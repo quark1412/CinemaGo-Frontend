@@ -1,18 +1,18 @@
 import { Genre } from "@/types/Genre";
 
-export interface Movie {
-  id: String;
-  title: String;
-  description: String;
-  duration: Number;
+export type Movie = {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
   releaseDate: Date;
-  rating: Number;
-  thumbnail: String;
-  thumbnailPublicId: String;
-  trailerUrl: String;
-  trailerPublicId: String;
+  rating: number;
+  thumbnail: string;
+  thumbnailPublicId: string;
+  trailerUrl: string;
+  trailerPublicId: string;
   genres: Genre[];
-  isActive: Boolean;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-}
+};

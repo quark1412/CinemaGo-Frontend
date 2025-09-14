@@ -1,6 +1,6 @@
 import { Movie } from "@/types/Movie";
 
-export interface Genre {
+export type Genre = {
   id: String;
   name: String;
   description: String;
@@ -8,4 +8,4 @@ export interface Genre {
   movies: Movie[];
   createdAt: Date;
   updatedAt: Date;
-}
+};

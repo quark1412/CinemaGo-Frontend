@@ -1,51 +1,51 @@
-export interface User {
-  id: String;
-  email: String;
-  password: String;
-  fullname: String;
-  gender: String;
+export type User = {
+  id: string;
+  email: string;
+  password: string;
+  fullname: string;
+  gender: string;
   role: Role;
-  avatarUrl: String;
-  publicId: String;
-  isActive: Boolean;
+  avatarUrl: string;
+  publicId: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
   refreshTokens: RefreshToken[];
   VerificationToken: VerificationToken[];
   OTP: OTP[];
-}
+};
 
 export enum Role {
   "USER",
   "ADMIN",
 }
 
-export interface RefreshToken {
-  id: String;
-  userId: String;
-  token: String;
+export type RefreshToken = {
+  id: string;
+  userId: string;
+  token: string;
   expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
   user: User;
-}
+};
 
-export interface VerificationToken {
-  id: String;
-  userId: String;
-  token: String;
+export type VerificationToken = {
+  id: string;
+  userId: string;
+  token: string;
   expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
   user: User;
-}
+};
 
-export interface OTP {
-  id: String;
-  userId: String;
-  otp: String;
+export type OTP = {
+  id: string;
+  userId: string;
+  otp: string;
   expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
   user: User;
-}
+};
