@@ -145,6 +145,7 @@ export default function Sidebar() {
       href: "/settings",
     },
   ];
+
   return (
     <div
       className={`h-screen bg-sidebar border-r border-sidebar-border p-6 flex flex-col justify-between transition-all duration-300 ease-in-out flex-shrink-0 overflow-hidden ${

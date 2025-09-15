@@ -4,6 +4,21 @@ import "./globals.css";
 import Sidebar from "@/layout/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/mode-toggle";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { Separator } from "@/components/ui/separator";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,15 +51,24 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <main className="flex">
-            <Sidebar />
-            <div className="w-full h-screen overflow-y-scroll p-10 bg-background">
-              <div className="absolute top-4 right-4">
-                <ModeToggle />
-              </div>
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset className="bg-background py-6 px-10">
+              <header className="flex shrink-0 items-center gap-2 mb-10 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+                <div className="flex items-center justify-between w-full gap-2">
+                  <div className="flex items-center gap-2">
+                    <SidebarTrigger className="-ml-1" />
+                    <Separator
+                      orientation="vertical"
+                      className="mr-2 data-[orientation=vertical]:h-4"
+                    />
+                  </div>
+                  <ModeToggle />
+                </div>
+              </header>
               {children}
-            </div>
-          </main>
+            </SidebarInset>
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>

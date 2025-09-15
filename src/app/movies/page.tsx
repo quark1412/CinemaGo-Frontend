@@ -504,8 +504,7 @@ export default async function MoviePage() {
   const movies = await getMovies();
 
   return (
-    <div className="container mx-auto">
-      <h1 className="text-xl font-bold mb-10">Movies</h1>
+    <div className="container">
       <DataTable columns={columns} data={movies} />
     </div>
   );
