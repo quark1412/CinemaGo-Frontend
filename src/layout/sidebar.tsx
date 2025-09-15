@@ -148,7 +148,7 @@ export default function Sidebar() {
   return (
     <div
       className={`h-screen bg-sidebar border-r border-sidebar-border p-6 flex flex-col justify-between transition-all duration-300 ease-in-out flex-shrink-0 overflow-hidden ${
-        isOpen ? "w-64" : "w-16"
+        isOpen ? "w-56" : "w-24"
       }`}
     >
       <div className="flex flex-col gap-10">
@@ -156,13 +156,13 @@ export default function Sidebar() {
           <div className="flex-shrink-0 -ml-1">
             <Image src="/logo.svg" alt="logo" width={60} height={60} />
           </div>
-          <p
-            className={`text-2xl font-bold text-sidebar-foreground transition-opacity duration-300 whitespace-nowrap ${
-              isOpen ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            {PROJECT_NAME}
-          </p>
+          {isOpen && (
+            <p
+              className={`text-2xl font-bold text-sidebar-foreground whitespace-nowrap`}
+            >
+              {PROJECT_NAME}
+            </p>
+          )}
         </div>
         <div className="flex flex-col gap-1 transition-all duration-300 ease-in-out">
           {links.map((link) => (
@@ -178,17 +178,17 @@ export default function Sidebar() {
               }`}
             >
               <div className="flex-shrink-0">{link.icon}</div>
-              <p
-                className={`text-sm font-medium transition-opacity duration-300 whitespace-nowrap ${
-                  isOpen ? "opacity-100" : "opacity-0"
-                } ${
-                  isLinkActive(link.href)
-                    ? "text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground"
-                }`}
-              >
-                {link.label}
-              </p>
+              {isOpen && (
+                <p
+                  className={`text-sm font-medium whitespace-nowrap ${
+                    isLinkActive(link.href)
+                      ? "text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground"
+                  }`}
+                >
+                  {link.label}
+                </p>
+              )}
             </Link>
           ))}
         </div>
@@ -200,7 +200,7 @@ export default function Sidebar() {
       >
         <Image src="/logo.svg" alt="logo" width={20} height={20} />
         <div
-          className="cursor-pointer hover:bg-sidebar-accent p-4 rounded-full transition-all duration-300"
+          className="cursor-pointer hover:bg-sidebar-accent p-4 rounded-full"
           onClick={() => setIsOpen(!isOpen)}
         >
           <svg
