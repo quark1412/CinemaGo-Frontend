@@ -71,7 +71,7 @@ export default function Sidebar() {
         >
           <path
             className={
-              isLinkActive("/movies")
+              isLinkActive("/theaters")
                 ? "fill-sidebar-primary-foreground"
                 : "fill-sidebar-foreground"
             }

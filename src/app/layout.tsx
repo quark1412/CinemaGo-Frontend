@@ -38,7 +38,7 @@ export default function RootLayout({
         >
           <main className="flex">
             <Sidebar />
-            <div className="w-full h-screen p-10 bg-background">
+            <div className="w-full h-screen overflow-y-scroll p-10 bg-background">
               <div className="absolute top-4 right-4">
                 <ModeToggle />
               </div>

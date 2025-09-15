@@ -502,7 +502,6 @@ async function getMovies(): Promise<Movie[]> {
 
 export default async function MoviePage() {
   const movies = await getMovies();
-  console.log(movies.length);
 
   return (
     <div className="container mx-auto">
