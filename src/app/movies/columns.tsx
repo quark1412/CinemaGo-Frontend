@@ -2,19 +2,19 @@
 
 import { Movie } from "@/types/Movie";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import { Clipboard, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DataTableColumnHeader } from "@/components/shared/data-table-column-header";
 import { formatDate, formatTime } from "@/lib/utils";
+import Link from "next/link";
 
 export const columns: ColumnDef<Movie>[] = [
   {
@@ -60,7 +60,7 @@ export const columns: ColumnDef<Movie>[] = [
           {genres.map((genre, index) => (
             <span
               key={genre.id}
-              className="inline-block bg-primary/10 text-primary text-xs px-2 py-1 rounded-full"
+              className="inline-block bg-success/10 text-success text-xs px-2 py-1 rounded-full"
             >
               {genre.name}
             </span>
@@ -107,21 +107,32 @@ export const columns: ColumnDef<Movie>[] = [
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only text-xs">Open menu</span>
+              <span className="sr-only text-xs">Actions</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
+            <DropdownMenuItem className="cursor-pointer">
+              <Pencil className="text-primary" />
+              <span className="text-xs">Edit</span>
+            </DropdownMenuItem>
             <DropdownMenuItem
+              className="cursor-pointer"
               onClick={() => navigator.clipboard.writeText(movie.id)}
             >
+              <Clipboard className="text-primary" />
               <span className="text-xs">Copy movie ID</span>
             </DropdownMenuItem>
+            <Link href={`/movies/${movie.id}`}>
+              <DropdownMenuItem className="cursor-pointer">
+                <Eye className="text-primary" />
+                <span className="text-xs">View details</span>
+              </DropdownMenuItem>
+            </Link>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-xs">View movie</DropdownMenuItem>
-            <DropdownMenuItem className="text-xs">
-              View movie details
+            <DropdownMenuItem className="cursor-pointer">
+              <Trash2 className="text-red-400" />
+              <span className="text-xs text-red-400">Delete</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

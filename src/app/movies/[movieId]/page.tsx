@@ -9,7 +9,7 @@ export const generateMetadata = async ({
 }: Props): Promise<Metadata> => {
   const movieId = (await params).movieId;
   return {
-    title: `Movie Details ${movieId}`,
+    title: `${movieId}`,
   };
 };
 

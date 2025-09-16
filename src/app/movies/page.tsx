@@ -3,7 +3,7 @@ import { DataTable } from "@/app/movies/data-table";
 import { Movie } from "@/types/Movie";
 
 export const metadata = {
-  title: "Movies",
+  title: "All movies",
   description: "Movie management",
 };
 
