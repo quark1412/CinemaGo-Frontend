@@ -501,11 +501,11 @@ async function getMovies(): Promise<Movie[]> {
 }
 
 export default async function MoviePage() {
-  await new Promise((resolve) => setTimeout(resolve, 10000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   const movies = await getMovies();
 
   return (
-    <div className="container">
+    <div>
       <DataTable columns={columns} data={movies} />
     </div>
   );
