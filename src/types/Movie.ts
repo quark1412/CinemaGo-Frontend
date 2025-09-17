@@ -1,4 +1,4 @@
-import { Genre } from "@/types/Genre";
+import { Genre } from "@/types/genre";
 
 export type Movie = {
   id: string;

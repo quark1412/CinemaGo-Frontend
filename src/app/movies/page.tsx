@@ -1,6 +1,6 @@
 import { columns } from "@/app/movies/columns";
 import { DataTable } from "@/app/movies/data-table";
-import { Movie } from "@/types/Movie";
+import { Movie } from "@/types/movie";
 
 export const metadata = {
   title: "All movies",
@@ -501,6 +501,7 @@ async function getMovies(): Promise<Movie[]> {
 }
 
 export default async function MoviePage() {
+  await new Promise((resolve) => setTimeout(resolve, 10000));
   const movies = await getMovies();
 
   return (

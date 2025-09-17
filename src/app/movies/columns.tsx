@@ -1,6 +1,6 @@
 "use client";
 
-import { Movie } from "@/types/Movie";
+import { Movie } from "@/types/movie";
 import { ColumnDef } from "@tanstack/react-table";
 import { Clipboard, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 

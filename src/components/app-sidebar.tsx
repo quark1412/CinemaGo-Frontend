@@ -114,11 +114,6 @@ const data = {
       url: "/showtimes",
       icon: Calendar,
     },
-    {
-      title: "Settings",
-      url: "/settings",
-      icon: Settings2,
-    },
   ],
 };
 

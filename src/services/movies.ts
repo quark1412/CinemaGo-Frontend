@@ -1,4 +1,4 @@
-import { Movie } from "@/types/Movie";
+import { Movie } from "@/types/movie";
 
 export const getAllMovies = async () => {};
 export const getMovieById = async (id: string) => {};
