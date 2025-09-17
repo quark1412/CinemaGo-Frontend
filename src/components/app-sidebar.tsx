@@ -69,7 +69,7 @@ const data = {
     },
     {
       title: "Movies",
-      url: "movies",
+      url: "/movies",
       icon: Film,
       // items: [
       //   {
@@ -88,7 +88,7 @@ const data = {
     },
     {
       title: "Theaters",
-      url: "theaters",
+      url: "/theaters",
       icon: Theater,
       // items: [
       //   {
@@ -111,12 +111,12 @@ const data = {
     },
     {
       title: "Showtimes",
-      url: "showtimes",
+      url: "/showtimes",
       icon: Calendar,
     },
     {
       title: "Settings",
-      url: "settings",
+      url: "/settings",
       icon: Settings2,
     },
   ],
