@@ -12,9 +12,8 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
-import { ImagePlus, CalendarIcon, Plus, Trash2, X } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 import Image from "next/image";
-import { format } from "date-fns";
 
 import { z } from "zod";
 import {
@@ -36,39 +35,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { createMovie } from "@/services/movies";
 
 const formSchema = z.object({
-  thumbnail: z.string().min(1, {
-    error: "Thumbnail is required",
-  }),
-  title: z.string().min(1, {
-    error: "Title is required",
-  }),
-  description: z.string().min(1, {
-    error: "Description is required",
-  }),
-  duration: z.number().min(1, {
-    error: "Duration must be greater than 0",
-  }),
-  genres: z.array(z.string()).min(1, {
-    error: "At least one genre is required",
-  }),
-  showtimes: z
-    .array(
-      z.object({
-        roomId: z.string().min(1, "Room is required"),
-        date: z.date({ error: "Date is required" }),
-        time: z.string().min(1, "Time is required"),
-      })
-    )
-    .min(1, "At least one showtime is required"),
+  thumbnail: z.string().min(1, { message: "Thumbnail is required" }),
+  title: z.string().min(1, { message: "Title is required" }),
+  description: z.string().min(1, { message: "Description is required" }),
+  duration: z
+    .number({ error: "Duration is required" })
+    .min(1, { message: "Duration must be greater than 0" }),
+  genres: z
+    .array(z.string())
+    .min(1, { message: "At least one genre is required" }),
+  trailer: z.string().min(1, { message: "Trailer is required" }),
 });
 
 const mockGenres = [
@@ -80,18 +60,15 @@ const mockGenres = [
   { id: "6", name: "Sci-Fi" },
 ];
 
-const mockRooms = [
-  { id: "1", name: "Room 1" },
-  { id: "2", name: "Room 2" },
-  { id: "3", name: "Room 3" },
-  { id: "4", name: "Room 4" },
-  { id: "5", name: "Room 5" },
-];
-
 export default function CreateMovie() {
   const [thumbnail, setThumbnail] = useState<{
     imagePath: string;
     imageFile: File | null;
+  } | null>(null);
+
+  const [trailer, setTrailer] = useState<{
+    videoPath: string;
+    videoFile: File | null;
   } | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -100,41 +77,35 @@ export default function CreateMovie() {
       thumbnail: "",
       title: "",
       description: "",
-      duration: 0,
+      duration: undefined,
       genres: [],
-      showtimes: [
-        {
-          roomId: "",
-          date: new Date(),
-          time: "",
-        },
-      ],
+      trailer: "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-  }
-
-  const addShowtime = () => {
-    const currentShowtimes = form.getValues("showtimes");
-    form.setValue("showtimes", [
-      ...currentShowtimes,
-      {
-        roomId: "",
-        date: new Date(),
-        time: "",
-      },
-    ]);
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    createMovie({
+      ...values,
+      thumbnail: thumbnail?.imageFile as File,
+      trailer: trailer?.videoFile as File,
+    })
+      .then(() => {
+        toast.success("Movie created successfully");
+      })
+      .catch((error) => {
+        toast.error(error.message);
+      });
   };
 
-  const removeShowtime = (index: number) => {
-    const currentShowtimes = form.getValues("showtimes");
-    if (currentShowtimes.length > 1) {
-      form.setValue(
-        "showtimes",
-        currentShowtimes.filter((_, i) => i !== index)
-      );
+  const handleTrailerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const videoUrl = URL.createObjectURL(file);
+      setTrailer({
+        videoPath: videoUrl,
+        videoFile: file,
+      });
+      form.setValue("trailer", videoUrl);
     }
   };
 
@@ -173,7 +144,8 @@ export default function CreateMovie() {
         <p className="text-xl font-bold">Movie information</p>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="flex gap-8">
+            <div className="flex gap-8 items-start">
+              {/* Thumbnail Upload */}
               <FormField
                 control={form.control}
                 name="thumbnail"
@@ -190,7 +162,7 @@ export default function CreateMovie() {
                           onChange={handlePhotoChange}
                         />
                         <div
-                          className={`flex h-64 p-5 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${
+                          className={`flex h-84 w-60 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${
                             form.formState.errors.thumbnail
                               ? "border-red-500"
                               : "border-gray-300"
@@ -212,15 +184,85 @@ export default function CreateMovie() {
                                 <Image
                                   src={thumbnail.imagePath}
                                   alt="thumbnail"
-                                  width={400}
-                                  height={480}
-                                  className="rounded-lg object-contain"
+                                  width={200}
+                                  height={280}
+                                  className="rounded-lg object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gray-400 bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-lg">
                                   <p className="text-white text-sm font-semibold">
                                     Change thumbnail
                                   </p>
                                 </div>
+                              </div>
+                            )}
+                          </Label>
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Trailer Upload */}
+              <FormField
+                control={form.control}
+                name="trailer"
+                render={({ field }) => (
+                  <FormItem className="flex-2">
+                    <FormLabel>Trailer</FormLabel>
+                    <FormControl>
+                      <div>
+                        <Input
+                          id="trailer-file"
+                          className="hidden"
+                          type="file"
+                          accept="video/*"
+                          onChange={handleTrailerChange}
+                        />
+                        <div
+                          className={`flex h-84 p-5 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${
+                            form.formState.errors.trailer
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          } cursor-pointer hover:bg-gray-50`}
+                        >
+                          <Label
+                            htmlFor="trailer-file"
+                            className="cursor-pointer w-full h-full flex items-center justify-center"
+                          >
+                            {!trailer ? (
+                              <div className="flex flex-col items-center justify-center">
+                                <ImagePlus size={60} />
+                                <p className="mt-2 text-sm text-gray-500 font-semibold">
+                                  Upload trailer video
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  MP4, AVI, MOV up to 100MB
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center gap-2">
+                                <video
+                                  src={trailer.videoPath}
+                                  className="w-full h-full rounded object-cover"
+                                  controls
+                                />
+                                <div className="text-center">
+                                  <p className="text-sm font-semibold text-gray-700">
+                                    {trailer.videoFile?.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {trailer.videoFile &&
+                                      `${(
+                                        trailer.videoFile.size /
+                                        (1024 * 1024)
+                                      ).toFixed(2)} MB`}
+                                  </p>
+                                </div>
+                                <p className="text-xs text-success">
+                                  Click to change
+                                </p>
                               </div>
                             )}
                           </Label>
@@ -258,9 +300,13 @@ export default function CreateMovie() {
                             type="number"
                             placeholder="Minutes"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
+                            value={field.value?.toString() ?? ""}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              field.onChange(
+                                value === "" ? undefined : Number(value)
+                              );
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -353,129 +399,18 @@ export default function CreateMovie() {
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold">Showtimes</h3>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addShowtime}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add showtime
-                </Button>
-              </div>
-
-              {form.watch("showtimes").map((_, index) => (
-                <div key={index} className="flex gap-4 items-center">
-                  <FormField
-                    control={form.control}
-                    name={`showtimes.${index}.roomId`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Room</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select room" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {mockRooms.map((room) => (
-                              <SelectItem key={room.id} value={room.id}>
-                                {room.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`showtimes.${index}.date`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => date < new Date()}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`showtimes.${index}.time`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Time</FormLabel>
-                        <FormControl>
-                          <Input type="time" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {form.watch("showtimes").length > 1 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeShowtime(index)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-
             <div className="flex gap-4 justify-start mt-10">
               <Button
                 type="submit"
                 className="bg-black text-white hover:bg-gray-800"
+                onClick={() => {
+                  form.handleSubmit(onSubmit)();
+                }}
               >
                 Add movie
               </Button>
-              <Button type="button" variant="outline">
-                Cancel
+              <Button type="button" variant="outline" asChild>
+                <Link href="/movies">Cancel</Link>
               </Button>
             </div>
           </form>
