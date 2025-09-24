@@ -1,4 +1,4 @@
-import CreateMovie from "@/app/movies/create/create-movie";
+import CreateMovie from "@/app/(main)/movies/create/create-movie";
 
 export const metadata = {
   title: "Create movie",

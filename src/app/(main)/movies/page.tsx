@@ -1,5 +1,5 @@
-import { columns } from "@/app/movies/columns";
-import { DataTable } from "@/app/movies/data-table";
+import { columns } from "@/app/(main)/movies/columns";
+import { DataTable } from "@/app/(main)/movies/data-table";
 import { Movie } from "@/types/movie";
 
 export const metadata = {

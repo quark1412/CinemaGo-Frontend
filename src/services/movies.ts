@@ -1,7 +1,26 @@
 import { Movie } from "@/types/movie";
+import instance from "@/configs/axiosConfig";
 
-export const getAllMovies = async () => {};
-export const getMovieById = async (id: string) => {};
+export const getAllMovies = async () => {
+  try {
+    const response = await instance.get("/movies", {
+      requiresAuth: true,
+    } as any);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+export const getMovieById = async (id: string) => {
+  try {
+    const response = await instance.get(`/movies/${id}`, {
+      requiresAuth: true,
+    } as any);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 export const createMovie = async (movieData: {
   title: string;
   description: string;
@@ -10,33 +29,31 @@ export const createMovie = async (movieData: {
   thumbnail: File;
   trailer: File;
 }) => {
-  const formData = new FormData();
+  try {
+    const formData = new FormData();
 
-  // Add text fields
-  formData.append("title", movieData.title);
-  formData.append("description", movieData.description);
-  formData.append("duration", movieData.duration.toString());
-  formData.append("releaseDate", new Date().toISOString());
-  formData.append("genresIds", movieData.genres.join(","));
+    formData.append("title", movieData.title);
+    formData.append("description", movieData.description);
+    formData.append("duration", movieData.duration.toString());
+    formData.append("releaseDate", new Date().toISOString());
+    formData.append("genresIds", movieData.genres.join(","));
 
-  // Add files
-  formData.append("thumbnail", movieData.thumbnail);
-  formData.append("trailer", movieData.trailer);
+    formData.append("thumbnail", movieData.thumbnail);
+    formData.append("trailer", movieData.trailer);
 
-  const response = await fetch("/api/movies", {
-    method: "POST",
-    body: formData,
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  });
+    const response = await instance.post("/movies", formData, {
+      requiresAuth: true,
+    } as any);
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Failed to create movie");
+    if (response.status !== 200) {
+      const error = await response.data;
+      throw new Error(error.message || "Failed to create movie");
+    }
+
+    return response.data;
+  } catch (error) {
+    throw error;
   }
-
-  return response.json();
 };
 export const updateMovie = async (id: string, movie: Movie) => {};
 export const deleteMovie = async (id: string) => {};

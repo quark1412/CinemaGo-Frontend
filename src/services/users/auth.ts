@@ -1,9 +1,9 @@
-import axios from "axios";
+import instance from "@/configs/axiosConfig";
 
 export const authService = {
   login: async (email: string, password: string) => {
     try {
-      const response = await axios.post(`${process.env.API_URL}/auth/login`, {
+      const response = await instance.post(`/auth/login`, {
         email,
         password,
       });
@@ -19,7 +19,7 @@ export const authService = {
     gender: string
   ) => {
     try {
-      const response = await axios.post(`${process.env.API_URL}/auth/signup`, {
+      const response = await instance.post(`/auth/signup`, {
         email,
         fullname,
         password,

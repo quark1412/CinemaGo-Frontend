@@ -144,74 +144,13 @@ export default function CreateMovie() {
         <p className="text-xl font-bold">Movie information</p>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="flex gap-8 items-start">
-              {/* Thumbnail Upload */}
-              <FormField
-                control={form.control}
-                name="thumbnail"
-                render={({ field }) => (
-                  <FormItem className="flex-[1]">
-                    <FormLabel>
-                      Thumbnail <span className="text-xs text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <div>
-                        <Input
-                          id="dropzone-file"
-                          className="hidden"
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePhotoChange}
-                        />
-                        <div
-                          className={`flex h-84 w-60 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${
-                            form.formState.errors.thumbnail
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          } cursor-pointer hover:bg-accent`}
-                        >
-                          <Label
-                            htmlFor="dropzone-file"
-                            className="cursor-pointer w-full h-full flex items-center justify-center"
-                          >
-                            {!thumbnail ? (
-                              <div className="flex flex-col items-center justify-center">
-                                <ImagePlus size={60} />
-                                <p className="mt-2 text-sm text-gray-500 font-semibold">
-                                  Upload thumbnail
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="relative">
-                                <Image
-                                  src={thumbnail.imagePath}
-                                  alt="thumbnail"
-                                  width={200}
-                                  height={280}
-                                  className="rounded-lg object-cover"
-                                />
-                                <div className="absolute inset-0 bg-gray-400 bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-lg">
-                                  <p className="text-white text-sm font-semibold">
-                                    Change thumbnail
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                          </Label>
-                        </div>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+            <div className="flex gap-8 items-start flex-wrap">
               {/* Trailer Upload */}
               <FormField
                 control={form.control}
                 name="trailer"
                 render={({ field }) => (
-                  <FormItem className="flex-2">
+                  <FormItem className="flex-2 min-w-64">
                     <FormLabel>
                       Trailer <span className="text-xs text-red-500">*</span>
                     </FormLabel>
@@ -278,7 +217,68 @@ export default function CreateMovie() {
                 )}
               />
 
-              <div className="flex-[2] flex flex-col gap-4">
+              {/* Thumbnail Upload */}
+              <FormField
+                control={form.control}
+                name="thumbnail"
+                render={({ field }) => (
+                  <FormItem className="flex-[1] min-w-64">
+                    <FormLabel>
+                      Thumbnail <span className="text-xs text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <div>
+                        <Input
+                          id="dropzone-file"
+                          className="hidden"
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoChange}
+                        />
+                        <div
+                          className={`flex h-84 w-60 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${
+                            form.formState.errors.thumbnail
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          } cursor-pointer hover:bg-accent`}
+                        >
+                          <Label
+                            htmlFor="dropzone-file"
+                            className="cursor-pointer w-full h-full flex items-center justify-center"
+                          >
+                            {!thumbnail ? (
+                              <div className="flex flex-col items-center justify-center">
+                                <ImagePlus size={60} />
+                                <p className="mt-2 text-sm text-gray-500 font-semibold">
+                                  Upload thumbnail
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="relative">
+                                <Image
+                                  src={thumbnail.imagePath}
+                                  alt="thumbnail"
+                                  width={200}
+                                  height={280}
+                                  className="rounded-lg object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gray-400 bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-lg">
+                                  <p className="text-white text-sm font-semibold">
+                                    Change thumbnail
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                          </Label>
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex-[2] flex flex-col gap-4 min-w-64">
                 <div className="flex gap-4">
                   <FormField
                     control={form.control}

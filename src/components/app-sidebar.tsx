@@ -87,6 +87,11 @@ const data = {
       // ],
     },
     {
+      title: "Rooms",
+      url: "/rooms",
+      icon: LayoutDashboard,
+    },
+    {
       title: "Theaters",
       url: "/theaters",
       icon: Theater,
@@ -128,7 +133,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5 hover:cursor-pointer"
             >
               <Link href="/" className="h-12">
-                <Image src="/logo.svg" alt="logo" height={28} width={28} />
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-4 h-4 bg-white rounded-sm transform rotate-45"></div>
+                </div>
                 <p className="font-extrabold text-xl">{PROJECT_NAME}</p>
               </Link>
             </SidebarMenuButton>
