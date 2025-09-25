@@ -26,6 +26,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
+import { useUser } from "@/contexts/UserContext";
+import { useRouter } from "next/navigation";
 
 export function NavUser({
   user,
@@ -37,6 +39,18 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const { logout } = useUser();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      router.push("/login");
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -88,7 +102,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
               <LogOut className="text-red-400" />
               <p className="text-red-400">Log out</p>
             </DropdownMenuItem>

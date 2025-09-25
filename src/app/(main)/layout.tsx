@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthGuard } from "@/components/auth-guard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,27 +33,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
+    <AuthGuard>
+      <div
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset className="py-6 px-10">
-            <header className="flex shrink-0 items-center gap-2 mb-10 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-              <div className="flex items-center justify-between w-full gap-2">
-                <SidebarTrigger className="-ml-1" />
-                <ModeToggle />
-              </div>
-            </header>
-            {children}
-            <Toaster />
-          </SidebarInset>
-        </SidebarProvider>
-      </ThemeProvider>
-    </div>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset className="py-6 px-10">
+              <header className="flex shrink-0 items-center gap-2 mb-10 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+                <div className="flex items-center justify-between w-full gap-2">
+                  <SidebarTrigger className="-ml-1" />
+                  <ModeToggle />
+                </div>
+              </header>
+              {children}
+              <Toaster />
+            </SidebarInset>
+          </SidebarProvider>
+        </ThemeProvider>
+      </div>
+    </AuthGuard>
   );
 }

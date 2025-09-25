@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { authService } from "@/services/users/auth";
+import { useUser } from "@/contexts/UserContext";
 import { Eye, EyeOff } from "lucide-react";
 
 const loginSchema = z.object({
@@ -27,6 +27,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login } = useUser();
 
   const {
     register,
@@ -45,7 +46,7 @@ export default function LoginPage() {
     clearErrors();
 
     try {
-      await authService.login(data.email, data.password);
+      await login(data.email, data.password);
       router.push("/dashboard");
     } catch (err: any) {
       setError("root", {
@@ -63,9 +64,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md space-y-8">
+    <Card className="w-full">
+      <CardContent className="px-8 py-2">
+        <div className="space-y-8">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
               <div className="w-4 h-4 bg-white rounded-sm transform rotate-45"></div>
@@ -201,41 +202,7 @@ export default function LoginPage() {
             </Button>
           </form>
         </div>
-      </div>
-
-      <div className="flex-1 relative overflow-hidden bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800">
-        <div className="absolute inset-0">
-          <div className="absolute top-20 right-20 w-64 h-64 bg-purple-400 rounded-full opacity-20"></div>
-          <div className="absolute bottom-32 left-16 w-48 h-48 bg-blue-400 rounded-full opacity-30"></div>
-
-          <div className="absolute top-32 left-32 w-16 h-16 bg-yellow-400 transform rotate-45"></div>
-          <div className="absolute top-64 right-48 w-12 h-12 bg-cyan-400 rounded-full"></div>
-          <div className="absolute bottom-48 right-32 w-8 h-8 bg-pink-400 rounded-full"></div>
-
-          <div className="absolute top-48 left-48 grid grid-cols-4 gap-2 opacity-30">
-            {Array.from({ length: 16 }).map((_, i) => (
-              <div key={i} className="w-2 h-2 bg-white rounded-full"></div>
-            ))}
-          </div>
-
-          <div className="absolute bottom-64 left-64 w-32 h-1 bg-cyan-400 opacity-60"></div>
-          <div className="absolute top-80 right-64 w-1 h-24 bg-yellow-400 opacity-60"></div>
-
-          <div className="absolute bottom-20 right-20 w-32 h-32 border-4 border-white opacity-20 rounded-full"></div>
-          <div className="absolute top-40 left-20 w-20 h-20 border-2 border-cyan-400 opacity-40 rounded-full"></div>
-
-          <div className="absolute top-72 left-72">
-            <div className="w-0 h-0 border-l-8 border-r-8 border-b-16 border-l-transparent border-r-transparent border-b-blue-300 opacity-60"></div>
-          </div>
-
-          <div className="absolute bottom-80 left-80 text-yellow-400 text-4xl opacity-80">
-            ★
-          </div>
-
-          <div className="absolute top-96 right-96 w-6 h-6 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full opacity-70"></div>
-          <div className="absolute bottom-96 left-96 w-4 h-16 bg-gradient-to-b from-cyan-400 to-blue-400 opacity-50"></div>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

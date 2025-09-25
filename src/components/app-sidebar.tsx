@@ -18,8 +18,6 @@ import {
   Theater,
 } from "lucide-react";
 
-// import { NavMain } from "@/components/nav-main";
-// import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
@@ -35,8 +33,8 @@ import Image from "next/image";
 import { PROJECT_NAME } from "@/lib/constants";
 import { NavMain } from "@/components/nav-main";
 import Link from "next/link";
+import { useUser } from "@/contexts/UserContext";
 
-// This is sample data.
 const data = {
   user: {
     name: "shadcn",
@@ -71,20 +69,6 @@ const data = {
       title: "Movies",
       url: "/movies",
       icon: Film,
-      // items: [
-      //   {
-      //     title: "Genesis",
-      //     url: "#",
-      //   },
-      //   {
-      //     title: "Explorer",
-      //     url: "#",
-      //   },
-      //   {
-      //     title: "Quantum",
-      //     url: "#",
-      //   },
-      // ],
     },
     {
       title: "Rooms",
@@ -95,24 +79,6 @@ const data = {
       title: "Theaters",
       url: "/theaters",
       icon: Theater,
-      // items: [
-      //   {
-      //     title: "All Theaters",
-      //     url: "#",
-      //   },
-      //   {
-      //     title: "Get Started",
-      //     url: "#",
-      //   },
-      //   {
-      //     title: "Tutorials",
-      //     url: "#",
-      //   },
-      //   {
-      //     title: "Changelog",
-      //     url: "#",
-      //   },
-      // ],
     },
     {
       title: "Showtimes",
@@ -123,6 +89,17 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user, isLoading } = useUser();
+
+  // Fallback user data while loading or if no user
+  const userData = user
+    ? {
+        name: user.fullname,
+        email: user.email,
+        avatar: user.avatarUrl || "/avatars/default.jpg",
+      }
+    : data.user;
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="mb-6">
@@ -133,8 +110,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5 hover:cursor-pointer"
             >
               <Link href="/" className="h-12">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                  <div className="w-4 h-4 bg-white rounded-sm transform rotate-45"></div>
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center shrink-0 justify-center">
+                  <div className="w-4 h-4 bg-white rounded-sm transform rotate-45 shrink-0"></div>
                 </div>
                 <p className="font-extrabold text-xl">{PROJECT_NAME}</p>
               </Link>
@@ -146,7 +123,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
