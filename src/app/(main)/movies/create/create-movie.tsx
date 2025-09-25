@@ -81,6 +81,8 @@ export default function CreateMovie() {
       genres: [],
       trailer: "",
     },
+    mode: "onSubmit",
+    reValidateMode: "onSubmit",
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {

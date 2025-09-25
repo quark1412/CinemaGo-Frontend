@@ -13,16 +13,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { authService } from "@/services/users/auth";
 import { Eye, EyeOff } from "lucide-react";
 
-// Zod schema for login form validation
 const loginSchema = z.object({
   email: z
     .string()
     .min(1, "Email is required")
     .email("Please enter a valid email address"),
-  password: z
-    .string()
-    .min(1, "Password is required")
-    .min(6, "Password must be at least 6 characters long"),
+  password: z.string().min(1, "Password is required"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -40,7 +36,8 @@ export default function LoginPage() {
     clearErrors,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    mode: "onChange",
+    mode: "onSubmit",
+    reValidateMode: "onSubmit",
   });
 
   const onSubmit = async (data: LoginFormData) => {
@@ -62,7 +59,6 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    // Implement Google OAuth login with redirect to /dashboard
     console.log("Google login clicked");
   };
 
@@ -99,7 +95,7 @@ export default function LoginPage() {
               </Label>
               <Input
                 id="email"
-                type="email"
+                type="text"
                 placeholder="Enter your mail address"
                 {...register("email")}
                 className={`h-12 px-4 border-gray-300 focus:border-purple-500 focus:ring-purple-500 ${
