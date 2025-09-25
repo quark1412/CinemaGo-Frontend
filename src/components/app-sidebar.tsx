@@ -15,6 +15,7 @@ import {
   PieChart,
   Settings2,
   SquareTerminal,
+  SwatchBook,
   Theater,
 } from "lucide-react";
 
@@ -69,6 +70,11 @@ const data = {
       title: "Movies",
       url: "/movies",
       icon: Film,
+    },
+    {
+      title: "Genres",
+      url: "/genres",
+      icon: SwatchBook,
     },
     {
       title: "Rooms",

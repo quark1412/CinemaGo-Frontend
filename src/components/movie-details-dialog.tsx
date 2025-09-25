@@ -1,0 +1,180 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Movie } from "@/types/movie";
+import { getMovieById } from "@/services/movies";
+import { toast } from "sonner";
+import { formatTime, formatDate } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Loader2, Star, Calendar, Clock, Tag } from "lucide-react";
+import Image from "next/image";
+
+interface MovieDetailsDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  movieId: string | null;
+}
+
+export function MovieDetailsDialog({
+  open,
+  onOpenChange,
+  movieId,
+}: MovieDetailsDialogProps) {
+  const [movie, setMovie] = useState<Movie | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && movieId) {
+      fetchMovieDetails();
+    }
+  }, [open, movieId]);
+
+  const fetchMovieDetails = async () => {
+    if (!movieId) return;
+
+    try {
+      setLoading(true);
+      const response = await getMovieById(movieId);
+      setMovie(response.data);
+    } catch (error: any) {
+      toast.error("Failed to fetch movie details");
+      console.error("Error fetching movie:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    onOpenChange(false);
+    setMovie(null);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="[&>button:last-child]:hidden min-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="p-2">
+          <DialogTitle className="text-2xl font-bold text-center">
+            {movie?.title}
+          </DialogTitle>
+        </DialogHeader>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading movie details...</span>
+          </div>
+        ) : movie ? (
+          <div className="space-y-8">
+            {/* Header with Title and Basic Info */}
+            <div className="space-y-3">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                    <div className="flex items-center space-x-1">
+                      <Clock className="h-4 w-4" />
+                      <span>{formatTime(movie.duration)}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="h-4 w-4" />
+                      <span>{formatDate(movie.releaseDate)}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <span>{movie.rating || "Not rated yet"}</span>
+                    </div>
+                  </div>
+                </div>
+                <Badge variant={movie.isActive ? "default" : "secondary"}>
+                  {movie.isActive ? "Active" : "Archived"}
+                </Badge>
+              </div>
+
+              {/* Genres */}
+              <div className="flex items-center space-x-2">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                <div className="flex flex-wrap gap-1">
+                  {movie.genres.map((genre) => (
+                    <Badge key={genre.id} variant="outline" className="text-xs">
+                      {genre.name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Media Content */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {/* Thumbnail */}
+              <div className="space-y-3">
+                <div className="relative aspect-[2/3] w-full max-w-xs mx-auto">
+                  <Image
+                    src={movie.thumbnail}
+                    alt={`${movie.title} thumbnail`}
+                    fill
+                    className="object-cover rounded-lg"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
+                </div>
+              </div>
+
+              {/* Trailer */}
+              <div className="space-y-3">
+                <div className="relative aspect-video w-full h-full">
+                  <video
+                    src={movie.trailerUrl}
+                    controls
+                    className="w-full h-full rounded-lg object-cover"
+                    preload="metadata"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Description</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                {movie.description}
+              </p>
+            </div>
+
+            {/* Additional Info */}
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Created</p>
+                <p className="text-sm text-muted-foreground">
+                  {formatDate(movie.createdAt)}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Last Updated</p>
+                <p className="text-sm text-muted-foreground">
+                  {formatDate(movie.updatedAt)}
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end pt-4 border-t">
+              <Button onClick={handleClose}>Close</Button>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            No movie details available.
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -2,7 +2,14 @@
 
 import { Movie } from "@/types/movie";
 import { ColumnDef } from "@tanstack/react-table";
-import { Clipboard, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  Clipboard,
+  Eye,
+  MoreHorizontal,
+  Pencil,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,9 +21,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DataTableColumnHeader } from "@/components/shared/data-table-column-header";
 import { formatDate, formatTime } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
-export const columns: ColumnDef<Movie>[] = [
+interface ColumnProps {
+  onEdit: (movie: Movie) => void;
+  onArchive: (movie: Movie) => void;
+  onRestore: (movie: Movie) => void;
+  onViewDetails: (movieId: string) => void;
+}
+
+export const createColumns = ({
+  onEdit,
+  onArchive,
+  onRestore,
+  onViewDetails,
+}: ColumnProps): ColumnDef<Movie>[] => [
   {
     accessorKey: "title",
     header: ({ column }) => (
@@ -88,6 +108,18 @@ export const columns: ColumnDef<Movie>[] = [
     },
   },
   {
+    accessorKey: "isActive",
+    header: () => <div className="font-bold">Status</div>,
+    cell: ({ row }) => {
+      const isActive = row.original.isActive;
+      return (
+        <Badge variant={isActive ? "default" : "secondary"}>
+          {isActive ? "Active" : "Archived"}
+        </Badge>
+      );
+    },
+  },
+  {
     accessorKey: "releaseDate",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Release Date" />
@@ -112,7 +144,10 @@ export const columns: ColumnDef<Movie>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => onEdit(movie)}
+            >
               <Pencil className="text-primary" />
               <span className="text-xs">Edit</span>
             </DropdownMenuItem>
@@ -123,17 +158,31 @@ export const columns: ColumnDef<Movie>[] = [
               <Clipboard className="text-primary" />
               <span className="text-xs">Copy movie ID</span>
             </DropdownMenuItem>
-            <Link href={`/movies/${movie.id}`}>
-              <DropdownMenuItem className="cursor-pointer">
-                <Eye className="text-primary" />
-                <span className="text-xs">View details</span>
-              </DropdownMenuItem>
-            </Link>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
-              <Trash2 className="text-red-400" />
-              <span className="text-xs text-red-400">Delete</span>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => onViewDetails(movie.id)}
+            >
+              <Eye className="text-primary" />
+              <span className="text-xs">View details</span>
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {movie.isActive ? (
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => onArchive(movie)}
+              >
+                <Archive className="text-orange-500" />
+                <span className="text-xs text-orange-500">Archive</span>
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => onRestore(movie)}
+              >
+                <ArchiveRestore className="text-green-500" />
+                <span className="text-xs text-green-500">Restore</span>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

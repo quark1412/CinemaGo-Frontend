@@ -8,6 +8,7 @@ import React, {
   ReactNode,
 } from "react";
 import { authService } from "@/services/users/auth";
+import { useRouter } from "next/navigation";
 
 interface User {
   id: string;
@@ -33,6 +34,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
 
   const fetchUserProfile = async () => {
     try {
@@ -67,11 +69,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
       await authService.logout();
       setUser(null);
       setIsAuthenticated(false);
+      router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
       // Even if logout fails, clear local state
       setUser(null);
       setIsAuthenticated(false);
+      router.push("/login");
     }
   };
 

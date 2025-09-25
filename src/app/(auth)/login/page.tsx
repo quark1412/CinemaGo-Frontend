@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useUser } from "@/contexts/UserContext";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z
@@ -33,7 +34,6 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-    setError,
     clearErrors,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -47,13 +47,12 @@ export default function LoginPage() {
 
     try {
       await login(data.email, data.password);
-      router.push("/dashboard");
+      router.push("/");
+      toast.success("Login successful");
     } catch (err: any) {
-      setError("root", {
-        type: "manual",
-        message:
-          err.response?.data?.message || "Login failed. Please try again.",
-      });
+      toast.error(
+        err.response?.data?.message || "Login failed. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -81,12 +80,6 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {errors.root && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-                {errors.root.message}
-              </div>
-            )}
-
             <div className="space-y-2">
               <Label
                 htmlFor="email"

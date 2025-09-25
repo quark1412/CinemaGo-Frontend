@@ -40,15 +40,12 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const { logout } = useUser();
-  const router = useRouter();
 
   const handleLogout = async () => {
     try {
       await logout();
-      router.push("/login");
     } catch (error) {
       console.error("Logout failed:", error);
-      router.push("/login");
     }
   };
 

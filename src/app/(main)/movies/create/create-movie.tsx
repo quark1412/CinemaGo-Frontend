@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { createMovie } from "@/services/movies";
+import { GenreSelector } from "@/components/genre-selector";
 
 const formSchema = z.object({
   thumbnail: z.string().min(1, { message: "Thumbnail is required" }),
@@ -50,15 +51,6 @@ const formSchema = z.object({
     .min(1, { message: "At least one genre is required" }),
   trailer: z.string().min(1, { message: "Trailer is required" }),
 });
-
-const mockGenres = [
-  { id: "1", name: "Action" },
-  { id: "2", name: "Comedy" },
-  { id: "3", name: "Drama" },
-  { id: "4", name: "Horror" },
-  { id: "5", name: "Romance" },
-  { id: "6", name: "Sci-Fi" },
-];
 
 export default function CreateMovie() {
   const [thumbnail, setThumbnail] = useState<{
@@ -95,7 +87,12 @@ export default function CreateMovie() {
         toast.success("Movie created successfully");
       })
       .catch((error) => {
-        toast.error(error.message);
+        console.error("Create movie error:", error);
+        const message =
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to create movie";
+        toast.error(message);
       });
   };
 
@@ -334,60 +331,14 @@ export default function CreateMovie() {
                         <FormLabel>
                           Genres <span className="text-xs text-red-500">*</span>
                         </FormLabel>
-                        <div className="flex flex-wrap gap-2">
-                          <Select
-                            onValueChange={(value) => {
-                              const currentGenres = field.value || [];
-                              if (!currentGenres.includes(value)) {
-                                field.onChange([...currentGenres, value]);
-                              }
-                            }}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select genres" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {mockGenres.map((genre) => (
-                                <SelectItem key={genre.id} value={genre.id}>
-                                  {genre.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                          {field.value && field.value.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {field.value.map((genreId) => {
-                                const genre = mockGenres.find(
-                                  (g) => g.id === genreId
-                                );
-                                return (
-                                  <span
-                                    key={genreId}
-                                    className="inline-flex items-center gap-1 bg-success/10 text-success text-xs pl-3 pr-2 py-1 rounded-full"
-                                  >
-                                    {genre?.name}
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        field.onChange(
-                                          field.value.filter(
-                                            (id) => id !== genreId
-                                          )
-                                        );
-                                      }}
-                                      className="hover:bg-success/20 rounded-full p-0.5"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
+                        <FormControl>
+                          <GenreSelector
+                            value={field.value || []}
+                            onValueChange={field.onChange}
+                            placeholder="Select genres"
+                          />
+                        </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
