@@ -28,6 +28,8 @@ import {
 import Link from "next/link";
 import { useUser } from "@/contexts/UserContext";
 import { useRouter } from "next/navigation";
+import { AccountSettingsDialog } from "@/components/account-settings-dialog";
+import { useState } from "react";
 
 export function NavUser({
   user,
@@ -40,6 +42,7 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const { logout } = useUser();
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -89,9 +92,12 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setAccountDialogOpen(true)}
+                className="cursor-pointer"
+              >
                 <BadgeCheck />
-                <Link href="/account">Account</Link>
+                Account
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Bell />
@@ -106,6 +112,11 @@ export function NavUser({
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
+
+      <AccountSettingsDialog
+        open={accountDialogOpen}
+        onOpenChange={setAccountDialogOpen}
+      />
     </SidebarMenu>
   );
 }

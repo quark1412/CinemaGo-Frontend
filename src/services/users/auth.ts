@@ -67,6 +67,35 @@ export const authService = {
     }
   },
 
+  updateProfile: async (
+    data: FormData | { fullname: string; gender: string }
+  ) => {
+    try {
+      const response = await instance.put(`/users/profile`, data, {
+        headers:
+          data instanceof FormData
+            ? {
+                "Content-Type": "multipart/form-data",
+              }
+            : undefined,
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  changePassword: async (data: {
+    oldPassword: string;
+    newPassword: string;
+  }) => {
+    try {
+      const response = await instance.post(`/auth/change-password`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
   isAuthenticated: () => {
     const accessToken = Cookies.get("accessToken");
     const refreshToken = Cookies.get("refreshToken");
