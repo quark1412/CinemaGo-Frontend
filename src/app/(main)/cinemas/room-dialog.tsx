@@ -32,8 +32,8 @@ import { Input } from "@/components/ui/input";
 const formSchema = z.object({
   name: z.string().min(1, "Room name is required"),
   cinemaId: z.string().min(1, "Cinema is required"),
-  vipPrice: z.number().min(0, "VIP price must be 0 or greater"),
-  couplePrice: z.number().min(0, "Couple price must be 0 or greater"),
+  vipPrice: z.number().min(1, "VIP price must be greater than 0"),
+  couplePrice: z.number().min(1, "Couple price must be greater than 0"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -43,6 +43,7 @@ interface RoomDialogProps {
   onOpenChange: (open: boolean) => void;
   room?: Room | null;
   onSuccess?: () => void;
+  defaultCinemaId?: string;
 }
 
 export function RoomDialog({
@@ -50,6 +51,7 @@ export function RoomDialog({
   onOpenChange,
   room,
   onSuccess,
+  defaultCinemaId,
 }: RoomDialogProps) {
   const [loading, setLoading] = useState(false);
   const isEditing = !!room;
@@ -58,9 +60,9 @@ export function RoomDialog({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      cinemaId: "",
-      vipPrice: 0,
-      couplePrice: 0,
+      cinemaId: defaultCinemaId || "",
+      vipPrice: 1,
+      couplePrice: 1,
     },
   });
 
@@ -69,18 +71,18 @@ export function RoomDialog({
       form.reset({
         name: room.name,
         cinemaId: room.cinemaId,
-        vipPrice: 0,
-        couplePrice: 0,
+        vipPrice: 1,
+        couplePrice: 1,
       });
     } else {
       form.reset({
         name: "",
-        cinemaId: "",
-        vipPrice: 0,
-        couplePrice: 0,
+        cinemaId: defaultCinemaId || "",
+        vipPrice: 1,
+        couplePrice: 1,
       });
     }
-  }, [room, form]);
+  }, [room, form, defaultCinemaId]);
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
@@ -106,9 +108,8 @@ export function RoomDialog({
                 col: col + 1,
                 type: "NORMAL",
               }))
-          );
-
-        console.log(basicSeatLayout);
+          )
+          .flat(); // Flatten the 2D array to 1D array
 
         const createData: CreateRoomData = {
           name: data.name,
@@ -182,7 +183,7 @@ export function RoomDialog({
                       }
                       placeholder="Select a cinema"
                       multiple={false}
-                      disabled={isEditing} // Don't allow changing cinema for existing rooms
+                      disabled={isEditing || !!defaultCinemaId}
                     />
                   </FormControl>
                   <FormMessage />
@@ -201,7 +202,7 @@ export function RoomDialog({
                       <Input
                         type="number"
                         step="0.01"
-                        placeholder="0.00"
+                        placeholder="1.00"
                         value={field.value?.toString() ?? ""}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -226,7 +227,7 @@ export function RoomDialog({
                       <Input
                         type="number"
                         step="0.01"
-                        placeholder="0.00"
+                        placeholder="1.00"
                         value={field.value?.toString() ?? ""}
                         onChange={(e) => {
                           const value = e.target.value;

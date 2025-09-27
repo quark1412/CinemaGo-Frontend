@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
   Pencil,
   MapPin,
+  Eye,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,12 +28,14 @@ interface ColumnProps {
   onEdit: (cinema: Cinema) => void;
   onArchive: (cinema: Cinema) => void;
   onRestore: (cinema: Cinema) => void;
+  onViewDetails: (cinema: Cinema) => void;
 }
 
 export const createColumns = ({
   onEdit,
   onArchive,
   onRestore,
+  onViewDetails,
 }: ColumnProps): ColumnDef<Cinema>[] => [
   {
     accessorKey: "name",
@@ -113,6 +116,13 @@ export const createColumns = ({
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               className="cursor-pointer"
+              onClick={() => onViewDetails(cinema)}
+            >
+              <Eye className="text-primary" />
+              <span className="text-xs">View Details</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="cursor-pointer"
               onClick={() => onEdit(cinema)}
             >
               <Pencil className="text-primary" />
@@ -135,8 +145,8 @@ export const createColumns = ({
                   )
                 }
               >
-                <MapPin className="text-blue-500" />
-                <span className="text-xs text-blue-500">View on Map</span>
+                <MapPin className="text-primary" />
+                <span className="text-xs">View on Map</span>
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import { Cinema } from "@/types/cinema";
 import { DataTable } from "./data-table";
@@ -12,10 +13,11 @@ import {
   getAllCinemas,
   archiveCinema,
   restoreCinema,
-  GetCinemasParams,
 } from "@/services/cinemas";
+import { GetCinemasParams } from "@/types/cinema";
 
 export default function AllCinemas() {
+  const router = useRouter();
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -92,6 +94,10 @@ export default function AllCinemas() {
     });
   };
 
+  const handleViewDetailsClick = (cinema: Cinema) => {
+    router.push(`/cinemas/${cinema.id}`);
+  };
+
   const handleConfirmAction = async () => {
     if (!confirmationDialog.cinema) return;
 
@@ -137,6 +143,7 @@ export default function AllCinemas() {
     onEdit: handleEditClick,
     onArchive: handleArchiveClick,
     onRestore: handleRestoreClick,
+    onViewDetails: handleViewDetailsClick,
   });
 
   return (

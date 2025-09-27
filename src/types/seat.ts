@@ -40,9 +40,9 @@ export const SEAT_COLORS = {
 };
 
 export const SEAT_LABELS = {
-  [SeatType.EMPTY]: "Empty",
-  [SeatType.NORMAL]: "Normal Seat",
-  [SeatType.VIP]: "VIP Seat",
-  [SeatType.COUPLE]: "Couple Seat",
-  [SeatType.BLOCKED]: "Blocked/Pillar",
+  [SeatType.EMPTY]: "EMPTY",
+  [SeatType.NORMAL]: "NORMAL",
+  [SeatType.VIP]: "VIP",
+  [SeatType.COUPLE]: "COUPLE",
+  [SeatType.BLOCKED]: "BLOCKED",
 };

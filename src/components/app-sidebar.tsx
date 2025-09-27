@@ -78,11 +78,6 @@ const data = {
       icon: SwatchBook,
     },
     {
-      title: "Rooms",
-      url: "/rooms",
-      icon: Sofa,
-    },
-    {
       title: "Cinemas",
       url: "/cinemas",
       icon: Theater,

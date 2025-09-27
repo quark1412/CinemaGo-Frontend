@@ -8,8 +8,8 @@ import {
   Clipboard,
   MoreHorizontal,
   Pencil,
-  Users,
   Layout,
+  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -47,17 +47,6 @@ export const createColumns = ({
     },
   },
   {
-    accessorKey: "cinema.name",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Cinema" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-xs">{row.original.cinema?.name || "N/A"}</div>
-      );
-    },
-  },
-  {
     accessorKey: "totalSeats",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Total Seats" />
@@ -90,22 +79,7 @@ export const createColumns = ({
     ),
     cell: ({ row }) => {
       return (
-        <div className="text-xs">
-          {formatDate(new Date(row.original.createdAt))}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "updatedAt",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Updated" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-xs">
-          {formatDate(new Date(row.original.updatedAt))}
-        </div>
+        <div className="text-xs">{formatDate(row.original.createdAt)}</div>
       );
     },
   },
@@ -134,8 +108,8 @@ export const createColumns = ({
               className="cursor-pointer"
               onClick={() => onDesignLayout(room)}
             >
-              <Layout className="text-blue-500" />
-              <span className="text-xs text-blue-500">Design Layout</span>
+              <Layout className="text-primary" />
+              <span className="text-xs">Design Layout</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer"

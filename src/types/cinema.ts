@@ -6,8 +6,8 @@ export interface Cinema {
   isActive: boolean;
   longitude?: number;
   latitude?: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   rooms?: Room[];
 }
 
@@ -19,8 +19,8 @@ export interface Room {
   totalSeats: number;
   seatLayout: any; // JSON data for seat layout
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   seats?: Seat[];
 }
 
@@ -31,8 +31,8 @@ export interface Seat {
   seatNumber: string;
   seatType: string;
   extraPrice: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateCinemaData {

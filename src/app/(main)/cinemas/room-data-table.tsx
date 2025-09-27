@@ -57,7 +57,7 @@ interface DataTableProps<TData, TValue> {
   loading?: boolean;
 }
 
-export function DataTable<TData, TValue>({
+export function RoomDataTable<TData, TValue>({
   columns,
   data,
   onCreateClick,
