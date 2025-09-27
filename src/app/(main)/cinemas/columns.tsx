@@ -1,6 +1,6 @@
 "use client";
 
-import { Genre } from "@/types/genre";
+import { Cinema } from "@/types/cinema";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   Archive,
@@ -8,7 +8,7 @@ import {
   Clipboard,
   MoreHorizontal,
   Pencil,
-  Trash2,
+  MapPin,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,16 +24,16 @@ import { formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 interface ColumnProps {
-  onEdit: (genre: Genre) => void;
-  onArchive: (genre: Genre) => void;
-  onRestore: (genre: Genre) => void;
+  onEdit: (cinema: Cinema) => void;
+  onArchive: (cinema: Cinema) => void;
+  onRestore: (cinema: Cinema) => void;
 }
 
 export const createColumns = ({
   onEdit,
   onArchive,
   onRestore,
-}: ColumnProps): ColumnDef<Genre>[] => [
+}: ColumnProps): ColumnDef<Cinema>[] => [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -44,12 +44,21 @@ export const createColumns = ({
     },
   },
   {
-    accessorKey: "description",
-    header: () => <div className="font-bold text-sm">Description</div>,
+    accessorKey: "city",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="City" />
+    ),
+    cell: ({ row }) => {
+      return <div className="text-xs">{row.original.city}</div>;
+    },
+  },
+  {
+    accessorKey: "address",
+    header: () => <div className="font-bold text-sm">Address</div>,
     cell: ({ row }) => {
       return (
         <div className="max-w-80 text-wrap text-xs text-muted-foreground">
-          {row.original.description}
+          {row.original.address}
         </div>
       );
     },
@@ -91,7 +100,7 @@ export const createColumns = ({
   {
     id: "actions",
     cell: ({ row }) => {
-      const genre = row.original;
+      const cinema = row.original;
 
       return (
         <DropdownMenu>
@@ -104,23 +113,37 @@ export const createColumns = ({
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               className="cursor-pointer"
-              onClick={() => onEdit(genre)}
+              onClick={() => onEdit(cinema)}
             >
               <Pencil className="text-primary" />
               <span className="text-xs">Edit</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer"
-              onClick={() => navigator.clipboard.writeText(genre.id)}
+              onClick={() => navigator.clipboard.writeText(cinema.id)}
             >
               <Clipboard className="text-primary" />
-              <span className="text-xs">Copy genre ID</span>
+              <span className="text-xs">Copy cinema ID</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {genre.isActive ? (
+            {cinema.longitude && cinema.latitude && (
               <DropdownMenuItem
                 className="cursor-pointer"
-                onClick={() => onArchive(genre)}
+                onClick={() =>
+                  window.open(
+                    `https://maps.google.com/?q=${cinema.latitude},${cinema.longitude}`,
+                    "_blank"
+                  )
+                }
+              >
+                <MapPin className="text-blue-500" />
+                <span className="text-xs text-blue-500">View on Map</span>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            {cinema.isActive ? (
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => onArchive(cinema)}
               >
                 <Archive className="text-orange-500" />
                 <span className="text-xs text-orange-500">Archive</span>
@@ -128,7 +151,7 @@ export const createColumns = ({
             ) : (
               <DropdownMenuItem
                 className="cursor-pointer"
-                onClick={() => onRestore(genre)}
+                onClick={() => onRestore(cinema)}
               >
                 <ArchiveRestore className="text-green-500" />
                 <span className="text-xs text-green-500">Restore</span>

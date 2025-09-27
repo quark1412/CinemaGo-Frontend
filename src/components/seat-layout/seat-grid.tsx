@@ -31,7 +31,6 @@ export function SeatGrid({
       const newLayout = { ...layout };
       const newSeats = layout.seats.map((seatRow) => [...seatRow]);
 
-      // Generate seat number for non-empty seats
       let seatNumber = "";
       if (newType !== SeatType.EMPTY) {
         const rowLetter = String.fromCharCode(65 + row);
@@ -59,7 +58,6 @@ export function SeatGrid({
       const rowLetter = String.fromCharCode(65 + row);
       const seatNumber1 = `${rowLetter}${col1 + 1}-${col2 + 1}`;
 
-      // Create couple seat pair
       newSeats[row][col1] = {
         row,
         col: col1,
@@ -91,7 +89,6 @@ export function SeatGrid({
 
       const currentSeat = newSeats[row][col];
       if (currentSeat.isCoupleSeat && currentSeat.coupleWith !== undefined) {
-        // Remove both seats in the couple
         newSeats[row][col] = {
           row,
           col,
@@ -104,7 +101,6 @@ export function SeatGrid({
           type: SeatType.EMPTY,
         };
       } else {
-        // Remove single seat
         newSeats[row][col] = {
           row,
           col,

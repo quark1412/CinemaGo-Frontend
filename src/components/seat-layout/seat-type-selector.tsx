@@ -19,7 +19,6 @@ export function SeatTypeSelector({
     SeatType.NORMAL,
     SeatType.VIP,
     SeatType.COUPLE,
-    SeatType.DISABLED,
     SeatType.BLOCKED,
   ];
 
@@ -31,8 +30,6 @@ export function SeatTypeSelector({
         return "👑";
       case SeatType.COUPLE:
         return "💕";
-      case SeatType.DISABLED:
-        return "♿";
       case SeatType.BLOCKED:
         return "🚫";
       case SeatType.EMPTY:

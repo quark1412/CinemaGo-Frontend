@@ -119,7 +119,6 @@ export function LayoutControls({
     let normal = 0,
       vip = 0,
       couple = 0,
-      disabled = 0,
       blocked = 0,
       empty = 0;
 
@@ -135,9 +134,6 @@ export function LayoutControls({
           case SeatType.COUPLE:
             couple++;
             break;
-          case SeatType.DISABLED:
-            disabled++;
-            break;
           case SeatType.BLOCKED:
             blocked++;
             break;
@@ -152,10 +148,9 @@ export function LayoutControls({
       normal,
       vip,
       couple,
-      disabled,
       blocked,
       empty,
-      total: normal + vip + couple + disabled,
+      total: normal + vip + couple,
     };
   };
 

@@ -17,6 +17,7 @@ import {
   SquareTerminal,
   SwatchBook,
   Theater,
+  Sofa,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -79,11 +80,11 @@ const data = {
     {
       title: "Rooms",
       url: "/rooms",
-      icon: LayoutDashboard,
+      icon: Sofa,
     },
     {
-      title: "Theaters",
-      url: "/theaters",
+      title: "Cinemas",
+      url: "/cinemas",
       icon: Theater,
     },
     {

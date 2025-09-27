@@ -2,32 +2,29 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
-import { Genre } from "@/types/genre";
+import { Room, GetRoomsParams } from "@/types/cinema";
 import { DataTable } from "./data-table";
 import { createColumns } from "./columns";
-import { GenreDialog } from "./genre-dialog";
+import { RoomDialog } from "./room-dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import {
-  getAllGenres,
-  archiveGenre,
-  restoreGenre,
-  GetGenresParams,
-} from "@/services/genres";
+import { getAllRooms, archiveRoom, restoreRoom } from "@/services/cinemas";
 
-export default function AllGenres() {
-  const [genres, setGenres] = useState<Genre[]>([]);
+export default function AllRooms() {
+  const router = useRouter();
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingGenre, setEditingGenre] = useState<Genre | null>(null);
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [confirmationDialog, setConfirmationDialog] = useState<{
     open: boolean;
-    genre: Genre | null;
+    room: Room | null;
     action: "archive" | "restore";
     loading: boolean;
   }>({
     open: false,
-    genre: null,
+    room: null,
     action: "archive",
     loading: false,
   });
@@ -39,111 +36,127 @@ export default function AllGenres() {
     hasNextPage: false,
     hasPrevPage: false,
   });
-  const [currentParams, setCurrentParams] = useState<GetGenresParams>({
+  const [currentParams, setCurrentParams] = useState<GetRoomsParams>({
     page: 1,
     limit: 10,
   });
 
-  const fetchGenres = async (params?: GetGenresParams) => {
+  const fetchRooms = async (params?: GetRoomsParams) => {
     try {
       setLoading(true);
       const finalParams = { ...currentParams, ...params };
       setCurrentParams(finalParams);
-      const response = await getAllGenres(finalParams);
-      setGenres(response.data);
+      const response = await getAllRooms(finalParams);
+      setRooms(response.data);
       setPagination(response.pagination);
     } catch (error: any) {
-      toast.error("Failed to fetch genres");
-      console.error("Error fetching genres:", error);
+      toast.error("Failed to fetch rooms");
+      console.error("Error fetching rooms:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchGenres();
+    fetchRooms();
   }, []);
 
   const handleCreateClick = () => {
-    setEditingGenre(null);
+    setEditingRoom(null);
     setDialogOpen(true);
   };
 
-  const handleEditClick = (genre: Genre) => {
-    setEditingGenre(genre);
+  const handleEditClick = (room: Room) => {
+    setEditingRoom(room);
     setDialogOpen(true);
   };
 
-  const handleArchiveClick = (genre: Genre) => {
+  const handleDesignLayoutClick = (room: Room) => {
+    const vipSeat = room.seats?.find((seat) => seat.seatType === "VIP");
+    const coupleSeat = room.seats?.find((seat) => seat.seatType === "COUPLE");
+
+    const params = new URLSearchParams({
+      roomId: room.id,
+      cinemaId: room.cinemaId,
+      roomName: room.name,
+      vipPrice: vipSeat?.extraPrice?.toString() || "0",
+      couplePrice: coupleSeat?.extraPrice?.toString() || "0",
+    });
+
+    router.push(`/rooms/layout-designer?${params.toString()}`);
+  };
+
+  const handleArchiveClick = (room: Room) => {
     setConfirmationDialog({
       open: true,
-      genre,
+      room,
       action: "archive",
       loading: false,
     });
   };
 
-  const handleRestoreClick = (genre: Genre) => {
+  const handleRestoreClick = (room: Room) => {
     setConfirmationDialog({
       open: true,
-      genre,
+      room,
       action: "restore",
       loading: false,
     });
   };
 
   const handleConfirmAction = async () => {
-    if (!confirmationDialog.genre) return;
+    if (!confirmationDialog.room) return;
 
     setConfirmationDialog((prev) => ({ ...prev, loading: true }));
 
     try {
       if (confirmationDialog.action === "archive") {
-        await archiveGenre(confirmationDialog.genre.id);
-        toast.success("Genre archived successfully!");
+        await archiveRoom(confirmationDialog.room.id);
+        toast.success("Room archived successfully!");
       } else {
-        await restoreGenre(confirmationDialog.genre.id);
-        toast.success("Genre restored successfully!");
+        await restoreRoom(confirmationDialog.room.id);
+        toast.success("Room restored successfully!");
       }
-      fetchGenres();
+      fetchRooms();
       setConfirmationDialog({
         open: false,
-        genre: null,
+        room: null,
         action: "archive",
         loading: false,
       });
     } catch (error: any) {
       const message =
         error.response?.data?.message ||
-        `Failed to ${confirmationDialog.action} genre`;
+        `Failed to ${confirmationDialog.action} room`;
       toast.error(message);
       setConfirmationDialog((prev) => ({ ...prev, loading: false }));
     }
   };
 
   const handleDialogSuccess = () => {
-    fetchGenres();
+    fetchRooms();
   };
 
   const handlePaginationChange = (page: number, pageSize: number) => {
-    fetchGenres({ page, limit: pageSize });
+    fetchRooms({ page, limit: pageSize });
   };
 
   const handleSearchChange = (search: string) => {
-    fetchGenres({ page: 1, limit: currentParams.limit, search });
+    fetchRooms({ page: 1, limit: currentParams.limit, search });
   };
 
   const columns = createColumns({
     onEdit: handleEditClick,
     onArchive: handleArchiveClick,
     onRestore: handleRestoreClick,
+    onDesignLayout: handleDesignLayoutClick,
   });
 
   return (
     <div className="h-full">
       <DataTable
         columns={columns}
-        data={genres}
+        data={rooms}
         onCreateClick={handleCreateClick}
         pagination={pagination}
         onPaginationChange={handlePaginationChange}
@@ -151,10 +164,10 @@ export default function AllGenres() {
         loading={loading}
       />
 
-      <GenreDialog
+      <RoomDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        genre={editingGenre}
+        room={editingRoom}
         onSuccess={handleDialogSuccess}
       />
 
@@ -165,13 +178,13 @@ export default function AllGenres() {
         }
         title={
           confirmationDialog.action === "archive"
-            ? "Archive Genre"
-            : "Restore Genre"
+            ? "Archive Room"
+            : "Restore Room"
         }
         description={
           confirmationDialog.action === "archive"
-            ? `Are you sure you want to archive "${confirmationDialog.genre?.name}"? This will make it unavailable for new movies.`
-            : `Are you sure you want to restore "${confirmationDialog.genre?.name}"? This will make it available for new movies again.`
+            ? `Are you sure you want to archive "${confirmationDialog.room?.name}"? This will make it unavailable for new showtimes.`
+            : `Are you sure you want to restore "${confirmationDialog.room?.name}"? This will make it available for new showtimes again.`
         }
         confirmText={
           confirmationDialog.action === "archive" ? "Archive" : "Restore"

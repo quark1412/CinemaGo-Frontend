@@ -43,6 +43,8 @@ interface GenericInfiniteSelectProps<T> {
   showSelectedBadges?: boolean;
   badgeClassName?: string;
   onRemoveBadge?: (value: string) => void;
+  // Search functionality
+  showSearch?: boolean;
 }
 
 export function GenericInfiniteSelect<T>({
@@ -58,6 +60,7 @@ export function GenericInfiniteSelect<T>({
   showSelectedBadges = true,
   badgeClassName,
   onRemoveBadge,
+  showSearch = true,
 }: GenericInfiniteSelectProps<T>) {
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
@@ -143,15 +146,17 @@ export function GenericInfiniteSelect<T>({
         </PopoverTrigger>
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
           <div className="flex flex-col">
-            <div className="flex items-center border-b px-3 py-2">
-              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-              <Input
-                placeholder={searchPlaceholder}
-                value={searchValue}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-            </div>
+            {showSearch && (
+              <div className="flex items-center border-b px-3 py-2">
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <Input
+                  placeholder={searchPlaceholder}
+                  value={searchValue}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </div>
+            )}
             <div ref={scrollRef} className="max-h-64 overflow-y-auto">
               {options.length === 0 && !loading ? (
                 <div className="py-6 text-center text-sm text-muted-foreground">

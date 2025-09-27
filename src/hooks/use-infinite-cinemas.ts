@@ -1,68 +1,97 @@
-// Example hook for cinemas - demonstrates the reusability pattern
-// import { getAllCinemas } from "@/services/cinemas";
-// import { Cinema } from "@/types/cinema";
-import { useInfiniteScroll } from "./use-infinite-scroll";
+import { useState, useEffect, useCallback } from "react";
+import { Cinema } from "@/types/cinema";
+import { getAllCinemas } from "@/services/cinemas";
+import { InfiniteSelectHookReturn } from "@/components/ui/generic-infinite-select";
 
-// Placeholder types - replace with actual types when available
-interface Cinema {
-  id: string;
-  name: string;
-  location: string;
-  isActive: boolean;
-}
+export function useInfiniteCinemas(
+  initialLimit: number = 20
+): InfiniteSelectHookReturn<Cinema> {
+  const [cinemas, setCinemas] = useState<Cinema[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<Record<string, any>>({});
 
-interface UseInfiniteCinemasReturn {
-  cinemas: Cinema[];
-  items: Cinema[]; // Required for generic interface compatibility
-  loading: boolean;
-  hasMore: boolean;
-  loadMore: () => void;
-  search: (searchTerm: string) => void;
-  reset: () => void;
-  setFilters: (filters: Record<string, any>) => void;
-}
+  const loadCinemas = useCallback(
+    async (pageNum: number, search: string = "", reset: boolean = false) => {
+      if (loading) return;
 
-interface UseInfiniteCinemasOptions {
-  initialPageSize?: number;
-  initialFilters?: {
-    location?: string;
-    isActive?: boolean;
-  };
-}
+      setLoading(true);
+      try {
+        const response = await getAllCinemas({
+          page: pageNum,
+          limit: initialLimit,
+          search: search.trim() || undefined,
+          isActive: filters.isActive,
+          ...filters,
+        });
 
-export function useInfiniteCinemas({
-  initialPageSize = 20,
-  initialFilters = {},
-}: UseInfiniteCinemasOptions = {}): UseInfiniteCinemasReturn {
-  // Placeholder fetch function - replace with actual service
-  const fetchCinemas = async (params: any) => {
-    // return getAllCinemas(params);
-    throw new Error("Cinema service not implemented yet");
-  };
+        const newCinemas = response.data;
 
-  const {
+        if (reset) {
+          setCinemas(newCinemas);
+        } else {
+          setCinemas((prev) => [...prev, ...newCinemas]);
+        }
+
+        setHasMore(response.pagination.hasNextPage);
+        setPage(pageNum);
+      } catch (error) {
+        console.error("Error loading cinemas:", error);
+        setHasMore(false);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loading, initialLimit, filters]
+  );
+
+  const loadMore = useCallback(() => {
+    if (!loading && hasMore) {
+      loadCinemas(page + 1, searchTerm);
+    }
+  }, [loading, hasMore, page, searchTerm, loadCinemas]);
+
+  const search = useCallback(
+    (term: string) => {
+      setSearchTerm(term);
+      setPage(1);
+      setHasMore(true);
+      loadCinemas(1, term, true);
+    },
+    [loadCinemas]
+  );
+
+  const reset = useCallback(() => {
+    setSearchTerm("");
+    setPage(1);
+    setHasMore(true);
+    setCinemas([]);
+    loadCinemas(1, "", true);
+  }, [loadCinemas]);
+
+  const updateFilters = useCallback(
+    (newFilters: Record<string, any>) => {
+      setFilters(newFilters);
+      setPage(1);
+      setHasMore(true);
+      loadCinemas(1, searchTerm, true);
+    },
+    [loadCinemas, searchTerm]
+  );
+
+  useEffect(() => {
+    loadCinemas(1, "", true);
+  }, []);
+
+  return {
     items: cinemas,
     loading,
     hasMore,
     loadMore,
     search,
     reset,
-    setFilters,
-  } = useInfiniteScroll<Cinema>({
-    fetchFn: fetchCinemas,
-    initialPageSize,
-    defaultFilters: { isActive: true, ...initialFilters },
-    errorMessage: "Failed to fetch cinemas",
-  });
-
-  return {
-    cinemas,
-    items: cinemas, // Alias for generic interface compatibility
-    loading,
-    hasMore,
-    loadMore,
-    search,
-    reset,
-    setFilters,
+    setFilters: updateFilters,
   };
 }

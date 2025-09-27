@@ -2,14 +2,7 @@
 
 import { GenericInfiniteSelect } from "@/components/ui/generic-infinite-select";
 import { useInfiniteCinemas } from "@/hooks/use-infinite-cinemas";
-
-// Placeholder type - replace with actual Cinema type when available
-interface Cinema {
-  id: string;
-  name: string;
-  location: string;
-  isActive: boolean;
-}
+import { Cinema } from "@/types/cinema";
 
 interface CinemaSelectorProps {
   value?: string[];
@@ -17,29 +10,22 @@ interface CinemaSelectorProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
-  // Cinema-specific filters
-  locationFilter?: string;
+  multiple?: boolean;
 }
 
 export function CinemaSelector({
   value = [],
   onValueChange,
-  placeholder = "Select cinemas",
+  placeholder = "Select cinema",
   disabled = false,
   className,
-  locationFilter,
+  multiple = false,
 }: CinemaSelectorProps) {
-  const useCinemaHook = () =>
-    useInfiniteCinemas({
-      initialPageSize: 20,
-      initialFilters: {
-        ...(locationFilter && { location: locationFilter }),
-      },
-    });
+  const useCinemaHook = () => useInfiniteCinemas(20);
 
   const getOptionFromCinema = (cinema: Cinema) => ({
     value: cinema.id,
-    label: `${cinema.name} - ${cinema.location}`,
+    label: `${cinema.name} - ${cinema.city}`,
   });
 
   return (
@@ -47,14 +33,14 @@ export function CinemaSelector({
       value={value}
       onValueChange={onValueChange}
       placeholder={placeholder}
-      searchPlaceholder="Search cinemas..."
-      multiple={true}
+      multiple={multiple}
       disabled={disabled}
       className={className}
       useInfiniteHook={useCinemaHook}
       getOptionFromItem={getOptionFromCinema}
-      showSelectedBadges={true}
-      badgeClassName="bg-purple-100 text-purple-800"
+      showSelectedBadges={multiple}
+      badgeClassName="bg-blue-50 text-blue-700"
+      showSearch={false}
     />
   );
 }

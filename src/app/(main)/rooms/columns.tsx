@@ -1,6 +1,6 @@
 "use client";
 
-import { Genre } from "@/types/genre";
+import { Room } from "@/types/cinema";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   Archive,
@@ -8,7 +8,8 @@ import {
   Clipboard,
   MoreHorizontal,
   Pencil,
-  Trash2,
+  Users,
+  Layout,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,32 +25,48 @@ import { formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 interface ColumnProps {
-  onEdit: (genre: Genre) => void;
-  onArchive: (genre: Genre) => void;
-  onRestore: (genre: Genre) => void;
+  onEdit: (room: Room) => void;
+  onArchive: (room: Room) => void;
+  onRestore: (room: Room) => void;
+  onDesignLayout: (room: Room) => void;
 }
 
 export const createColumns = ({
   onEdit,
   onArchive,
   onRestore,
-}: ColumnProps): ColumnDef<Genre>[] => [
+  onDesignLayout,
+}: ColumnProps): ColumnDef<Room>[] => [
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
+      <DataTableColumnHeader column={column} title="Room Name" />
     ),
     cell: ({ row }) => {
       return <div className="text-xs font-medium">{row.original.name}</div>;
     },
   },
   {
-    accessorKey: "description",
-    header: () => <div className="font-bold text-sm">Description</div>,
+    accessorKey: "cinema.name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Cinema" />
+    ),
     cell: ({ row }) => {
       return (
-        <div className="max-w-80 text-wrap text-xs text-muted-foreground">
-          {row.original.description}
+        <div className="text-xs">{row.original.cinema?.name || "N/A"}</div>
+      );
+    },
+  },
+  {
+    accessorKey: "totalSeats",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Total Seats" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="flex items-center gap-1 text-xs">
+          <Users className="h-3 w-3" />
+          {row.original.totalSeats}
         </div>
       );
     },
@@ -73,7 +90,9 @@ export const createColumns = ({
     ),
     cell: ({ row }) => {
       return (
-        <div className="text-xs">{formatDate(row.original.createdAt)}</div>
+        <div className="text-xs">
+          {formatDate(new Date(row.original.createdAt))}
+        </div>
       );
     },
   },
@@ -84,14 +103,16 @@ export const createColumns = ({
     ),
     cell: ({ row }) => {
       return (
-        <div className="text-xs">{formatDate(row.original.updatedAt)}</div>
+        <div className="text-xs">
+          {formatDate(new Date(row.original.updatedAt))}
+        </div>
       );
     },
   },
   {
     id: "actions",
     cell: ({ row }) => {
-      const genre = row.original;
+      const room = row.original;
 
       return (
         <DropdownMenu>
@@ -104,23 +125,30 @@ export const createColumns = ({
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               className="cursor-pointer"
-              onClick={() => onEdit(genre)}
+              onClick={() => onEdit(room)}
             >
               <Pencil className="text-primary" />
               <span className="text-xs">Edit</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer"
-              onClick={() => navigator.clipboard.writeText(genre.id)}
+              onClick={() => onDesignLayout(room)}
+            >
+              <Layout className="text-blue-500" />
+              <span className="text-xs text-blue-500">Design Layout</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => navigator.clipboard.writeText(room.id)}
             >
               <Clipboard className="text-primary" />
-              <span className="text-xs">Copy genre ID</span>
+              <span className="text-xs">Copy room ID</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            {genre.isActive ? (
+            {room.isActive ? (
               <DropdownMenuItem
                 className="cursor-pointer"
-                onClick={() => onArchive(genre)}
+                onClick={() => onArchive(room)}
               >
                 <Archive className="text-orange-500" />
                 <span className="text-xs text-orange-500">Archive</span>
@@ -128,7 +156,7 @@ export const createColumns = ({
             ) : (
               <DropdownMenuItem
                 className="cursor-pointer"
-                onClick={() => onRestore(genre)}
+                onClick={() => onRestore(room)}
               >
                 <ArchiveRestore className="text-green-500" />
                 <span className="text-xs text-green-500">Restore</span>

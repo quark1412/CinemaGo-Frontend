@@ -13,6 +13,7 @@ import {
   GetMoviesParams,
 } from "@/services/movies";
 import { MovieDetailsDialog } from "@/components/movie-details-dialog";
+import { MoviesSkeleton } from "@/components/movies-skeleton";
 
 export default function AllMovies() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -21,8 +22,8 @@ export default function AllMovies() {
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
 
   const fetchMovies = async (params?: GetMoviesParams) => {
+    setLoading(true);
     try {
-      setLoading(true);
       const response = await getAllMovies(params);
       setMovies(response.data);
     } catch (error: any) {
@@ -38,7 +39,6 @@ export default function AllMovies() {
   }, []);
 
   const handleEditClick = (movie: Movie) => {
-    // TODO: Implement edit functionality
     console.log("Edit movie:", movie);
   };
 
@@ -46,7 +46,7 @@ export default function AllMovies() {
     try {
       await archiveMovie(movie.id);
       toast.success("Movie archived successfully!");
-      fetchMovies(); // Refresh the list
+      fetchMovies();
     } catch (error: any) {
       const message =
         error.response?.data?.message || "Failed to archive movie";
@@ -58,7 +58,7 @@ export default function AllMovies() {
     try {
       await restoreMovie(movie.id);
       toast.success("Movie restored successfully!");
-      fetchMovies(); // Refresh the list
+      fetchMovies();
     } catch (error: any) {
       const message =
         error.response?.data?.message || "Failed to restore movie";
@@ -79,11 +79,7 @@ export default function AllMovies() {
   });
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <MoviesSkeleton />;
   }
 
   return (

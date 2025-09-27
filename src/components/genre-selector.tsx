@@ -31,7 +31,6 @@ export function GenreSelector({
       value={value}
       onValueChange={onValueChange}
       placeholder={placeholder}
-      searchPlaceholder="Search genres..."
       multiple={true}
       disabled={disabled}
       className={className}
@@ -39,6 +38,7 @@ export function GenreSelector({
       getOptionFromItem={getOptionFromGenre}
       showSelectedBadges={true}
       badgeClassName="bg-success/10 text-success"
+      showSearch={false}
     />
   );
 }

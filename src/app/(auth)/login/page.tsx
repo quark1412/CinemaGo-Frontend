@@ -50,6 +50,7 @@ export default function LoginPage() {
       router.push("/");
       toast.success("Login successful");
     } catch (err: any) {
+      console.log(err);
       toast.error(
         err.response?.data?.message || "Login failed. Please try again."
       );
@@ -74,9 +75,6 @@ export default function LoginPage() {
 
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-gray-900">Welcome back !</h1>
-            <p className="text-gray-600">
-              Enter to get unlimited access to data & information.
-            </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

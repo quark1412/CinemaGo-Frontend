@@ -3,31 +3,31 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
-import { Genre } from "@/types/genre";
+import { Cinema } from "@/types/cinema";
 import { DataTable } from "./data-table";
 import { createColumns } from "./columns";
-import { GenreDialog } from "./genre-dialog";
+import { CinemaDialog } from "./cinema-dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import {
-  getAllGenres,
-  archiveGenre,
-  restoreGenre,
-  GetGenresParams,
-} from "@/services/genres";
+  getAllCinemas,
+  archiveCinema,
+  restoreCinema,
+  GetCinemasParams,
+} from "@/services/cinemas";
 
-export default function AllGenres() {
-  const [genres, setGenres] = useState<Genre[]>([]);
+export default function AllCinemas() {
+  const [cinemas, setCinemas] = useState<Cinema[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingGenre, setEditingGenre] = useState<Genre | null>(null);
+  const [editingCinema, setEditingCinema] = useState<Cinema | null>(null);
   const [confirmationDialog, setConfirmationDialog] = useState<{
     open: boolean;
-    genre: Genre | null;
+    cinema: Cinema | null;
     action: "archive" | "restore";
     loading: boolean;
   }>({
     open: false,
-    genre: null,
+    cinema: null,
     action: "archive",
     loading: false,
   });
@@ -39,98 +39,98 @@ export default function AllGenres() {
     hasNextPage: false,
     hasPrevPage: false,
   });
-  const [currentParams, setCurrentParams] = useState<GetGenresParams>({
+  const [currentParams, setCurrentParams] = useState<GetCinemasParams>({
     page: 1,
     limit: 10,
   });
 
-  const fetchGenres = async (params?: GetGenresParams) => {
+  const fetchCinemas = async (params?: GetCinemasParams) => {
     try {
       setLoading(true);
       const finalParams = { ...currentParams, ...params };
       setCurrentParams(finalParams);
-      const response = await getAllGenres(finalParams);
-      setGenres(response.data);
+      const response = await getAllCinemas(finalParams);
+      setCinemas(response.data);
       setPagination(response.pagination);
     } catch (error: any) {
-      toast.error("Failed to fetch genres");
-      console.error("Error fetching genres:", error);
+      toast.error("Failed to fetch cinemas");
+      console.error("Error fetching cinemas:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchGenres();
+    fetchCinemas();
   }, []);
 
   const handleCreateClick = () => {
-    setEditingGenre(null);
+    setEditingCinema(null);
     setDialogOpen(true);
   };
 
-  const handleEditClick = (genre: Genre) => {
-    setEditingGenre(genre);
+  const handleEditClick = (cinema: Cinema) => {
+    setEditingCinema(cinema);
     setDialogOpen(true);
   };
 
-  const handleArchiveClick = (genre: Genre) => {
+  const handleArchiveClick = (cinema: Cinema) => {
     setConfirmationDialog({
       open: true,
-      genre,
+      cinema,
       action: "archive",
       loading: false,
     });
   };
 
-  const handleRestoreClick = (genre: Genre) => {
+  const handleRestoreClick = (cinema: Cinema) => {
     setConfirmationDialog({
       open: true,
-      genre,
+      cinema,
       action: "restore",
       loading: false,
     });
   };
 
   const handleConfirmAction = async () => {
-    if (!confirmationDialog.genre) return;
+    if (!confirmationDialog.cinema) return;
 
     setConfirmationDialog((prev) => ({ ...prev, loading: true }));
 
     try {
       if (confirmationDialog.action === "archive") {
-        await archiveGenre(confirmationDialog.genre.id);
-        toast.success("Genre archived successfully!");
+        await archiveCinema(confirmationDialog.cinema.id);
+        toast.success("Cinema archived successfully!");
       } else {
-        await restoreGenre(confirmationDialog.genre.id);
-        toast.success("Genre restored successfully!");
+        await restoreCinema(confirmationDialog.cinema.id);
+        toast.success("Cinema restored successfully!");
       }
-      fetchGenres();
+      fetchCinemas();
       setConfirmationDialog({
         open: false,
-        genre: null,
+        cinema: null,
         action: "archive",
         loading: false,
       });
     } catch (error: any) {
       const message =
         error.response?.data?.message ||
-        `Failed to ${confirmationDialog.action} genre`;
+        `Failed to ${confirmationDialog.action} cinema`;
       toast.error(message);
       setConfirmationDialog((prev) => ({ ...prev, loading: false }));
     }
   };
 
   const handleDialogSuccess = () => {
-    fetchGenres();
+    fetchCinemas();
   };
 
   const handlePaginationChange = (page: number, pageSize: number) => {
-    fetchGenres({ page, limit: pageSize });
+    fetchCinemas({ page, limit: pageSize });
   };
 
   const handleSearchChange = (search: string) => {
-    fetchGenres({ page: 1, limit: currentParams.limit, search });
+    fetchCinemas({ page: 1, limit: currentParams.limit, search });
   };
 
   const columns = createColumns({
@@ -143,7 +143,7 @@ export default function AllGenres() {
     <div className="h-full">
       <DataTable
         columns={columns}
-        data={genres}
+        data={cinemas}
         onCreateClick={handleCreateClick}
         pagination={pagination}
         onPaginationChange={handlePaginationChange}
@@ -151,10 +151,10 @@ export default function AllGenres() {
         loading={loading}
       />
 
-      <GenreDialog
+      <CinemaDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        genre={editingGenre}
+        cinema={editingCinema}
         onSuccess={handleDialogSuccess}
       />
 
@@ -165,13 +165,13 @@ export default function AllGenres() {
         }
         title={
           confirmationDialog.action === "archive"
-            ? "Archive Genre"
-            : "Restore Genre"
+            ? "Archive Cinema"
+            : "Restore Cinema"
         }
         description={
           confirmationDialog.action === "archive"
-            ? `Are you sure you want to archive "${confirmationDialog.genre?.name}"? This will make it unavailable for new movies.`
-            : `Are you sure you want to restore "${confirmationDialog.genre?.name}"? This will make it available for new movies again.`
+            ? `Are you sure you want to archive "${confirmationDialog.cinema?.name}"? This will make it unavailable for new showtimes.`
+            : `Are you sure you want to restore "${confirmationDialog.cinema?.name}"? This will make it available for new showtimes again.`
         }
         confirmText={
           confirmationDialog.action === "archive" ? "Archive" : "Restore"

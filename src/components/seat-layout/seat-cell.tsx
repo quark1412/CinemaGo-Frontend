@@ -39,8 +39,6 @@ export function SeatCell({
         return "👑";
       case SeatType.COUPLE:
         return "💕";
-      case SeatType.DISABLED:
-        return "♿";
       case SeatType.BLOCKED:
         return "🚫";
       default:

@@ -39,6 +39,7 @@ import {
   ChevronsRight,
   CirclePlus,
 } from "lucide-react";
+import { GenresSkeleton } from "@/components/genres-skeleton";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -95,6 +96,10 @@ export function DataTable<TData, TValue>({
     },
   });
 
+  if (loading) {
+    return <GenresSkeleton />;
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
@@ -138,18 +143,7 @@ export function DataTable<TData, TValue>({
               ))}
             </TableHeader>
             <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : table.getRowModel().rows?.length ? (
+              {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
