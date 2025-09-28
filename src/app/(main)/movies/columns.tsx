@@ -28,14 +28,12 @@ interface ColumnProps {
   onEdit: (movie: Movie) => void;
   onArchive: (movie: Movie) => void;
   onRestore: (movie: Movie) => void;
-  onViewDetails: (movieId: string) => void;
 }
 
 export const createColumns = ({
   onEdit,
   onArchive,
   onRestore,
-  onViewDetails,
 }: ColumnProps): ColumnDef<Movie>[] => [
   {
     accessorKey: "title",
@@ -158,13 +156,12 @@ export const createColumns = ({
               <Clipboard className="text-primary" />
               <span className="text-xs">Copy movie ID</span>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onClick={() => onViewDetails(movie.id)}
-            >
-              <Eye className="text-primary" />
-              <span className="text-xs">View details</span>
-            </DropdownMenuItem>
+            <Link href={`/movies/${movie.id}`}>
+              <DropdownMenuItem className="cursor-pointer">
+                <Eye className="text-primary" />
+                <span className="text-xs">View details</span>
+              </DropdownMenuItem>
+            </Link>
             <DropdownMenuSeparator />
             {movie.isActive ? (
               <DropdownMenuItem

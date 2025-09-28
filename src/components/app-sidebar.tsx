@@ -82,18 +82,12 @@ const data = {
       url: "/cinemas",
       icon: Theater,
     },
-    {
-      title: "Showtimes",
-      url: "/showtimes",
-      icon: Calendar,
-    },
   ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, isLoading } = useUser();
 
-  // Fallback user data while loading or if no user
   const userData = user
     ? {
         name: user.fullname,

@@ -12,14 +12,11 @@ import {
   restoreMovie,
   GetMoviesParams,
 } from "@/services/movies";
-import { MovieDetailsDialog } from "@/components/movie-details-dialog";
 import { MoviesSkeleton } from "@/components/movies-skeleton";
 
 export default function AllMovies() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
 
   const fetchMovies = async (params?: GetMoviesParams) => {
     setLoading(true);
@@ -66,16 +63,10 @@ export default function AllMovies() {
     }
   };
 
-  const handleViewDetailsClick = (movieId: string) => {
-    setSelectedMovieId(movieId);
-    setDetailsDialogOpen(true);
-  };
-
   const columns = createColumns({
     onEdit: handleEditClick,
     onArchive: handleArchiveClick,
     onRestore: handleRestoreClick,
-    onViewDetails: handleViewDetailsClick,
   });
 
   if (loading) {
@@ -85,11 +76,6 @@ export default function AllMovies() {
   return (
     <div className="h-full">
       <DataTable columns={columns} data={movies} />
-      <MovieDetailsDialog
-        open={detailsDialogOpen}
-        onOpenChange={setDetailsDialogOpen}
-        movieId={selectedMovieId}
-      />
     </div>
   );
 }
