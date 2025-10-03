@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Cinema, CreateCinemaData, UpdateCinemaData } from "@/types/cinema";
-import { createCinema, updateCinema } from "@/services/cinemas";
+import { useCreateCinema, useUpdateCinema } from "@/hooks/use-cinemas";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -52,8 +51,9 @@ export function CinemaDialog({
   cinema,
   onSuccess,
 }: CinemaDialogProps) {
-  const [loading, setLoading] = useState(false);
   const isEditing = !!cinema;
+  const createMutation = useCreateCinema();
+  const updateMutation = useUpdateCinema();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -87,7 +87,6 @@ export function CinemaDialog({
   }, [cinema, form]);
 
   const onSubmit = async (data: FormData) => {
-    setLoading(true);
     try {
       if (isEditing && cinema) {
         const updateData: UpdateCinemaData = {
@@ -95,26 +94,19 @@ export function CinemaDialog({
           longitude: data.longitude || undefined,
           latitude: data.latitude || undefined,
         };
-        await updateCinema(cinema.id, updateData);
-        toast.success("Cinema updated successfully!");
+        await updateMutation.mutateAsync({ id: cinema.id, data: updateData });
       } else {
         const createData: CreateCinemaData = {
           ...data,
           longitude: data.longitude || undefined,
           latitude: data.latitude || undefined,
         };
-        await createCinema(createData);
-        toast.success("Cinema created successfully!");
+        await createMutation.mutateAsync(createData);
       }
       onSuccess?.();
       onOpenChange(false);
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message ||
-        `Failed to ${isEditing ? "update" : "create"} cinema`;
-      toast.error(message);
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      // Error handling is done in the mutation hooks
     }
   };
 
@@ -122,6 +114,8 @@ export function CinemaDialog({
     onOpenChange(false);
     form.reset();
   };
+
+  const loading = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

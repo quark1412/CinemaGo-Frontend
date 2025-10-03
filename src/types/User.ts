@@ -16,8 +16,8 @@ export type User = {
 };
 
 export enum Role {
-  "USER",
-  "ADMIN",
+  USER = "USER",
+  ADMIN = "ADMIN",
 }
 
 export type RefreshToken = {

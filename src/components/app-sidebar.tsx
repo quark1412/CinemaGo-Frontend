@@ -82,10 +82,17 @@ const data = {
       url: "/cinemas",
       icon: Theater,
     },
+    {
+      title: "Users",
+      url: "/users",
+      icon: Bot,
+    },
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export const AppSidebar = React.memo(function AppSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
   const { user, isLoading } = useUser();
 
   const userData = user
@@ -124,4 +131,4 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarRail />
     </Sidebar>
   );
-}
+});

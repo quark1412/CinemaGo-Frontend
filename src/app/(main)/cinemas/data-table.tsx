@@ -149,7 +149,7 @@ export function DataTable<TData, TValue>({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
         {/* Search */}

@@ -1,68 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 
 import { Genre } from "@/types/genre";
 import { DataTable } from "./data-table";
 import { createColumns } from "./columns";
 import { GenreDialog } from "./genre-dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { GetGenresParams } from "@/services/genres";
 import {
-  getAllGenres,
-  archiveGenre,
-  restoreGenre,
-  GetGenresParams,
-} from "@/services/genres";
+  useGenres,
+  useArchiveGenre,
+  useRestoreGenre,
+} from "@/hooks/use-genres";
 
 export default function AllGenres() {
-  const [genres, setGenres] = useState<Genre[]>([]);
-  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingGenre, setEditingGenre] = useState<Genre | null>(null);
   const [confirmationDialog, setConfirmationDialog] = useState<{
     open: boolean;
     genre: Genre | null;
     action: "archive" | "restore";
-    loading: boolean;
   }>({
     open: false,
     genre: null,
     action: "archive",
-    loading: false,
-  });
-  const [pagination, setPagination] = useState({
-    totalItems: 0,
-    totalPages: 0,
-    currentPage: 1,
-    pageSize: 10,
-    hasNextPage: false,
-    hasPrevPage: false,
   });
   const [currentParams, setCurrentParams] = useState<GetGenresParams>({
     page: 1,
     limit: 10,
   });
 
-  const fetchGenres = async (params?: GetGenresParams) => {
-    try {
-      setLoading(true);
-      const finalParams = { ...currentParams, ...params };
-      setCurrentParams(finalParams);
-      const response = await getAllGenres(finalParams);
-      setGenres(response.data);
-      setPagination(response.pagination);
-    } catch (error: any) {
-      toast.error("Failed to fetch genres");
-      console.error("Error fetching genres:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchGenres();
-  }, []);
+  const { data, isLoading } = useGenres(currentParams);
+  const archiveMutation = useArchiveGenre();
+  const restoreMutation = useRestoreGenre();
 
   const handleCreateClick = () => {
     setEditingGenre(null);
@@ -79,7 +50,6 @@ export default function AllGenres() {
       open: true,
       genre,
       action: "archive",
-      loading: false,
     });
   };
 
@@ -88,49 +58,38 @@ export default function AllGenres() {
       open: true,
       genre,
       action: "restore",
-      loading: false,
     });
   };
 
   const handleConfirmAction = async () => {
     if (!confirmationDialog.genre) return;
 
-    setConfirmationDialog((prev) => ({ ...prev, loading: true }));
-
     try {
       if (confirmationDialog.action === "archive") {
-        await archiveGenre(confirmationDialog.genre.id);
-        toast.success("Genre archived successfully!");
+        await archiveMutation.mutateAsync(confirmationDialog.genre.id);
       } else {
-        await restoreGenre(confirmationDialog.genre.id);
-        toast.success("Genre restored successfully!");
+        await restoreMutation.mutateAsync(confirmationDialog.genre.id);
       }
-      fetchGenres();
       setConfirmationDialog({
         open: false,
         genre: null,
         action: "archive",
-        loading: false,
       });
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message ||
-        `Failed to ${confirmationDialog.action} genre`;
-      toast.error(message);
-      setConfirmationDialog((prev) => ({ ...prev, loading: false }));
+    } catch (error) {
+      // Error handling is done in the mutation hooks
     }
   };
 
   const handleDialogSuccess = () => {
-    fetchGenres();
+    // Cache will be automatically invalidated by mutation hooks
   };
 
   const handlePaginationChange = (page: number, pageSize: number) => {
-    fetchGenres({ page, limit: pageSize });
+    setCurrentParams({ ...currentParams, page, limit: pageSize });
   };
 
   const handleSearchChange = (search: string) => {
-    fetchGenres({ page: 1, limit: currentParams.limit, search });
+    setCurrentParams({ ...currentParams, page: 1, search });
   };
 
   const columns = createColumns({
@@ -143,12 +102,21 @@ export default function AllGenres() {
     <div className="h-full">
       <DataTable
         columns={columns}
-        data={genres}
+        data={data?.data || []}
         onCreateClick={handleCreateClick}
-        pagination={pagination}
+        pagination={
+          data?.pagination || {
+            totalItems: 0,
+            totalPages: 0,
+            currentPage: 1,
+            pageSize: 10,
+            hasNextPage: false,
+            hasPrevPage: false,
+          }
+        }
         onPaginationChange={handlePaginationChange}
         onSearchChange={handleSearchChange}
-        loading={loading}
+        loading={isLoading}
       />
 
       <GenreDialog
@@ -178,7 +146,7 @@ export default function AllGenres() {
         }
         variant={confirmationDialog.action}
         onConfirm={handleConfirmAction}
-        loading={confirmationDialog.loading}
+        loading={archiveMutation.isPending || restoreMutation.isPending}
       />
     </div>
   );

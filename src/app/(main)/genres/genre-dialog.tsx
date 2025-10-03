@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "sonner";
 
 import {
   Dialog,
@@ -26,7 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Genre } from "@/types/genre";
-import { createGenre, updateGenre } from "@/services/genres";
+import { useCreateGenre, useUpdateGenre } from "@/hooks/use-genres";
 
 const genreSchema = z.object({
   name: z
@@ -56,8 +55,9 @@ export function GenreDialog({
   genre,
   onSuccess,
 }: GenreDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const isEditing = !!genre;
+  const createMutation = useCreateGenre();
+  const updateMutation = useUpdateGenre();
 
   const form = useForm<GenreFormData>({
     resolver: zodResolver(genreSchema),
@@ -85,27 +85,17 @@ export function GenreDialog({
   }, [open, genre, form]);
 
   const onSubmit = async (data: GenreFormData) => {
-    setIsLoading(true);
-
     try {
       if (isEditing && genre) {
-        await updateGenre(genre.id, data);
-        toast.success("Genre updated successfully!");
+        await updateMutation.mutateAsync({ id: genre.id, data });
       } else {
-        await createGenre(data);
-        toast.success("Genre created successfully!");
+        await createMutation.mutateAsync(data);
       }
-
       onSuccess();
       onOpenChange(false);
       form.reset();
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message ||
-        `Failed to ${isEditing ? "update" : "create"} genre`;
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      // Error handling is done in the mutation hooks
     }
   };
 
@@ -113,6 +103,8 @@ export function GenreDialog({
     onOpenChange(false);
     form.reset();
   };
+
+  const isLoading = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

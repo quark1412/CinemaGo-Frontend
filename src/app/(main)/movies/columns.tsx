@@ -75,13 +75,10 @@ export const createColumns = ({
       const genres = row.original.genres;
       return (
         <div className="flex flex-wrap gap-1 max-w-60">
-          {genres.map((genre, index) => (
-            <span
-              key={genre.id}
-              className="inline-block bg-success/10 text-success text-xs px-2 py-1 rounded-full"
-            >
+          {genres.map((genre) => (
+            <Badge key={genre.id} variant={"secondary"}>
               {genre.name}
-            </span>
+            </Badge>
           ))}
         </div>
       );

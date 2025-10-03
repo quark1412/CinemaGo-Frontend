@@ -37,7 +37,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  CirclePlus,
+  UserPlus,
 } from "lucide-react";
 import { GenresSkeleton } from "@/components/genres-skeleton";
 
@@ -104,21 +104,23 @@ export function DataTable<TData, TValue>({
     <div className="flex flex-col">
       <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
         <Input
-          placeholder="Filter genres..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          placeholder="Search users by name or email..."
+          value={
+            (table.getColumn("fullname")?.getFilterValue() as string) ?? ""
+          }
           onChange={(event) => {
             const value = event.target.value;
             if (pagination && onSearchChange) {
               onSearchChange(value);
             } else {
-              table.getColumn("name")?.setFilterValue(value);
+              table.getColumn("fullname")?.setFilterValue(value);
             }
           }}
           className="max-w-sm text-xs placeholder:text-[13px] placeholder:font-medium"
         />
         <Button variant="default" size="default" onClick={onCreateClick}>
-          <CirclePlus />
-          <span className="text-sm font-medium">Add Genre</span>
+          <UserPlus />
+          <span className="text-sm font-medium">Create User</span>
         </Button>
       </div>
       <div className="overflow-hidden rounded-md border flex-1 min-h-0">

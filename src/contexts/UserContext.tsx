@@ -72,7 +72,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
-      // Even if logout fails, clear local state
       setUser(null);
       setIsAuthenticated(false);
       router.push("/login");
@@ -85,7 +84,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchUserProfile();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const value: UserContextType = {
     user,
