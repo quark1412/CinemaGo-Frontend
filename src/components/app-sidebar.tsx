@@ -83,6 +83,11 @@ const data = {
       icon: Theater,
     },
     {
+      title: "Reviews",
+      url: "/reviews",
+      icon: BookOpen,
+    },
+    {
       title: "Users",
       url: "/users",
       icon: Bot,

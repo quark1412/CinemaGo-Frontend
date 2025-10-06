@@ -1,7 +1,6 @@
 import { DashboardCard } from "@/components/dashboard-card";
 
-export default async function DashboardPage() {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+export default function DashboardPage() {
   return (
     <div className="grid grid-cols-4 max-xl:grid-cols-2 max-sm:grid-cols-1 gap-4">
       <DashboardCard

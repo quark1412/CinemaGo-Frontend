@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
-  },
+  }, productionBrowserSourceMaps: false,
 };
 
 export default nextConfig;
