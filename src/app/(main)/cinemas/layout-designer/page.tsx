@@ -37,7 +37,7 @@ export default function SeatLayoutDesigner() {
   );
   const [layout, setLayout] = useState<SeatLayout>({
     rows: 10,
-    cols: 15,
+    cols: 10,
     seats: [],
   });
 

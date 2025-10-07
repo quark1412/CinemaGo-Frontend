@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SeatType, SEAT_COLORS, SEAT_LABELS } from "@/types/seat";
-import { cn } from "@/lib/utils";
+import { SeatType, SEAT_LABELS } from "@/types/seat";
+import { Armchair, Crown, Sofa, X } from "lucide-react";
 
 interface SeatTypeSelectorProps {
   selectedType: SeatType;
@@ -15,7 +15,6 @@ export function SeatTypeSelector({
   onTypeSelect,
 }: SeatTypeSelectorProps) {
   const seatTypes = [
-    SeatType.EMPTY,
     SeatType.NORMAL,
     SeatType.VIP,
     SeatType.COUPLE,
@@ -23,25 +22,24 @@ export function SeatTypeSelector({
   ];
 
   const getSeatIcon = (type: SeatType) => {
+    const iconClass = "h-5 w-5";
     switch (type) {
       case SeatType.NORMAL:
-        return "🪑";
+        return <Armchair className={iconClass} />;
       case SeatType.VIP:
-        return "⭐";
+        return <Crown className={iconClass} />;
       case SeatType.COUPLE:
-        return "💑";
+        return <Sofa className={iconClass} />;
       case SeatType.BLOCKED:
-        return "❌";
-      case SeatType.EMPTY:
-        return "⚪";
+        return <X className={iconClass} />;
       default:
-        return "";
+        return null;
     }
   };
 
   const getSeatButtonStyle = (type: SeatType, isSelected: boolean) => {
     const baseStyle =
-      "justify-start gap-3 h-12 font-medium transition-all border-2";
+      "justify-start gap-3 h-11 font-medium transition-all border-2";
 
     if (isSelected) {
       switch (type) {
@@ -53,8 +51,6 @@ export function SeatTypeSelector({
           return `${baseStyle} bg-pink-600 hover:bg-pink-700 text-white border-pink-600`;
         case SeatType.BLOCKED:
           return `${baseStyle} bg-red-600 hover:bg-red-700 text-white border-red-600`;
-        case SeatType.EMPTY:
-          return `${baseStyle} bg-gray-600 hover:bg-gray-700 text-white border-gray-600`;
         default:
           return `${baseStyle} bg-primary hover:bg-primary/90 text-white border-primary`;
       }
@@ -68,34 +64,8 @@ export function SeatTypeSelector({
           return `${baseStyle} bg-white hover:bg-pink-50 text-pink-700 border-pink-200 hover:border-pink-300`;
         case SeatType.BLOCKED:
           return `${baseStyle} bg-white hover:bg-red-50 text-red-700 border-red-200 hover:border-red-300`;
-        case SeatType.EMPTY:
-          return `${baseStyle} bg-white hover:bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300`;
         default:
           return `${baseStyle} bg-white hover:bg-gray-50 text-gray-700 border-gray-200`;
-      }
-    }
-  };
-
-  const getSeatIconStyle = (type: SeatType, isSelected: boolean) => {
-    const baseStyle =
-      "w-8 h-8 rounded-lg border-2 flex items-center justify-center text-lg font-semibold";
-
-    if (isSelected) {
-      return `${baseStyle} bg-white/20 border-white/30 text-white`;
-    } else {
-      switch (type) {
-        case SeatType.NORMAL:
-          return `${baseStyle} bg-blue-100 border-blue-200 text-blue-600`;
-        case SeatType.VIP:
-          return `${baseStyle} bg-amber-100 border-amber-200 text-amber-600`;
-        case SeatType.COUPLE:
-          return `${baseStyle} bg-pink-100 border-pink-200 text-pink-600`;
-        case SeatType.BLOCKED:
-          return `${baseStyle} bg-red-100 border-red-200 text-red-600`;
-        case SeatType.EMPTY:
-          return `${baseStyle} bg-gray-100 border-gray-200 text-gray-600`;
-        default:
-          return `${baseStyle} bg-gray-100 border-gray-200 text-gray-600`;
       }
     }
   };
@@ -104,6 +74,9 @@ export function SeatTypeSelector({
     <Card className="h-full">
       <CardHeader>
         <CardTitle className="text-lg">Seat Types</CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          Right-click on any seat to remove it
+        </p>
       </CardHeader>
       <CardContent className="space-y-3 grid grid-cols-2 gap-3">
         {seatTypes.map((type) => {
@@ -115,10 +88,8 @@ export function SeatTypeSelector({
               className={getSeatButtonStyle(type, isSelected)}
               onClick={() => onTypeSelect(type)}
             >
-              <div className={getSeatIconStyle(type, isSelected)}>
-                {getSeatIcon(type)}
-              </div>
-              <span className="font-semibold">{SEAT_LABELS[type]}</span>
+              {getSeatIcon(type)}
+              <span className="font-semibold text-sm">{SEAT_LABELS[type]}</span>
             </Button>
           );
         })}

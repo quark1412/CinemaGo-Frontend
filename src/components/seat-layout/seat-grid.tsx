@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { SeatCell } from "@/components/seat-layout/seat-cell";
 import { SeatType, SeatPosition, SeatLayout } from "@/types/seat";
 import { cn } from "@/lib/utils";
+import { Sofa } from "lucide-react";
 
 interface SeatGridProps {
   layout: SeatLayout;
@@ -314,11 +315,8 @@ export function SeatGrid({
                       title={`${seat.seatNumber} - Couple Seat`}
                     >
                       <div className="flex flex-col items-center justify-center h-full text-xs">
-                        <div className="flex gap-2">
-                          <span className="text-lg">💕</span>
-                          <span className="text-lg">💕</span>
-                        </div>
-                        <span className="text-white font-bold text-[10px] leading-none">
+                        <Sofa className="h-6 w-6 text-white" />
+                        <span className="text-white font-bold text-[10px] leading-none mt-1">
                           {seat.seatNumber}
                         </span>
                         <span className="text-white text-[8px] leading-none">
@@ -373,16 +371,13 @@ export function SeatGrid({
       {/* Instructions */}
       <div className="mt-4 text-xs text-gray-600 text-center space-y-1">
         <p>
-          💡 <strong>Single click:</strong> Place selected seat type
+          <strong>Single click:</strong> Place selected seat type
         </p>
         <p>
-          💡 <strong>Long press + drag:</strong> Paint multiple seats
+          <strong>Long press + drag:</strong> Paint multiple seats
         </p>
         <p>
-          💡 <strong>Right click:</strong> Remove seat
-        </p>
-        <p>
-          💡 <strong>Couple seats:</strong> Automatically merge 2 adjacent seats
+          <strong>Right click:</strong> Remove seat
         </p>
       </div>
     </div>

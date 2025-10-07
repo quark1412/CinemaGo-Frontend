@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { SeatType, SEAT_COLORS, SeatPosition } from "@/types/seat";
+import { Armchair, Crown, Sofa, X } from "lucide-react";
 
 interface SeatCellProps {
   seat: SeatPosition;
@@ -32,17 +33,18 @@ export function SeatCell({
   };
 
   const getSeatIcon = (type: SeatType) => {
+    const iconClass = "h-5 w-5 text-white";
     switch (type) {
       case SeatType.NORMAL:
-        return "🪑";
+        return <Armchair className={iconClass} />;
       case SeatType.VIP:
-        return "👑";
+        return <Crown className={iconClass} />;
       case SeatType.COUPLE:
-        return "💕";
+        return <Sofa className={iconClass} />;
       case SeatType.BLOCKED:
-        return "🚫";
+        return <X className={iconClass} />;
       default:
-        return "";
+        return null;
     }
   };
 
@@ -51,9 +53,9 @@ export function SeatCell({
 
     return (
       <div className="flex flex-col items-center justify-center h-full text-xs">
-        <span className="text-lg">{getSeatIcon(seat.type)}</span>
+        {getSeatIcon(seat.type)}
         {seat.seatNumber && (
-          <span className="text-white font-bold text-[10px] leading-none">
+          <span className="text-white font-bold text-[10px] leading-none mt-1">
             {seat.seatNumber}
           </span>
         )}

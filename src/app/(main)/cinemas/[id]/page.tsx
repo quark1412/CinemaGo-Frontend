@@ -5,14 +5,16 @@ export const metadata = {
   description: "Cinema details and room management",
 };
 
-export default function CinemaDetailsPage({
+export default async function CinemaDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+
   return (
     <div>
-      <CinemaDetails cinemaId={params.id} />
+      <CinemaDetails cinemaId={id} />
     </div>
   );
 }

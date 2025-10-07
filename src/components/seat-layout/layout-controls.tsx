@@ -15,6 +15,7 @@ import {
   Trash2,
   Eye,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface LayoutControlsProps {
   layout: SeatLayout;
@@ -45,8 +46,8 @@ export function LayoutControls({
   };
 
   const handleResizeGrid = () => {
-    if (rows < 1 || cols < 1 || rows > 15 || cols > 15) {
-      alert("Grid size must be between 1x1 and 15x15");
+    if (rows < 1 || cols < 1 || rows > 10 || cols > 10) {
+      toast.error("Grid size must be between 1x1 and 10x10");
       return;
     }
 
@@ -172,7 +173,7 @@ export function LayoutControls({
               id="rows"
               type="number"
               min="1"
-              max="15"
+              max="10"
               value={rows}
               onChange={(e) => setRows(Number(e.target.value))}
               className="mt-1"
@@ -184,7 +185,7 @@ export function LayoutControls({
               id="cols"
               type="number"
               min="1"
-              max="15"
+              max="10"
               value={cols}
               onChange={(e) => setCols(Number(e.target.value))}
               className="mt-1"
