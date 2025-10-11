@@ -8,10 +8,15 @@ import { Input } from "@/components/ui/input";
 import { SeatGrid } from "@/components/seat-layout/seat-grid";
 import { SeatTypeSelector } from "@/components/seat-layout/seat-type-selector";
 import { LayoutControls } from "@/components/seat-layout/layout-controls";
-import { SeatType, SeatLayout } from "@/types/seat";
+import { SeatType, SeatLayout, SeatPosition } from "@/types/seat";
 import { Cinema } from "@/types/cinema";
 import { Eye, Save, Download, Upload, Trash2, X } from "lucide-react";
-import { createRoom, getCinemaById } from "@/services/cinemas";
+import {
+  createRoom,
+  getCinemaById,
+  getRoomById,
+  updateRoom,
+} from "@/services/cinemas";
 import { toast } from "sonner";
 import {
   Breadcrumb,
@@ -63,8 +68,110 @@ export default function SeatLayoutDesigner() {
   }, []);
 
   useEffect(() => {
-    if (roomId) {
-    }
+    const fetchRoomLayout = async () => {
+      if (!roomId) return;
+
+      setIsLoading(true);
+      try {
+        const response = await getRoomById(roomId);
+        const room = response.data;
+
+        // Set room name
+        setRoomNameInput(room.name);
+
+        // Convert backend seatLayout to frontend format
+        if (room.seatLayout && Array.isArray(room.seatLayout)) {
+          console.log(room.seatLayout);
+          // Find max row and col to determine grid size
+          let maxRow = 0;
+          let maxCol = 0;
+
+          room.seatLayout.forEach((seat: any) => {
+            const rowIndex = seat.row.charCodeAt(0) - 65;
+            const colIndex = seat.col - 1;
+
+            if (rowIndex > maxRow) maxRow = rowIndex;
+            if (colIndex > maxCol) maxCol = colIndex;
+          });
+
+          // Create empty layout
+          const rows = maxRow + 1;
+          const cols = maxCol + 1;
+          const seats: SeatPosition[][] = Array.from(
+            { length: rows },
+            (_, rowIndex) =>
+              Array.from({ length: cols }, (_, colIndex) => ({
+                row: rowIndex,
+                col: colIndex,
+                type: SeatType.EMPTY,
+              }))
+          );
+
+          // First pass: Fill in all seats
+          room.seatLayout.forEach((seat: any) => {
+            const rowIndex = seat.row.charCodeAt(0) - 65;
+            const colIndex = seat.col - 1;
+
+            if (rowIndex < rows && colIndex < cols) {
+              const seatNumber = `${seat.row}${seat.col}`;
+              seats[rowIndex][colIndex] = {
+                row: rowIndex,
+                col: colIndex,
+                type: seat.type as SeatType,
+                seatNumber: seatNumber,
+              };
+            }
+          });
+
+          // Second pass: Detect and pair couple seats
+          for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
+            for (let colIndex = 0; colIndex < cols - 1; colIndex++) {
+              const currentSeat = seats[rowIndex][colIndex];
+              const nextSeat = seats[rowIndex][colIndex + 1];
+
+              // Check if this is the start of a couple seat pair
+              if (
+                currentSeat.type === SeatType.COUPLE &&
+                nextSeat.type === SeatType.COUPLE &&
+                !currentSeat.isCoupleSeat &&
+                !nextSeat.isCoupleSeat
+              ) {
+                const rowLetter = String.fromCharCode(65 + rowIndex);
+                const coupleSeatNumber = `${rowLetter}${colIndex + 1}-${
+                  colIndex + 2
+                }`;
+
+                // Update both seats with couple properties
+                seats[rowIndex][colIndex] = {
+                  ...currentSeat,
+                  seatNumber: coupleSeatNumber,
+                  isCoupleSeat: true,
+                  coupleWith: colIndex + 1,
+                };
+
+                seats[rowIndex][colIndex + 1] = {
+                  ...nextSeat,
+                  seatNumber: coupleSeatNumber,
+                  isCoupleSeat: true,
+                  coupleWith: colIndex,
+                };
+              }
+            }
+          }
+
+          setLayout({ rows, cols, seats });
+        }
+      } catch (error: any) {
+        console.error("Error fetching room:", error);
+        const message =
+          error.response?.data?.message || "Error loading room layout";
+        toast.error(message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRoomLayout();
   }, [roomId]);
 
   const handleLayoutChange = (newLayout: SeatLayout) => {
@@ -77,7 +184,7 @@ export default function SeatLayoutDesigner() {
       return;
     }
 
-    if (!cinemaId) {
+    if (!cinemaId && !roomId) {
       toast.error("Cinema information is required");
       return;
     }
@@ -97,14 +204,26 @@ export default function SeatLayoutDesigner() {
 
       const roomData = {
         name: roomNameInput,
-        cinemaId: cinemaId,
+        cinemaId: cinemaId || undefined,
         seatLayout: seatLayoutData,
         vipPrice: parseInt(vipPrice || "0") || 0,
         couplePrice: parseInt(couplePrice || "0") || 0,
       };
 
-      await createRoom(roomData);
-      toast.success("Room layout saved successfully!");
+      if (roomId) {
+        // Update existing room
+        await updateRoom(roomId, roomData);
+        toast.success("Room layout updated successfully!");
+      } else {
+        // Create new room
+        if (!cinemaId) {
+          toast.error("Cinema information is required");
+          return;
+        }
+        await createRoom({ ...roomData, cinemaId });
+        toast.success("Room layout created successfully!");
+      }
+
       if (cinemaId) {
         router.push(`/cinemas/${cinemaId}`);
       } else {
@@ -293,12 +412,20 @@ export default function SeatLayoutDesigner() {
 
                   <Button
                     onClick={() => handleSaveLayout(layout)}
-                    disabled={isLoading || !roomNameInput.trim() || !cinemaId}
+                    disabled={
+                      isLoading ||
+                      !roomNameInput.trim() ||
+                      (!cinemaId && !roomId)
+                    }
                     className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold shadow-sm"
                     size="lg"
                   >
                     <Save className="mr-2 h-5 w-5" />
-                    {isLoading ? "Saving..." : "Save Layout"}
+                    {isLoading
+                      ? "Saving..."
+                      : roomId
+                      ? "Update Layout"
+                      : "Save Layout"}
                   </Button>
 
                   <Button

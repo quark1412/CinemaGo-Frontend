@@ -49,7 +49,6 @@ instance.interceptors.request.use(async (req: any) => {
     req.headers.Authorization = `Bearer ${newAccessToken}`;
     return req;
   } catch (err) {
-    console.log(err);
     Cookies.remove("accessToken");
     Cookies.remove("refreshToken");
     return req;

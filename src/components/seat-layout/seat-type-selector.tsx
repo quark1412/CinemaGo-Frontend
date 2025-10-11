@@ -74,9 +74,6 @@ export function SeatTypeSelector({
     <Card className="h-full">
       <CardHeader>
         <CardTitle className="text-lg">Seat Types</CardTitle>
-        <p className="text-xs text-muted-foreground mt-1">
-          Right-click on any seat to remove it
-        </p>
       </CardHeader>
       <CardContent className="space-y-3 grid grid-cols-2 gap-3">
         {seatTypes.map((type) => {
