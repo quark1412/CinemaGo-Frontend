@@ -27,6 +27,10 @@ export default function AllMovies() {
     page: 1,
     limit: 10,
   });
+  const [filters, setFilters] = useState<{
+    status?: string;
+    isActive?: string;
+  }>({});
 
   const { data, isLoading } = useMovies(currentParams);
   const archiveMutation = useArchiveMovie();
@@ -79,6 +83,26 @@ export default function AllMovies() {
     setCurrentParams({ ...currentParams, page: 1, search });
   };
 
+  const handleFilterChange = (filterType: string, value: string) => {
+    const newFilters = { ...filters, [filterType]: value };
+    setFilters(newFilters);
+
+    // Convert filter values to the correct format for the API
+    const apiParams: GetMoviesParams = {
+      ...currentParams,
+      page: 1,
+    };
+
+    if (filterType === "status") {
+      apiParams.status = value && value !== "all" ? value : undefined;
+    } else if (filterType === "isActive") {
+      apiParams.isActive =
+        value === "true" ? true : value === "false" ? false : undefined;
+    }
+
+    setCurrentParams(apiParams);
+  };
+
   const columns = createColumns({
     onEdit: handleEditClick,
     onArchive: handleArchiveClick,
@@ -102,6 +126,7 @@ export default function AllMovies() {
         }
         onPaginationChange={handlePaginationChange}
         onSearchChange={handleSearchChange}
+        onFilterChange={handleFilterChange}
         loading={isLoading}
       />
 

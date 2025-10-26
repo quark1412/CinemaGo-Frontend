@@ -6,8 +6,9 @@ export interface GetMoviesParams {
   limit?: number;
   search?: string;
   rating?: number;
-  genreQuery?: string; // comma-separated genre IDs
+  genreQuery?: string;
   isActive?: boolean;
+  status?: string;
 }
 
 export interface MoviesResponse {
@@ -34,6 +35,7 @@ export const getAllMovies = async (
     if (params?.genreQuery) queryParams.append("genreQuery", params.genreQuery);
     if (params?.isActive !== undefined)
       queryParams.append("isActive", params.isActive.toString());
+    if (params?.status) queryParams.append("status", params.status);
 
     const response = await instance.get(
       `/movies/public?${queryParams.toString()}`,

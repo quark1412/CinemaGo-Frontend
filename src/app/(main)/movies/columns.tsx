@@ -104,12 +104,44 @@ export const createColumns = ({
   },
   {
     accessorKey: "isActive",
-    header: () => <div className="font-bold">Status</div>,
+    header: () => <div className="font-bold">Active Status</div>,
     cell: ({ row }) => {
       const isActive = row.original.isActive;
       return (
         <Badge variant={isActive ? "default" : "secondary"}>
           {isActive ? "Active" : "Archived"}
+        </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: "status",
+    header: () => <div className="font-bold">Movie Status</div>,
+    cell: ({ row }) => {
+      const status = row.original.status;
+
+      if (process.env.NODE_ENV === "development" && !status) {
+        console.warn(
+          "Movie status is undefined for movie:",
+          row.original.title
+        );
+      }
+
+      const getStatusVariant = (status: string | undefined) => {
+        switch (status) {
+          case "NOW_SHOWING":
+            return "default";
+          case "COMING_SOON":
+            return "secondary";
+          case "ENDED":
+            return "destructive";
+          default:
+            return "outline";
+        }
+      };
+      return (
+        <Badge variant={getStatusVariant(status)}>
+          {status ? status.replace("_", " ") : "Unknown"}
         </Badge>
       );
     },

@@ -263,6 +263,7 @@ export default function MovieDetailsPage() {
         open={showtimeDialogOpen}
         onOpenChange={handleCloseDialog}
         movieId={movieId}
+        movie={movie}
         showtime={editingShowtime}
         onSuccess={fetchShowtimes}
       />

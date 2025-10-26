@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Room, CreateRoomData, UpdateRoomData } from "@/types/cinema";
 import { createRoom, updateRoom } from "@/services/cinemas";
 import { CinemaSelector } from "@/components/cinema-selector";
+import { formatPrice } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -197,7 +198,7 @@ export function RoomDialog({
                 name="vipPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>VIP Seat Extra Price</FormLabel>
+                    <FormLabel>VIP Seat Extra Price (VND)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -222,7 +223,7 @@ export function RoomDialog({
                 name="couplePrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Couple Seat Extra Price</FormLabel>
+                    <FormLabel>Couple Seat Extra Price (VND)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DataTableColumnHeader } from "@/components/shared/data-table-column-header";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate, formatTime, formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Showtime } from "@/types/showtime";
 import { archiveShowtime, restoreShowtime } from "@/services/showtimes";
@@ -75,7 +75,7 @@ export const createShowtimeColumns = ({
     ),
     cell: ({ row }) => {
       const price = row.original.price;
-      return <div className="text-xs font-medium">${price.toFixed(2)}</div>;
+      return <div className="text-xs font-medium">{formatPrice(price)}</div>;
     },
   },
   {

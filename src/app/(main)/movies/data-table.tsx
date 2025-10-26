@@ -54,6 +54,7 @@ interface DataTableProps<TData, TValue> {
   };
   onPaginationChange?: (page: number, pageSize: number) => void;
   onSearchChange?: (search: string) => void;
+  onFilterChange?: (filterType: string, value: string) => void;
   loading?: boolean;
 }
 
@@ -63,6 +64,7 @@ export function DataTable<TData, TValue>({
   pagination,
   onPaginationChange,
   onSearchChange,
+  onFilterChange,
   loading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -97,19 +99,68 @@ export function DataTable<TData, TValue>({
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
-        <Input
-          placeholder="Filter movies..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => {
-            const value = event.target.value;
-            if (pagination && onSearchChange) {
-              onSearchChange(value);
-            } else {
-              table.getColumn("title")?.setFilterValue(value);
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Filter movies..."
+            value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (pagination && onSearchChange) {
+                onSearchChange(value);
+              } else {
+                table.getColumn("title")?.setFilterValue(value);
+              }
+            }}
+            className="max-w-sm text-xs placeholder:text-[13px] placeholder:font-medium"
+          />
+          <Select
+            value={
+              (table.getColumn("status")?.getFilterValue() as string) ?? "all"
             }
-          }}
-          className="max-w-sm text-xs placeholder:text-[13px] placeholder:font-medium"
-        />
+            onValueChange={(value) => {
+              if (pagination && onFilterChange) {
+                onFilterChange("status", value === "all" ? "" : value);
+              } else {
+                table
+                  .getColumn("status")
+                  ?.setFilterValue(value === "all" ? "" : value);
+              }
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="NOW_SHOWING">Now Showing</SelectItem>
+              <SelectItem value="COMING_SOON">Coming Soon</SelectItem>
+              <SelectItem value="ENDED">Ended</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={
+              (table.getColumn("isActive")?.getFilterValue() as string) ?? "all"
+            }
+            onValueChange={(value) => {
+              if (pagination && onFilterChange) {
+                onFilterChange("isActive", value === "all" ? "" : value);
+              } else {
+                table
+                  .getColumn("isActive")
+                  ?.setFilterValue(value === "all" ? "" : value);
+              }
+            }}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Filter by active" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Movies</SelectItem>
+              <SelectItem value="true">Active Only</SelectItem>
+              <SelectItem value="false">Archived Only</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <Button variant="default" size="default">
           <CirclePlus />
           <Link href="/movies/create" className="text-sm font-medium">
@@ -188,7 +239,7 @@ export function DataTable<TData, TValue>({
             }}
           >
             <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue />
+              <SelectValue placeholder="10" />
             </SelectTrigger>
             <SelectContent side="top">
               {[10, 20, 30, 40, 50].map((pageSize) => (

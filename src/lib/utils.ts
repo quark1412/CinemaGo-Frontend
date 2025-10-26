@@ -10,8 +10,6 @@ export function formatDate(date: Date) {
     year: "numeric",
     month: "numeric",
     day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
 }
 
@@ -19,4 +17,13 @@ export function formatTime(time: number) {
   const hours = Math.floor(time / 60);
   const minutes = time % 60;
   return `${hours}h ${minutes}m`;
+}
+
+export function formatPrice(price: number) {
+  const formatter = new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  });
+
+  return formatter.format(price);
 }

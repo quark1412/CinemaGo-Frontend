@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -41,16 +41,20 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import {
   createShowtime,
   updateShowtime,
   CreateShowtimeRequest,
   UpdateShowtimeRequest,
+  getBusyRoomIds,
 } from "@/services/showtimes";
 import { getAllRooms, getAllCinemas } from "@/services/cinemas";
 import { Showtime } from "@/types/showtime";
 import { Room, Cinema } from "@/types/cinema";
+import { Movie } from "@/types/movie";
+import { LANGUAGES, FORMATS } from "@/lib/constants";
+import { Plus, X } from "lucide-react";
 
 const showtimeSchema = z.object({
   cinemaId: z.string().min(1, "Cinema is required"),
@@ -58,11 +62,7 @@ const showtimeSchema = z.object({
   startDate: z.date({
     message: "Start date is required",
   }),
-  startTime: z.string().min(1, "Start time is required"),
-  endDate: z.date({
-    message: "End date is required",
-  }),
-  endTime: z.string().min(1, "End time is required"),
+  startTimes: z.array(z.string()).min(1, "At least one start time is required"),
   price: z.number().min(0, "Price must be positive"),
   language: z.string().min(1, "Language is required"),
   subtitle: z.boolean(),
@@ -75,6 +75,7 @@ interface ShowtimeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   movieId: string;
+  movie: Movie;
   showtime?: Showtime;
   onSuccess: () => void;
 }
@@ -83,6 +84,7 @@ export function ShowtimeDialog({
   open,
   onOpenChange,
   movieId,
+  movie,
   showtime,
   onSuccess,
 }: ShowtimeDialogProps) {
@@ -92,6 +94,8 @@ export function ShowtimeDialog({
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedCinemaId, setSelectedCinemaId] = useState<string>("");
+  const [startTimes, setStartTimes] = useState<string[]>(["09:00"]);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const isEditing = !!showtime;
 
   const form = useForm<ShowtimeFormData>({
@@ -100,9 +104,7 @@ export function ShowtimeDialog({
       cinemaId: "",
       roomId: "",
       startDate: new Date(),
-      startTime: "09:00",
-      endDate: new Date(),
-      endTime: "11:00",
+      startTimes: ["09:00"],
       price: 0,
       language: "English",
       subtitle: false,
@@ -110,7 +112,7 @@ export function ShowtimeDialog({
     },
   });
 
-  const fetchCinemas = async () => {
+  const fetchCinemas = useCallback(async () => {
     try {
       setCinemasLoading(true);
       let allCinemas: Cinema[] = [];
@@ -136,9 +138,9 @@ export function ShowtimeDialog({
     } finally {
       setCinemasLoading(false);
     }
-  };
+  }, []);
 
-  const fetchRooms = async (cinemaId: string) => {
+  const fetchRooms = useCallback(async (cinemaId: string) => {
     if (!cinemaId) {
       setRooms([]);
       return;
@@ -170,18 +172,17 @@ export function ShowtimeDialog({
     } finally {
       setRoomsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (open) {
       fetchCinemas();
     }
-  }, [open]);
+  }, [open, fetchCinemas]);
 
   useEffect(() => {
     if (showtime && open) {
       const startDate = new Date(showtime.startTime);
-      const endDate = new Date(showtime.endTime);
 
       // Set the cinema ID and fetch rooms
       setSelectedCinemaId(showtime.cinemaId);
@@ -191,70 +192,235 @@ export function ShowtimeDialog({
         cinemaId: showtime.cinemaId,
         roomId: showtime.roomId,
         startDate,
-        startTime: format(startDate, "HH:mm"),
-        endDate,
-        endTime: format(endDate, "HH:mm"),
+        startTimes: [format(startDate, "HH:mm")],
         price: showtime.price,
         language: showtime.language,
         subtitle: showtime.subtitle,
         format: showtime.format,
       });
+      setStartTimes([format(startDate, "HH:mm")]);
     } else if (!showtime && open) {
       setSelectedCinemaId("");
       setRooms([]);
+      setStartTimes(["09:00"]);
       form.reset({
         cinemaId: "",
         roomId: "",
         startDate: new Date(),
-        startTime: "09:00",
-        endDate: new Date(),
-        endTime: "11:00",
+        startTimes: ["09:00"],
         price: 0,
         language: "English",
         subtitle: false,
         format: "2D",
       });
     }
-  }, [showtime, open, form]);
+  }, [showtime, open]);
 
-  const handleCinemaChange = (cinemaId: string) => {
-    setSelectedCinemaId(cinemaId);
-    form.setValue("cinemaId", cinemaId);
-    form.setValue("roomId", "");
-    fetchRooms(cinemaId);
+  const handleCinemaChange = useCallback(
+    (cinemaId: string) => {
+      setSelectedCinemaId(cinemaId);
+      form.setValue("cinemaId", cinemaId);
+      form.setValue("roomId", "");
+      fetchRooms(cinemaId);
+    },
+    [form, fetchRooms]
+  );
+
+  const addStartTime = useCallback(() => {
+    const newStartTimes = [...startTimes, "09:00"];
+    setStartTimes(newStartTimes);
+    form.setValue("startTimes", newStartTimes);
+
+    // Clear validation errors when user makes changes
+    if (validationErrors.length > 0) {
+      setValidationErrors([]);
+    }
+  }, [startTimes, form, validationErrors.length]);
+
+  const removeStartTime = useCallback(
+    (index: number) => {
+      if (startTimes.length > 1) {
+        const newStartTimes = startTimes.filter((_, i) => i !== index);
+        setStartTimes(newStartTimes);
+        form.setValue("startTimes", newStartTimes);
+
+        // Clear validation errors when user makes changes
+        if (validationErrors.length > 0) {
+          setValidationErrors([]);
+        }
+      }
+    },
+    [startTimes, form, validationErrors.length]
+  );
+
+  const updateStartTime = useCallback(
+    (index: number, time: string) => {
+      const newStartTimes = [...startTimes];
+      newStartTimes[index] = time;
+      setStartTimes(newStartTimes);
+      form.setValue("startTimes", newStartTimes);
+
+      // Clear validation errors when user makes changes
+      if (validationErrors.length > 0) {
+        setValidationErrors([]);
+      }
+    },
+    [startTimes, form, validationErrors.length]
+  );
+
+  const calculateEndTime = (startTime: string, duration: number) => {
+    const [hours, minutes] = startTime.split(":").map(Number);
+    const startMinutes = hours * 60 + minutes;
+    const endMinutes = startMinutes + duration;
+    const endHours = Math.floor(endMinutes / 60);
+    const endMins = endMinutes % 60;
+    return `${endHours.toString().padStart(2, "0")}:${endMins
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  const checkTimeOverlap = (
+    time1Start: string,
+    time1End: string,
+    time2Start: string,
+    time2End: string
+  ) => {
+    const parseTime = (time: string) => {
+      const [hours, minutes] = time.split(":").map(Number);
+      return hours * 60 + minutes;
+    };
+
+    const start1 = parseTime(time1Start);
+    const end1 = parseTime(time1End);
+    const start2 = parseTime(time2Start);
+    const end2 = parseTime(time2End);
+
+    // Check if times overlap
+    return start1 < end2 && start2 < end1;
+  };
+
+  const validateShowtimes = async (data: ShowtimeFormData) => {
+    const errors: string[] = [];
+
+    // Check for overlaps within the new showtimes
+    for (let i = 0; i < data.startTimes.length; i++) {
+      for (let j = i + 1; j < data.startTimes.length; j++) {
+        const startTime1 = data.startTimes[i];
+        const endTime1 = calculateEndTime(startTime1, movie.duration);
+        const startTime2 = data.startTimes[j];
+        const endTime2 = calculateEndTime(startTime2, movie.duration);
+
+        if (checkTimeOverlap(startTime1, endTime1, startTime2, endTime2)) {
+          errors.push(
+            `Showtime at ${startTime1} overlaps with showtime at ${startTime2}`
+          );
+        }
+      }
+    }
+
+    // Check for overlaps with existing showtimes in the same room
+    if (data.roomId && data.startTimes.length > 0) {
+      try {
+        const startDate = data.startDate;
+
+        for (const startTime of data.startTimes) {
+          const [startHours, startMinutes] = startTime.split(":").map(Number);
+          const startDateTime = new Date(startDate);
+          startDateTime.setHours(startHours, startMinutes, 0, 0);
+
+          const endTime = calculateEndTime(startTime, movie.duration);
+          const [endHours, endMinutes] = endTime.split(":").map(Number);
+          const endDateTime = new Date(startDate);
+          endDateTime.setHours(endHours, endMinutes, 0, 0);
+
+          const busyRooms = await getBusyRoomIds(
+            startDateTime.toISOString(),
+            endDateTime.toISOString(),
+            data.cinemaId
+          );
+
+          if (busyRooms.data.includes(data.roomId)) {
+            errors.push(`Room is already booked for showtime at ${startTime}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking busy rooms:", error);
+        errors.push("Failed to validate room availability");
+      }
+    }
+
+    return errors;
   };
 
   const onSubmit = async (data: ShowtimeFormData) => {
     try {
       setLoading(true);
+      setValidationErrors([]);
 
-      // Combine date and time
-      const [startHours, startMinutes] = data.startTime.split(":").map(Number);
-      const [endHours, endMinutes] = data.endTime.split(":").map(Number);
-
-      const startDateTime = new Date(data.startDate);
-      startDateTime.setHours(startHours, startMinutes, 0, 0);
-
-      const endDateTime = new Date(data.endDate);
-      endDateTime.setHours(endHours, endMinutes, 0, 0);
-
-      const requestData = {
-        movieId,
-        roomId: data.roomId,
-        startTime: startDateTime.toISOString(),
-        endTime: endDateTime.toISOString(),
-        price: data.price,
-        language: data.language,
-        subtitle: data.subtitle,
-        format: data.format,
-      };
+      // Validate showtimes before creating
+      const validationErrors = await validateShowtimes(data);
+      if (validationErrors.length > 0) {
+        setValidationErrors(validationErrors);
+        toast.error("Validation failed. Please check the errors below.");
+        return;
+      }
 
       if (isEditing) {
+        // For editing, only handle the first start time
+        const [startHours, startMinutes] = data.startTimes[0]
+          .split(":")
+          .map(Number);
+        const startDateTime = new Date(data.startDate);
+        startDateTime.setHours(startHours, startMinutes, 0, 0);
+
+        const endTime = calculateEndTime(data.startTimes[0], movie.duration);
+        const [endHours, endMinutes] = endTime.split(":").map(Number);
+        const endDateTime = new Date(data.startDate);
+        endDateTime.setHours(endHours, endMinutes, 0, 0);
+
+        const requestData = {
+          movieId,
+          roomId: data.roomId,
+          startTime: startDateTime.toISOString(),
+          endTime: endDateTime.toISOString(),
+          price: data.price,
+          language: data.language,
+          subtitle: data.subtitle,
+          format: data.format,
+        };
+
         await updateShowtime(showtime.id, requestData);
         toast.success("Showtime updated successfully!");
       } else {
-        await createShowtime(requestData);
-        toast.success("Showtime created successfully!");
+        // For creating, handle multiple start times
+        const promises = data.startTimes.map(async (startTime) => {
+          const [startHours, startMinutes] = startTime.split(":").map(Number);
+          const startDateTime = new Date(data.startDate);
+          startDateTime.setHours(startHours, startMinutes, 0, 0);
+
+          const endTime = calculateEndTime(startTime, movie.duration);
+          const [endHours, endMinutes] = endTime.split(":").map(Number);
+          const endDateTime = new Date(data.startDate);
+          endDateTime.setHours(endHours, endMinutes, 0, 0);
+
+          const requestData = {
+            movieId,
+            roomId: data.roomId,
+            startTime: startDateTime.toISOString(),
+            endTime: endDateTime.toISOString(),
+            price: data.price,
+            language: data.language,
+            subtitle: data.subtitle,
+            format: data.format,
+          };
+
+          return createShowtime(requestData);
+        });
+
+        await Promise.all(promises);
+        toast.success(
+          `${data.startTimes.length} showtime(s) created successfully!`
+        );
       }
 
       onSuccess();
@@ -409,7 +575,7 @@ export function ShowtimeDialog({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price ($)</FormLabel>
+                    <FormLabel>Price (VND)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -428,117 +594,100 @@ export function ShowtimeDialog({
               />
             </div>
 
-            {/* Start Date and Time */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Start Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date(new Date().setHours(0, 0, 0, 0))
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Start Date */}
+            <FormField
+              control={form.control}
+              name="startDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Start Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date(new Date().setHours(0, 0, 0, 0))
+                        }
+                        autoFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
+            {/* Start Times */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <FormLabel>Start Times</FormLabel>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addStartTime}
+                  disabled={isEditing}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Time
+                </Button>
+              </div>
+              {startTimes.map((time, index) => {
+                const endTime = calculateEndTime(time, movie.duration);
+                return (
+                  <div key={index} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="time"
+                        value={time}
+                        onChange={(e) => updateStartTime(index, e.target.value)}
+                        disabled={isEditing}
+                        className="flex-1"
+                      />
+                      {!isEditing && startTimes.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeStartTime(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground ml-2">
+                      Duration: {movie.duration} min • Ends at: {endTime}
+                    </div>
+                  </div>
+                );
+              })}
               <FormField
                 control={form.control}
-                name="startTime"
+                name="startTimes"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Time</FormLabel>
+                  <FormItem className="hidden">
                     <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* End Date and Time */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>End Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date(new Date().setHours(0, 0, 0, 0))
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="endTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Time</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -564,14 +713,14 @@ export function ShowtimeDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="English">English</SelectItem>
-                        <SelectItem value="Spanish">Spanish</SelectItem>
-                        <SelectItem value="French">French</SelectItem>
-                        <SelectItem value="German">German</SelectItem>
-                        <SelectItem value="Italian">Italian</SelectItem>
-                        <SelectItem value="Japanese">Japanese</SelectItem>
-                        <SelectItem value="Korean">Korean</SelectItem>
-                        <SelectItem value="Mandarin">Mandarin</SelectItem>
+                        {LANGUAGES.map((language) => (
+                          <SelectItem
+                            key={language.value}
+                            value={language.value}
+                          >
+                            {language.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -596,11 +745,11 @@ export function ShowtimeDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="2D">2D</SelectItem>
-                        <SelectItem value="3D">3D</SelectItem>
-                        <SelectItem value="IMAX">IMAX</SelectItem>
-                        <SelectItem value="4DX">4DX</SelectItem>
-                        <SelectItem value="Dolby Atmos">Dolby Atmos</SelectItem>
+                        {FORMATS.map((format) => (
+                          <SelectItem key={format.value} value={format.value}>
+                            {format.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -630,6 +779,23 @@ export function ShowtimeDialog({
                 </FormItem>
               )}
             />
+
+            {/* Validation Errors */}
+            {validationErrors.length > 0 && (
+              <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
+                <h4 className="text-sm font-medium text-destructive mb-2">
+                  Validation Errors:
+                </h4>
+                <ul className="text-sm text-destructive space-y-1">
+                  {validationErrors.map((error, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="mr-2">•</span>
+                      <span>{error}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <DialogFooter>
               <Button

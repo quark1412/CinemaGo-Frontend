@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 
 export interface PaginationParams {
   page?: number;
   limit?: number;
   search?: string;
-  [key: string]: any; // Allow additional filter parameters
+  [key: string]: any;
 }
 
 export interface PaginationResponse<T> {
@@ -51,6 +51,7 @@ export function useInfiniteScroll<T>({
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFiltersState] = useState(defaultFilters);
   const [totalPages, setTotalPages] = useState(0);
+  const isInitialLoad = useRef(true);
 
   const currentParams: PaginationParams = {
     page: currentPage,
@@ -61,8 +62,6 @@ export function useInfiniteScroll<T>({
 
   const fetchItems = useCallback(
     async (params: PaginationParams, append = false) => {
-      if (loading) return;
-
       try {
         setLoading(true);
         const response = await fetchFn({
@@ -86,7 +85,7 @@ export function useInfiniteScroll<T>({
         setLoading(false);
       }
     },
-    [fetchFn, initialPageSize, filters, loading, errorMessage]
+    [fetchFn, initialPageSize, filters, errorMessage]
   );
 
   const loadMore = useCallback(() => {
@@ -94,8 +93,9 @@ export function useInfiniteScroll<T>({
 
     const nextPage = currentPage + 1;
     setCurrentPage(nextPage);
+    // Call fetchItems directly without including it in dependencies
     fetchItems({ page: nextPage, search: searchTerm, ...filters }, true);
-  }, [hasMore, loading, currentPage, searchTerm, filters, fetchItems]);
+  }, [hasMore, loading, currentPage, searchTerm, filters]);
 
   const search = useCallback(
     (newSearchTerm: string) => {
@@ -106,7 +106,7 @@ export function useInfiniteScroll<T>({
 
       fetchItems({ page: 1, search: newSearchTerm, ...filters }, false);
     },
-    [filters, fetchItems]
+    [filters]
   );
 
   const setFilters = useCallback(
@@ -121,7 +121,7 @@ export function useInfiniteScroll<T>({
         false
       );
     },
-    [defaultFilters, searchTerm, fetchItems]
+    [defaultFilters, searchTerm]
   );
 
   const reset = useCallback(() => {
@@ -131,11 +131,37 @@ export function useInfiniteScroll<T>({
     setFiltersState(defaultFilters);
     setHasMore(true);
     fetchItems({ page: 1, search: "", ...defaultFilters }, false);
-  }, [defaultFilters, fetchItems]);
+  }, [defaultFilters]);
 
+  // Initial load effect - only run once on mount
   useEffect(() => {
-    fetchItems({ page: 1, search: "", ...defaultFilters }, false);
-  }, [fetchItems]);
+    if (!isInitialLoad.current) return;
+
+    const loadInitialData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchFn({
+          page: 1,
+          limit: initialPageSize,
+          search: "",
+          ...defaultFilters,
+        });
+
+        setItems(response.data);
+        setTotalPages(response.pagination.totalPages);
+        setHasMore(response.pagination.hasNextPage);
+        isInitialLoad.current = false;
+      } catch (error: any) {
+        toast.error(errorMessage);
+        console.error("Error fetching data:", error);
+        isInitialLoad.current = false;
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, [fetchFn, initialPageSize, errorMessage, defaultFilters]);
 
   useEffect(() => {
     if (!hasMore && loading) {
