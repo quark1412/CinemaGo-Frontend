@@ -18,6 +18,7 @@ import {
   SwatchBook,
   Theater,
   Sofa,
+  UtensilsCrossed,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -91,6 +92,11 @@ const data = {
       title: "Users",
       url: "/users",
       icon: Bot,
+    },
+    {
+      title: "Food & Drinks",
+      url: "/food-drinks",
+      icon: UtensilsCrossed,
     },
   ],
 };
