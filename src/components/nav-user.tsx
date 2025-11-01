@@ -30,6 +30,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useRouter } from "next/navigation";
 import { AccountSettingsDialog } from "@/components/account-settings-dialog";
 import { useState } from "react";
+import { useI18n } from "@/contexts/I18nContext";
 
 export function NavUser({
   user,
@@ -42,6 +43,7 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const { logout } = useUser();
+  const { t } = useI18n();
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -97,13 +99,13 @@ export function NavUser({
                 className="cursor-pointer"
               >
                 <BadgeCheck />
-                Account
+                {t("account.account")}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
               <LogOut className="text-red-400" />
-              <p className="text-red-400">Log out</p>
+              <p className="text-red-400">{t("account.logOut")}</p>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -2,22 +2,13 @@
 
 import * as React from "react";
 import {
-  AudioWaveform,
   BookOpen,
   Bot,
-  Calendar,
-  Command,
   Film,
-  Frame,
-  GalleryVerticalEnd,
   LayoutDashboard,
-  Map,
   PieChart,
-  Settings2,
-  SquareTerminal,
   SwatchBook,
   Theater,
-  Sofa,
   UtensilsCrossed,
 } from "lucide-react";
 
@@ -32,79 +23,19 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import Image from "next/image";
 import { PROJECT_NAME } from "@/lib/constants";
 import { NavMain } from "@/components/nav-main";
 import Link from "next/link";
 import { useUser } from "@/contexts/UserContext";
+import { useI18n } from "@/contexts/I18nContext";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard,
-      isActive: true,
-    },
-    {
-      title: "Movies",
-      url: "/movies",
-      icon: Film,
-    },
-    {
-      title: "Genres",
-      url: "/genres",
-      icon: SwatchBook,
-    },
-    {
-      title: "Cinemas",
-      url: "/cinemas",
-      icon: Theater,
-    },
-    {
-      title: "Reviews",
-      url: "/reviews",
-      icon: BookOpen,
-    },
-    {
-      title: "Users",
-      url: "/users",
-      icon: Bot,
-    },
-    {
-      title: "Food & Drinks",
-      url: "/food-drinks",
-      icon: UtensilsCrossed,
-    },
-  ],
-};
 
 export const AppSidebar = React.memo(function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
   const { user, isLoading } = useUser();
+  const { t } = useI18n();
 
   const userData = user
     ? {
@@ -112,7 +43,55 @@ export const AppSidebar = React.memo(function AppSidebar({
         email: user.email,
         avatar: user.avatarUrl || "/avatars/default.jpg",
       }
-    : data.user;
+    : {
+        name: "Guest",
+        email: "",
+        avatar: "/avatars/default.jpg",
+      };
+
+  const navMain = [
+    {
+      title: t("sidebar.dashboard"),
+      url: "/dashboard",
+      icon: LayoutDashboard,
+      isActive: true,
+    },
+    {
+      title: t("sidebar.movies"),
+      url: "/movies",
+      icon: Film,
+    },
+    {
+      title: t("sidebar.genres"),
+      url: "/genres",
+      icon: SwatchBook,
+    },
+    {
+      title: t("sidebar.cinemas"),
+      url: "/cinemas",
+      icon: Theater,
+    },
+    {
+      title: t("sidebar.reviews"),
+      url: "/reviews",
+      icon: BookOpen,
+    },
+    {
+      title: t("sidebar.users"),
+      url: "/users",
+      icon: Bot,
+    },
+    {
+      title: t("sidebar.foodDrinks"),
+      url: "/food-drinks",
+      icon: UtensilsCrossed,
+    },
+    {
+      title: t("sidebar.report"),
+      url: "/report",
+      icon: PieChart,
+    },
+  ];
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -134,9 +113,12 @@ export const AppSidebar = React.memo(function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
+        <div className="px-2 py-2 mb-2">
+          <LanguageSwitcher />
+        </div>
         <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />

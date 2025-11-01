@@ -8,8 +8,10 @@ import {
 } from "@/hooks/use-dashboard";
 import { Film, Theater, Users, ShoppingCart } from "lucide-react";
 import { Loader2 } from "lucide-react";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function Dashboard() {
+  const { t } = useI18n();
   const currentYear = new Date().getFullYear();
   const { data: statistics, isLoading: statsLoading } =
     useDashboardStatistics();
@@ -28,27 +30,27 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="grid grid-cols-4 max-xl:grid-cols-2 max-sm:grid-cols-1 gap-4">
         <DashboardCard
-          title="Total Movies"
+          title={t("dashboard.totalMovies")}
           value={statistics?.totalMovies || 0}
-          description="Total movies in the database"
+          description={t("dashboard.totalMoviesDesc")}
           icon={Film}
         />
         <DashboardCard
-          title="Total Cinemas"
+          title={t("dashboard.totalCinemas")}
           value={statistics?.totalCinemas || 0}
-          description="Total cinemas available"
+          description={t("dashboard.totalCinemasDesc")}
           icon={Theater}
         />
         <DashboardCard
-          title="Total Users"
+          title={t("dashboard.totalUsers")}
           value={statistics?.totalUsers || 0}
-          description="Total registered users"
+          description={t("dashboard.totalUsersDesc")}
           icon={Users}
         />
         <DashboardCard
-          title="Total Bookings"
+          title={t("dashboard.totalBookings")}
           value={statistics?.totalBookings || 0}
-          description="Total bookings made"
+          description={t("dashboard.totalBookingsDesc")}
           icon={ShoppingCart}
         />
       </div>

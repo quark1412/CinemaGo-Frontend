@@ -36,6 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useUser } from "@/contexts/UserContext";
 import { authService } from "@/services/users/auth";
+import { useI18n } from "@/contexts/I18nContext";
 
 const profileSchema = z.object({
   fullname: z
@@ -81,6 +82,7 @@ export function AccountSettingsDialog({
   open,
   onOpenChange,
 }: AccountSettingsDialogProps) {
+  const { t } = useI18n();
   const { user, refreshUser } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
@@ -137,7 +139,7 @@ export function AccountSettingsDialog({
         });
       }
 
-      toast.success("Profile updated successfully!");
+      toast.success(t("account.profileUpdated"));
       await refreshUser();
       setSelectedAvatar(null);
       setAvatarPreview(null);
@@ -159,7 +161,7 @@ export function AccountSettingsDialog({
         oldPassword: data.oldPassword,
         newPassword: data.newPassword,
       });
-      toast.success("Password changed successfully!");
+      toast.success(t("account.passwordChanged"));
       passwordForm.reset();
       onOpenChange(false);
     } catch (error: any) {
@@ -212,7 +214,7 @@ export function AccountSettingsDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Account Settings
+            {t("account.accountSettings")}
           </DialogTitle>
         </DialogHeader>
 
@@ -223,14 +225,14 @@ export function AccountSettingsDialog({
               className="flex items-center gap-2 text-base"
             >
               <User className="h-5 w-5" />
-              Profile
+              {t("account.profile")}
             </TabsTrigger>
             <TabsTrigger
               value="security"
               className="flex items-center gap-2 text-base"
             >
               <Settings className="h-5 w-5" />
-              Security
+              {t("account.security")}
             </TabsTrigger>
           </TabsList>
 
@@ -238,7 +240,7 @@ export function AccountSettingsDialog({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Avatar Section */}
               <div className="space-y-4">
-                <p className="text-lg font-semibold">Profile Picture</p>
+                <p className="text-lg font-semibold">{t("account.profilePicture")}</p>
                 <div className="flex flex-col items-center space-y-4 p-6 border rounded-lg">
                   <div className="relative">
                     <Avatar className="h-32 w-32">
@@ -274,7 +276,7 @@ export function AccountSettingsDialog({
 
               {/* Profile Information Section */}
               <div className="space-y-4">
-                <p className="text-lg font-semibold">Personal Information</p>
+                <p className="text-lg font-semibold">{t("account.personalInformation")}</p>
                 <Form {...profileForm}>
                   <form
                     onSubmit={profileForm.handleSubmit(onProfileSubmit)}
@@ -286,10 +288,10 @@ export function AccountSettingsDialog({
                         name="fullname"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Full Name</FormLabel>
+                            <FormLabel>{t("account.fullName")}</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Enter your full name"
+                                placeholder={t("account.enterFullName")}
                                 {...field}
                                 disabled={isLoading}
                               />
@@ -304,11 +306,11 @@ export function AccountSettingsDialog({
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>{t("auth.email")}</FormLabel>
                             <FormControl>
                               <Input
                                 type="email"
-                                placeholder="Enter your email"
+                                placeholder={t("auth.enterEmail")}
                                 {...field}
                                 disabled={true}
                                 className="bg-muted"
@@ -323,7 +325,7 @@ export function AccountSettingsDialog({
                         name="gender"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Gender</FormLabel>
+                            <FormLabel>{t("account.gender")}</FormLabel>
                             <Select
                               onValueChange={field.onChange}
                               defaultValue={field.value}
@@ -331,13 +333,13 @@ export function AccountSettingsDialog({
                             >
                               <FormControl>
                                 <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select your gender" />
+                                  <SelectValue placeholder={t("account.selectGender")} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="MALE">Male</SelectItem>
-                                <SelectItem value="FEMALE">Female</SelectItem>
-                                <SelectItem value="OTHER">Other</SelectItem>
+                                <SelectItem value="MALE">{t("account.male")}</SelectItem>
+                                <SelectItem value="FEMALE">{t("account.female")}</SelectItem>
+                                <SelectItem value="OTHER">{t("account.other")}</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -353,10 +355,10 @@ export function AccountSettingsDialog({
                         onClick={handleClose}
                         disabled={isLoading}
                       >
-                        Cancel
+                        {t("common.cancel")}
                       </Button>
                       <Button type="submit" disabled={isLoading}>
-                        {isLoading ? "Updating..." : "Update Profile"}
+                        {isLoading ? t("common.updating") : t("account.updateProfile")}
                       </Button>
                     </div>
                   </form>
@@ -376,11 +378,11 @@ export function AccountSettingsDialog({
                   name="oldPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Current Password</FormLabel>
+                      <FormLabel>{t("account.currentPassword")}</FormLabel>
                       <FormControl>
                         <Input
                           type="password"
-                          placeholder="Enter your current password"
+                          placeholder={t("account.enterCurrentPassword")}
                           {...field}
                           disabled={isLoading}
                         />
@@ -395,11 +397,11 @@ export function AccountSettingsDialog({
                   name="newPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>New Password</FormLabel>
+                      <FormLabel>{t("account.newPassword")}</FormLabel>
                       <FormControl>
                         <Input
                           type="password"
-                          placeholder="Enter your new password"
+                          placeholder={t("account.enterNewPassword")}
                           {...field}
                           disabled={isLoading}
                         />
@@ -414,11 +416,11 @@ export function AccountSettingsDialog({
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormLabel>{t("account.confirmNewPassword")}</FormLabel>
                       <FormControl>
                         <Input
                           type="password"
-                          placeholder="Confirm your new password"
+                          placeholder={t("account.confirmNewPasswordPlaceholder")}
                           {...field}
                           disabled={isLoading}
                         />
@@ -430,14 +432,12 @@ export function AccountSettingsDialog({
 
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <p className="text-sm text-muted-foreground mb-2">
-                    Password requirements:
+                    {t("account.passwordRequirements")}
                   </p>
                   <ul className="text-xs text-muted-foreground space-y-1">
-                    <li>• At least 8 characters long</li>
-                    <li>• Contains at least one number</li>
-                    <li>
-                      • Contains at least one special character (!@#$%^&*)
-                    </li>
+                    <li>• {t("account.passwordReq1")}</li>
+                    <li>• {t("account.passwordReq2")}</li>
+                    <li>• {t("account.passwordReq3")}</li>
                   </ul>
                 </div>
 
@@ -448,10 +448,10 @@ export function AccountSettingsDialog({
                     onClick={handleClose}
                     disabled={isLoading}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button type="submit" disabled={isLoading}>
-                    {isLoading ? "Changing..." : "Change Password"}
+                    {isLoading ? t("account.changing") : t("account.changePassword")}
                   </Button>
                 </div>
               </form>

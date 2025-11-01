@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileQuestion, Home } from "lucide-react";
 import Link from "next/link";
 import { PROJECT_NAME } from "@/lib/constants";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function NotFound() {
+  const { t } = useI18n();
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -16,11 +18,9 @@ export default function NotFound() {
           </div>
           <div>
             <CardTitle className="text-2xl font-bold text-gray-900">
-              Page Not Found
+              {t("notFound.title")}
             </CardTitle>
-            <p className="text-gray-600 mt-2">
-              The page you're looking for doesn't exist
-            </p>
+            <p className="text-gray-600 mt-2">{t("notFound.description")}</p>
           </div>
         </CardHeader>
 
@@ -28,15 +28,14 @@ export default function NotFound() {
           <div className="text-center space-y-2">
             <h1 className="text-6xl font-bold text-gray-300">404</h1>
             <p className="text-sm text-gray-500">
-              Sorry, we couldn't find the page you're looking for in{" "}
-              {PROJECT_NAME}
+              {t("notFound.sorry")} {PROJECT_NAME}
             </p>
           </div>
 
           <Button className="w-full">
             <Link href="/" className="flex items-center gap-2">
               <Home className="w-4 h-4" />
-              Go Home
+              {t("notFound.goHome")}
             </Link>
           </Button>
         </CardContent>

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useUser } from "@/contexts/UserContext";
 import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
 
 const loginSchema = z.object({
   email: z
@@ -24,6 +25,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { login } = useUser();
@@ -46,11 +48,11 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password);
       router.push("/");
-      toast.success("Login successful");
+      toast.success(t("auth.loginSuccessful"));
     } catch (err: any) {
       console.log(err);
       toast.error(
-        err.response?.data?.message || "Login failed. Please try again."
+        err.response?.data?.message || t("auth.loginFailed")
       );
     } finally {
       setIsLoading(false);
@@ -72,7 +74,7 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-gray-900">Welcome back !</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t("auth.welcomeBack")}</h1>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -81,12 +83,12 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="text-sm font-medium text-gray-700"
               >
-                Email <span className="text-red-500">*</span>
+                {t("auth.email")} <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="email"
                 type="text"
-                placeholder="Enter your mail address"
+                placeholder={t("auth.enterEmail")}
                 {...register("email")}
                 className={`h-12 px-4 border-gray-300 focus:border-purple-500 focus:ring-purple-500 ${
                   errors.email
@@ -106,12 +108,12 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="text-sm font-medium text-gray-700"
               >
-                Password <span className="text-red-500">*</span>
+                {t("auth.password")} <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter password"
+                placeholder={t("auth.enterPassword")}
                 {...register("password")}
                 className={`h-12 px-4 border-gray-300 focus:border-purple-500 focus:ring-purple-500 ${
                   errors.password
@@ -131,7 +133,7 @@ export default function LoginPage() {
                 href="/forgot-password"
                 className="text-sm text-purple-600 hover:text-purple-800 font-medium"
               >
-                Forgot your password ?
+                {t("auth.forgotPassword")}
               </Link>
             </div>
 
@@ -140,7 +142,7 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-200"
             >
-              {isLoading ? "Logging in..." : "Log In"}
+              {isLoading ? t("auth.loggingIn") : t("auth.login")}
             </Button>
 
             <div className="relative">
@@ -149,7 +151,7 @@ export default function LoginPage() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
-                  or login with
+                  {t("auth.orLoginWith")}
                 </span>
               </div>
             </div>
@@ -178,7 +180,7 @@ export default function LoginPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              <span>Login with google</span>
+              <span>{t("auth.loginWithGoogle")}</span>
             </Button>
           </form>
         </div>

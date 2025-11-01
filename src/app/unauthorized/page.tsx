@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, LogIn } from "lucide-react";
 import Link from "next/link";
 import { PROJECT_NAME } from "@/lib/constants";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function UnauthorizedPage() {
+  const { t } = useI18n();
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -16,10 +18,10 @@ export default function UnauthorizedPage() {
           </div>
           <div>
             <CardTitle className="text-2xl font-bold text-gray-900">
-              Access Denied
+              {t("unauthorized.title")}
             </CardTitle>
             <p className="text-gray-600 mt-2">
-              You need to be logged in to access this page
+              {t("unauthorized.description")}
             </p>
           </div>
         </CardHeader>
@@ -27,7 +29,7 @@ export default function UnauthorizedPage() {
         <CardContent className="space-y-4">
           <div className="text-center space-y-2">
             <p className="text-sm text-gray-500">
-              Please sign in to your {PROJECT_NAME} account to continue
+              {t("unauthorized.pleaseSignIn")} {PROJECT_NAME} {t("unauthorized.accountToContinue")}
             </p>
           </div>
 
@@ -35,7 +37,7 @@ export default function UnauthorizedPage() {
             <Button asChild className="w-full">
               <Link href="/login" className="flex items-center gap-2">
                 <LogIn className="w-4 h-4" />
-                Sign In
+                {t("auth.signIn")}
               </Link>
             </Button>
           </div>
