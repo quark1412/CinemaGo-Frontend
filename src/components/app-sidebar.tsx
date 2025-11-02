@@ -29,13 +29,14 @@ import Link from "next/link";
 import { useUser } from "@/contexts/UserContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { LanguageSwitcher } from "@/components/language-switcher";
-
+import { usePathname } from "next/navigation";
 
 export const AppSidebar = React.memo(function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
   const { user, isLoading } = useUser();
   const { t } = useI18n();
+  const pathname = usePathname();
 
   const userData = user
     ? {
@@ -54,7 +55,6 @@ export const AppSidebar = React.memo(function AppSidebar({
       title: t("sidebar.dashboard"),
       url: "/dashboard",
       icon: LayoutDashboard,
-      isActive: true,
     },
     {
       title: t("sidebar.movies"),
@@ -91,7 +91,10 @@ export const AppSidebar = React.memo(function AppSidebar({
       url: "/report",
       icon: PieChart,
     },
-  ];
+  ].map((item) => ({
+    ...item,
+    isActive: pathname === item.url || pathname.startsWith(`${item.url}/`),
+  }));
 
   return (
     <Sidebar collapsible="icon" {...props}>

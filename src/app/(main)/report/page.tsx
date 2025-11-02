@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import dayjs from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import {
@@ -11,17 +11,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import dynamic from "next/dynamic";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +49,16 @@ import {
 } from "@/hooks/use-report";
 import { Loader2 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
+import ReportChart from "@/components/report-chart";
+
+// Dynamically import ExcelJS and file-saver to reduce initial bundle size
+const loadExcelExport = async () => {
+  const [ExcelJS, { default: saveAs }] = await Promise.all([
+    import("exceljs"),
+    import("file-saver"),
+  ]);
+  return { ExcelJS: ExcelJS.default || ExcelJS, saveAs };
+};
 
 function hasDayProperty(
   stat: WeeklyReport | MonthlyReport | YearlyReport
@@ -180,8 +180,11 @@ export default function ReportPage() {
     setCalendarOpen(false);
   };
 
-  const handleExportReport = () => {
+  const handleExportReport = async () => {
     if (!statistics.length) return;
+
+    // Dynamically load ExcelJS and file-saver
+    const { ExcelJS, saveAs } = await loadExcelExport();
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(t("report.excel.worksheetName"));
@@ -460,46 +463,7 @@ export default function ReportPage() {
                 </p>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <AreaChart
-                    data={chartData}
-                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient
-                        id="colorRevenue"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="#82ca9d"
-                          stopOpacity={0.8}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#82ca9d"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <Tooltip
-                      formatter={(value: number) => formatPrice(value)}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#82ca9d"
-                      fillOpacity={1}
-                      fill="url(#colorRevenue)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <ReportChart data={chartData} />
               </CardContent>
             </Card>
           </>

@@ -11,6 +11,7 @@ import {
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthGuard } from "@/components/auth-guard";
+import { MainContentWrapper } from "@/components/main-content-wrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,7 +53,7 @@ export default function RootLayout({
                   <ModeToggle />
                 </div>
               </header>
-              {children}
+              <MainContentWrapper>{children}</MainContentWrapper>
               <Toaster />
             </SidebarInset>
           </SidebarProvider>
