@@ -36,9 +36,7 @@ export default function AllMovies() {
   const archiveMutation = useArchiveMovie();
   const restoreMutation = useRestoreMovie();
 
-  const handleEditClick = (movie: Movie) => {
-    console.log("Edit movie:", movie);
-  };
+  const handleEditClick = (movie: Movie) => {};
 
   const handleArchiveClick = (movie: Movie) => {
     setConfirmationDialog({

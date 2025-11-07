@@ -119,7 +119,7 @@ export const createColumns = ({
               onClick={() => onViewDetails(cinema)}
             >
               <Eye className="text-primary" />
-              <span className="text-xs">View Details</span>
+              <span className="text-xs">View Details and Rooms</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer"

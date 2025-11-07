@@ -7,6 +7,7 @@ import { Cinema } from "@/types/cinema";
 import { DataTable } from "./data-table";
 import { createColumns } from "./columns";
 import { CinemaDialog } from "./cinema-dialog";
+import { CreateCinemaDialog } from "./create-cinema-dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { GetCinemasParams } from "@/types/cinema";
 import {
@@ -122,12 +123,20 @@ export default function AllCinemas() {
         loading={isLoading}
       />
 
-      <CinemaDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        cinema={editingCinema}
-        onSuccess={handleDialogSuccess}
-      />
+      {editingCinema ? (
+        <CinemaDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          cinema={editingCinema}
+          onSuccess={handleDialogSuccess}
+        />
+      ) : (
+        <CreateCinemaDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onSuccess={handleDialogSuccess}
+        />
+      )}
 
       <ConfirmationDialog
         open={confirmationDialog.open}

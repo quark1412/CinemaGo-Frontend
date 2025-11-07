@@ -18,3 +18,6 @@ export const FORMATS = [
   { value: "4DX", label: "4DX" },
   { value: "Dolby Atmos", label: "Dolby Atmos" },
 ] as const;
+
+export const MAX_ROWS = 10;
+export const MAX_COLS = 10;

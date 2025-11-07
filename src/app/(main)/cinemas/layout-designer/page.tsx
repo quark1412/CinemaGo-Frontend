@@ -27,6 +27,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import Link from "next/link";
+import { MAX_ROWS, MAX_COLS } from "@/lib/constants";
 
 export default function SeatLayoutDesigner() {
   const searchParams = useSearchParams();
@@ -41,8 +42,8 @@ export default function SeatLayoutDesigner() {
     SeatType.NORMAL
   );
   const [layout, setLayout] = useState<SeatLayout>({
-    rows: 10,
-    cols: 10,
+    rows: MAX_ROWS,
+    cols: MAX_COLS,
     seats: [],
   });
 
@@ -63,7 +64,7 @@ export default function SeatLayoutDesigner() {
       return { rows, cols, seats };
     };
 
-    const initialLayout = createEmptyLayout(10, 15);
+    const initialLayout = createEmptyLayout(MAX_ROWS, MAX_COLS);
     setLayout(initialLayout);
   }, []);
 

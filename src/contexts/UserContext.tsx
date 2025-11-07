@@ -85,7 +85,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchUserProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+  }, []);
 
   const value: UserContextType = {
     user,
