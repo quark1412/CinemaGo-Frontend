@@ -10,6 +10,7 @@ import {
   SwatchBook,
   Theater,
   UtensilsCrossed,
+  Clock,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -70,6 +71,11 @@ export const AppSidebar = React.memo(function AppSidebar({
       title: t("sidebar.cinemas"),
       url: "/cinemas",
       icon: Theater,
+    },
+    {
+      title: t("sidebar.showtimes"),
+      url: "/showtimes",
+      icon: Clock,
     },
     {
       title: t("sidebar.reviews"),

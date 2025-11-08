@@ -27,3 +27,25 @@ export function formatPrice(price: number) {
 
   return formatter.format(price);
 }
+
+export function convertToEmbedUrl(url: string): string {
+  if (!url) return url;
+
+  if (url.includes("/embed/")) {
+    return url;
+  }
+
+  const match = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/
+  );
+  if (match) {
+    return `https://www.youtube.com/embed/${match[1]}`;
+  }
+
+  return url;
+}
+
+export function isVideoPlatformUrl(url: string): boolean {
+  if (!url) return false;
+  return url.includes("youtube.com") || url.includes("youtu.be");
+}

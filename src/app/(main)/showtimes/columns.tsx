@@ -42,11 +42,11 @@ export const createShowtimeColumns = ({
     cell: ({ row }) => {
       const startTime = new Date(row.original.startTime);
       return (
-        <div className="text-xs">
-          <div>{formatDate(startTime)}</div>
-          <div className="text-muted-foreground">
+        <div className="text-xs ">
+          <div>
             {formatTime(startTime.getHours() * 60 + startTime.getMinutes())}
           </div>
+          <div className="text-muted-foreground">{formatDate(startTime)}</div>
         </div>
       );
     },
@@ -57,13 +57,15 @@ export const createShowtimeColumns = ({
       <DataTableColumnHeader column={column} title="End Time" />
     ),
     cell: ({ row }) => {
+      console.log(row.original.endTime);
       const endTime = new Date(row.original.endTime);
+      console.log(endTime);
       return (
         <div className="text-xs">
-          <div>{formatDate(endTime)}</div>
-          <div className="text-muted-foreground">
+          <div>
             {formatTime(endTime.getHours() * 60 + endTime.getMinutes())}
           </div>
+          <div className="text-muted-foreground">{formatDate(endTime)}</div>
         </div>
       );
     },

@@ -4,7 +4,12 @@ import { useState, useEffect } from "react";
 import { Movie } from "@/types/movie";
 import { getMovieById } from "@/services/movies";
 import { toast } from "sonner";
-import { formatTime, formatDate } from "@/lib/utils";
+import {
+  formatTime,
+  formatDate,
+  convertToEmbedUrl,
+  isVideoPlatformUrl,
+} from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -128,14 +133,23 @@ export function MovieDetailsDialog({
               {/* Trailer */}
               <div className="space-y-3">
                 <div className="relative aspect-video w-full h-full">
-                  <video
-                    src={movie.trailerUrl}
-                    controls
-                    className="w-full h-full rounded-lg object-cover"
-                    preload="metadata"
-                  >
-                    Your browser does not support the video tag.
-                  </video>
+                  {movie.trailerUrl && isVideoPlatformUrl(movie.trailerUrl) ? (
+                    <iframe
+                      src={convertToEmbedUrl(movie.trailerUrl)}
+                      className="w-full h-full rounded-lg"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <video
+                      src={movie.trailerUrl}
+                      controls
+                      className="w-full h-full rounded-lg object-cover"
+                      preload="metadata"
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  )}
                 </div>
               </div>
             </div>

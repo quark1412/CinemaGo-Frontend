@@ -29,12 +29,13 @@
   },
   "sidebar": {
     "dashboard": "Bảng điều khiển",
-    "movies": "Phim",
-    "genres": "Thể loại",
-    "cinemas": "Rạp chiếu phim",
-    "reviews": "Đánh giá",
-    "users": "Người dùng",
-    "foodDrinks": "Đồ ăn & Đồ uống",
+    "movies": "Quản lý phim",
+    "genres": "Quản lý thể loại",
+    "cinemas": "Quản lý rạp",
+    "reviews": "Quản lý đánh giá",
+    "showtimes": "Quản lý lịch chiếu",
+    "users": "Quản lý người dùng",
+    "foodDrinks": "Quản lý đồ ăn & đồ uống",
     "report": "Báo cáo"
   },
   "auth": {

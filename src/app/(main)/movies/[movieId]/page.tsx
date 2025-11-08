@@ -3,47 +3,33 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import {
-  ArrowLeft,
-  Clock,
-  Calendar,
-  Star,
-  Tag,
-  Plus,
-  Loader2,
-} from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Star, Tag, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 import { Movie } from "@/types/movie";
-import { Showtime } from "@/types/showtime";
 import { getMovieById } from "@/services/movies";
-import { getShowtimes, GetShowtimesParams } from "@/services/showtimes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { formatTime, formatDate } from "@/lib/utils";
-import { ShowtimesDataTable } from "./showtimes-data-table";
-import { ShowtimeDialog } from "./showtime-dialog";
+import {
+  formatTime,
+  formatDate,
+  convertToEmbedUrl,
+  isVideoPlatformUrl,
+} from "@/lib/utils";
 
 export default function MovieDetailsPage() {
   const params = useParams();
   const movieId = params.movieId as string;
 
   const [movie, setMovie] = useState<Movie | null>(null);
-  const [showtimes, setShowtimes] = useState<Showtime[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showtimesLoading, setShowtimesLoading] = useState(false);
-  const [showtimeDialogOpen, setShowtimeDialogOpen] = useState(false);
-  const [editingShowtime, setEditingShowtime] = useState<
-    Showtime | undefined
-  >();
 
   useEffect(() => {
     if (movieId) {
       fetchMovieDetails();
-      fetchShowtimes();
     }
   }, [movieId]);
 
@@ -51,37 +37,13 @@ export default function MovieDetailsPage() {
     try {
       setLoading(true);
       const response = await getMovieById(movieId);
+      console.log(response.data);
       setMovie(response.data);
     } catch (error: any) {
       toast.error("Failed to fetch movie details");
       console.error("Error fetching movie:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchShowtimes = async () => {
-    try {
-      setShowtimesLoading(true);
-      const response = await getShowtimes({ movieId, limit: 100 });
-      setShowtimes(response.data);
-    } catch (error: any) {
-      toast.error("Failed to fetch showtimes");
-      console.error("Error fetching showtimes:", error);
-    } finally {
-      setShowtimesLoading(false);
-    }
-  };
-
-  const handleEditShowtime = (showtime: Showtime) => {
-    setEditingShowtime(showtime);
-    setShowtimeDialogOpen(true);
-  };
-
-  const handleCloseDialog = (open: boolean) => {
-    setShowtimeDialogOpen(open);
-    if (!open) {
-      setEditingShowtime(undefined);
     }
   };
 
@@ -179,14 +141,23 @@ export default function MovieDetailsPage() {
             </CardHeader>
             <CardContent>
               <div className="relative aspect-video w-full">
-                <video
-                  src={movie.trailerUrl}
-                  controls
-                  className="w-full h-full rounded-lg object-cover"
-                  preload="metadata"
-                >
-                  Your browser does not support the video tag.
-                </video>
+                {movie.trailerUrl && isVideoPlatformUrl(movie.trailerUrl) ? (
+                  <iframe
+                    src={convertToEmbedUrl(movie.trailerUrl)}
+                    className="w-full h-full rounded-lg"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    src={movie.trailerUrl}
+                    controls
+                    className="w-full h-full rounded-lg object-cover"
+                    preload="metadata"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -230,43 +201,6 @@ export default function MovieDetailsPage() {
           </Card>
         </div>
       </div>
-
-      {/* Showtimes Management */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Showtimes Management</CardTitle>
-            <Button onClick={() => setShowtimeDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Showtime
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {showtimesLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span className="ml-2">Loading showtimes...</span>
-            </div>
-          ) : (
-            <ShowtimesDataTable
-              data={showtimes}
-              onRefresh={fetchShowtimes}
-              onEdit={handleEditShowtime}
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Showtime Dialog */}
-      <ShowtimeDialog
-        open={showtimeDialogOpen}
-        onOpenChange={handleCloseDialog}
-        movieId={movieId}
-        movie={movie}
-        showtime={editingShowtime}
-        onSuccess={fetchShowtimes}
-      />
     </div>
   );
 }

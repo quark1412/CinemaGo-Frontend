@@ -64,7 +64,8 @@ export const createMovie = async (movieData: {
   duration: number;
   genres: string[];
   thumbnail: File;
-  trailer: File;
+  trailer?: File;
+  trailerPath?: string;
 }) => {
   try {
     const formData = new FormData();
@@ -76,7 +77,12 @@ export const createMovie = async (movieData: {
     formData.append("genresIds", movieData.genres.join(","));
 
     formData.append("thumbnail", movieData.thumbnail);
-    formData.append("trailer", movieData.trailer);
+
+    if (movieData.trailer) {
+      formData.append("trailer", movieData.trailer);
+    } else if (movieData.trailerPath) {
+      formData.append("trailerPath", movieData.trailerPath);
+    }
 
     const response = await instance.post("/movies", formData, {
       headers: {
@@ -105,6 +111,7 @@ export const updateMovie = async (
     genresIds: string;
     thumbnail?: File;
     trailer?: File;
+    trailerPath?: string;
   }
 ): Promise<{ data: Movie }> => {
   try {
@@ -119,8 +126,11 @@ export const updateMovie = async (
     if (movieData.thumbnail) {
       formData.append("thumbnail", movieData.thumbnail);
     }
+
     if (movieData.trailer) {
       formData.append("trailer", movieData.trailer);
+    } else if (movieData.trailerPath) {
+      formData.append("trailerPath", movieData.trailerPath);
     }
 
     const response = await instance.put(`/movies/${id}`, formData, {

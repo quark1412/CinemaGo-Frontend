@@ -13,18 +13,3 @@ export interface Showtime {
   createdAt: string;
   updatedAt: string;
 }
-
-export interface Room {
-  id: string;
-  name: string;
-  cinemaId: string;
-  capacity: number;
-  isActive: boolean;
-}
-
-export interface Cinema {
-  id: string;
-  name: string;
-  location: string;
-  isActive: boolean;
-}

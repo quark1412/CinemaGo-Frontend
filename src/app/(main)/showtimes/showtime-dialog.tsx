@@ -50,13 +50,16 @@ import {
   getBusyRoomIds,
 } from "@/services/showtimes";
 import { getAllRooms, getAllCinemas } from "@/services/cinemas";
+import { getAllMovies, getMovieById } from "@/services/movies";
 import { Showtime } from "@/types/showtime";
 import { Room, Cinema } from "@/types/cinema";
 import { Movie } from "@/types/movie";
 import { LANGUAGES, FORMATS } from "@/lib/constants";
 import { Plus, X } from "lucide-react";
+import { MovieSelector } from "@/components/movie-selector";
 
 const showtimeSchema = z.object({
+  movieId: z.string().min(1, "Movie is required"),
   cinemaId: z.string().min(1, "Cinema is required"),
   roomId: z.string().min(1, "Room is required"),
   startDate: z.date({
@@ -74,8 +77,8 @@ type ShowtimeFormData = z.infer<typeof showtimeSchema>;
 interface ShowtimeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  movieId: string;
-  movie: Movie;
+  movieId?: string;
+  movie?: Movie;
   showtime?: Showtime;
   onSuccess: () => void;
 }
@@ -91,8 +94,11 @@ export function ShowtimeDialog({
   const [loading, setLoading] = useState(false);
   const [cinemasLoading, setCinemasLoading] = useState(false);
   const [roomsLoading, setRoomsLoading] = useState(false);
+  const [moviesLoading, setMoviesLoading] = useState(false);
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [selectedCinemaId, setSelectedCinemaId] = useState<string>("");
   const [startTimes, setStartTimes] = useState<string[]>(["09:00"]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -101,6 +107,7 @@ export function ShowtimeDialog({
   const form = useForm<ShowtimeFormData>({
     resolver: zodResolver(showtimeSchema),
     defaultValues: {
+      movieId: movieId || "",
       cinemaId: "",
       roomId: "",
       startDate: new Date(),
@@ -174,11 +181,41 @@ export function ShowtimeDialog({
     }
   }, []);
 
+  const fetchMovie = useCallback(async (movieId: string) => {
+    try {
+      setMoviesLoading(true);
+      const response = await getMovieById(movieId);
+      setSelectedMovie(response.data);
+    } catch (error: any) {
+      toast.error("Failed to fetch movie");
+      console.error("Error fetching movie:", error);
+    } finally {
+      setMoviesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (open) {
       fetchCinemas();
+      // Initialize movie
+      if (movieId && movie) {
+        setSelectedMovie(movie);
+        form.setValue("movieId", movieId);
+      } else if (movieId && !movie) {
+        fetchMovie(movieId);
+        form.setValue("movieId", movieId);
+      } else if (showtime?.movieId) {
+        fetchMovie(showtime.movieId);
+        form.setValue("movieId", showtime.movieId);
+      }
     }
-  }, [open, fetchCinemas]);
+  }, [open, fetchCinemas, movieId, movie, showtime, fetchMovie, form]);
+
+  useEffect(() => {
+    if (!open) {
+      setValidationErrors([]);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (showtime && open) {
@@ -189,6 +226,7 @@ export function ShowtimeDialog({
       fetchRooms(showtime.cinemaId);
 
       form.reset({
+        movieId: showtime.movieId,
         cinemaId: showtime.cinemaId,
         roomId: showtime.roomId,
         startDate,
@@ -204,6 +242,7 @@ export function ShowtimeDialog({
       setRooms([]);
       setStartTimes(["09:00"]);
       form.reset({
+        movieId: movieId || "",
         cinemaId: "",
         roomId: "",
         startDate: new Date(),
@@ -213,6 +252,9 @@ export function ShowtimeDialog({
         subtitle: false,
         format: "2D",
       });
+      if (!movieId) {
+        setSelectedMovie(null);
+      }
     }
   }, [showtime, open]);
 
@@ -268,6 +310,20 @@ export function ShowtimeDialog({
     [startTimes, form, validationErrors.length]
   );
 
+  const handleMovieChange = useCallback(
+    async (movieIds: string[]) => {
+      const selectedMovieId = movieIds[0];
+      if (selectedMovieId) {
+        form.setValue("movieId", selectedMovieId);
+        await fetchMovie(selectedMovieId);
+      } else {
+        form.setValue("movieId", "");
+        setSelectedMovie(null);
+      }
+    },
+    [form, fetchMovie]
+  );
+
   const calculateEndTime = (startTime: string, duration: number) => {
     const [hours, minutes] = startTime.split(":").map(Number);
     const startMinutes = hours * 60 + minutes;
@@ -305,10 +361,11 @@ export function ShowtimeDialog({
     // Check for overlaps within the new showtimes
     for (let i = 0; i < data.startTimes.length; i++) {
       for (let j = i + 1; j < data.startTimes.length; j++) {
+        if (!selectedMovie) return errors;
         const startTime1 = data.startTimes[i];
-        const endTime1 = calculateEndTime(startTime1, movie.duration);
+        const endTime1 = calculateEndTime(startTime1, selectedMovie.duration);
         const startTime2 = data.startTimes[j];
-        const endTime2 = calculateEndTime(startTime2, movie.duration);
+        const endTime2 = calculateEndTime(startTime2, selectedMovie.duration);
 
         if (checkTimeOverlap(startTime1, endTime1, startTime2, endTime2)) {
           errors.push(
@@ -323,12 +380,13 @@ export function ShowtimeDialog({
       try {
         const startDate = data.startDate;
 
+        if (!selectedMovie) return errors;
         for (const startTime of data.startTimes) {
           const [startHours, startMinutes] = startTime.split(":").map(Number);
           const startDateTime = new Date(startDate);
           startDateTime.setHours(startHours, startMinutes, 0, 0);
 
-          const endTime = calculateEndTime(startTime, movie.duration);
+          const endTime = calculateEndTime(startTime, selectedMovie.duration);
           const [endHours, endMinutes] = endTime.split(":").map(Number);
           const endDateTime = new Date(startDate);
           endDateTime.setHours(endHours, endMinutes, 0, 0);
@@ -373,13 +431,20 @@ export function ShowtimeDialog({
         const startDateTime = new Date(data.startDate);
         startDateTime.setHours(startHours, startMinutes, 0, 0);
 
-        const endTime = calculateEndTime(data.startTimes[0], movie.duration);
+        if (!selectedMovie) {
+          toast.error("Please select a movie");
+          return;
+        }
+        const endTime = calculateEndTime(
+          data.startTimes[0],
+          selectedMovie.duration
+        );
         const [endHours, endMinutes] = endTime.split(":").map(Number);
         const endDateTime = new Date(data.startDate);
         endDateTime.setHours(endHours, endMinutes, 0, 0);
 
         const requestData = {
-          movieId,
+          movieId: data.movieId,
           roomId: data.roomId,
           startTime: startDateTime.toISOString(),
           endTime: endDateTime.toISOString(),
@@ -398,13 +463,17 @@ export function ShowtimeDialog({
           const startDateTime = new Date(data.startDate);
           startDateTime.setHours(startHours, startMinutes, 0, 0);
 
-          const endTime = calculateEndTime(startTime, movie.duration);
+          if (!selectedMovie) {
+            toast.error("Please select a movie");
+            return;
+          }
+          const endTime = calculateEndTime(startTime, selectedMovie.duration);
           const [endHours, endMinutes] = endTime.split(":").map(Number);
           const endDateTime = new Date(data.startDate);
           endDateTime.setHours(endHours, endMinutes, 0, 0);
 
           const requestData = {
-            movieId,
+            movieId: data.movieId,
             roomId: data.roomId,
             startTime: startDateTime.toISOString(),
             endTime: endDateTime.toISOString(),
@@ -445,12 +514,32 @@ export function ShowtimeDialog({
           <DialogDescription>
             {isEditing
               ? "Update the showtime details below."
-              : "Fill in the details to create a new showtime for this movie."}
+              : "Fill in the details to create a new showtime."}
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Movie Selection */}
+            <FormField
+              control={form.control}
+              name="movieId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Movie</FormLabel>
+                  <FormControl>
+                    <MovieSelector
+                      value={field.value ? [field.value] : []}
+                      onValueChange={handleMovieChange}
+                      placeholder="Select a movie"
+                      disabled={isEditing || !!movieId}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Cinema Selection */}
             <FormField
               control={form.control}
@@ -653,7 +742,9 @@ export function ShowtimeDialog({
                 </Button>
               </div>
               {startTimes.map((time, index) => {
-                const endTime = calculateEndTime(time, movie.duration);
+                const endTime = selectedMovie
+                  ? calculateEndTime(time, selectedMovie.duration)
+                  : "";
                 return (
                   <div key={index} className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -675,9 +766,12 @@ export function ShowtimeDialog({
                         </Button>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground ml-2">
-                      Duration: {movie.duration} min • Ends at: {endTime}
-                    </div>
+                    {selectedMovie && (
+                      <div className="text-xs text-muted-foreground ml-2">
+                        Duration: {selectedMovie.duration} min • Ends at:{" "}
+                        {endTime}
+                      </div>
+                    )}
                   </div>
                 );
               })}

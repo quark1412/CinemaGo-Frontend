@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Movie } from "@/types/movie";
 import { DataTable } from "./data-table";
@@ -14,6 +15,7 @@ import {
 } from "@/hooks/use-movies";
 
 export default function AllMovies() {
+  const router = useRouter();
   const [confirmationDialog, setConfirmationDialog] = useState<{
     open: boolean;
     movie: Movie | null;
@@ -36,7 +38,9 @@ export default function AllMovies() {
   const archiveMutation = useArchiveMovie();
   const restoreMutation = useRestoreMovie();
 
-  const handleEditClick = (movie: Movie) => {};
+  const handleEditClick = (movie: Movie) => {
+    router.push(`/movies/${movie.id}/edit`);
+  };
 
   const handleArchiveClick = (movie: Movie) => {
     setConfirmationDialog({
@@ -68,9 +72,7 @@ export default function AllMovies() {
         movie: null,
         action: "archive",
       });
-    } catch (error) {
-      // Error handling is done in the mutation hooks
-    }
+    } catch (error) {}
   };
 
   const handlePaginationChange = (page: number, pageSize: number) => {
@@ -85,7 +87,6 @@ export default function AllMovies() {
     const newFilters = { ...filters, [filterType]: value };
     setFilters(newFilters);
 
-    // Convert filter values to the correct format for the API
     const apiParams: GetMoviesParams = {
       ...currentParams,
       page: 1,

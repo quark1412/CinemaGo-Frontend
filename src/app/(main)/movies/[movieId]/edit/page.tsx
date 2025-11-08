@@ -10,9 +10,10 @@ import {
 } from "@/components/ui/breadcrumb";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, Loader2 } from "lucide-react";
 import Image from "next/image";
 
 import { z } from "zod";
@@ -28,21 +29,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { createMovie } from "@/services/movies";
+import { getMovieById, updateMovie } from "@/services/movies";
 import { GenreSelector } from "@/components/genre-selector";
+import { Movie } from "@/types/movie";
+import { Genre } from "@/types/genre";
 import { convertToEmbedUrl } from "@/lib/utils";
 
 const formSchema = z.object({
-  thumbnail: z.string().min(1, { message: "Thumbnail is required" }),
+  thumbnail: z.string().optional(),
   title: z.string().min(1, { message: "Title is required" }),
   description: z.string().min(1, { message: "Description is required" }),
   duration: z
@@ -55,8 +51,16 @@ const formSchema = z.object({
   trailerUrl: z.string().optional(),
 });
 
-export default function CreateMovie() {
+export default function EditMoviePage() {
+  const params = useParams();
+  const router = useRouter();
+  const movieId = params.movieId as string;
+
+  const [movie, setMovie] = useState<Movie | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [trailerMode, setTrailerMode] = useState<"file" | "url">("file");
+
   const [thumbnail, setThumbnail] = useState<{
     imagePath: string;
     imageFile: File | null;
@@ -76,15 +80,68 @@ export default function CreateMovie() {
       duration: undefined,
       genres: [],
       trailer: "",
-      trailerUrl: "",
     },
     mode: "onSubmit",
     reValidateMode: "onSubmit",
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  useEffect(() => {
+    if (movieId) {
+      fetchMovie();
+    }
+  }, [movieId]);
+
+  const fetchMovie = async () => {
+    try {
+      setLoading(true);
+      const response = await getMovieById(movieId);
+      const movieData = response.data;
+      setMovie(movieData);
+
+      const isTrailerUrl =
+        movieData.trailerUrl &&
+        (movieData.trailerUrl.startsWith("http") ||
+          movieData.trailerUrl.startsWith("<iframe"));
+
+      form.reset({
+        thumbnail: movieData.thumbnail,
+        title: movieData.title,
+        description: movieData.description,
+        duration: movieData.duration,
+        genres: movieData.genres.map((g: Genre) => g.id),
+        trailer: isTrailerUrl ? "" : movieData.trailerUrl,
+        trailerUrl: isTrailerUrl ? movieData.trailerUrl : "",
+      });
+
+      setThumbnail({
+        imagePath: movieData.thumbnail,
+        imageFile: null,
+      });
+
+      if (isTrailerUrl) {
+        setTrailerMode("url");
+        setTrailer(null);
+      } else {
+        setTrailerMode("file");
+        setTrailer({
+          videoPath: movieData.trailerUrl,
+          videoFile: null,
+        });
+      }
+    } catch (error: any) {
+      toast.error("Failed to fetch movie details");
+      console.error("Error fetching movie:", error);
+      router.push("/movies");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!movie) return;
+
     if (trailerMode === "file") {
-      if (!trailer?.videoFile) {
+      if (!trailer?.videoFile && !trailer?.videoPath) {
         toast.error("Please upload a trailer file or switch to URL mode");
         return;
       }
@@ -95,45 +152,49 @@ export default function CreateMovie() {
       }
     }
 
-    const movieData: {
-      title: string;
-      description: string;
-      duration: number;
-      genres: string[];
-      thumbnail: File;
-      trailer?: File;
-      trailerPath?: string;
-    } = {
-      title: values.title,
-      description: values.description,
-      duration: values.duration,
-      genres: values.genres,
-      thumbnail: thumbnail?.imageFile as File,
-    };
+    try {
+      setSubmitting(true);
 
-    if (trailerMode === "file" && trailer?.videoFile) {
-      movieData.trailer = trailer.videoFile;
-    } else if (trailerMode === "url" && values.trailerUrl) {
-      movieData.trailerPath = values.trailerUrl;
+      const updateData: {
+        title: string;
+        description: string;
+        duration: number;
+        releaseDate: string;
+        genresIds: string;
+        thumbnail?: File;
+        trailer?: File;
+        trailerPath?: string;
+      } = {
+        title: values.title,
+        description: values.description,
+        duration: values.duration,
+        releaseDate:
+          movie.releaseDate instanceof Date
+            ? movie.releaseDate.toISOString()
+            : new Date(movie.releaseDate).toISOString(),
+        genresIds: values.genres.join(","),
+        thumbnail: thumbnail?.imageFile || undefined,
+      };
+
+      if (trailerMode === "file" && trailer?.videoFile) {
+        updateData.trailer = trailer.videoFile;
+      } else if (trailerMode === "url" && values.trailerUrl) {
+        updateData.trailerPath = values.trailerUrl;
+      }
+
+      await updateMovie(movieId, updateData);
+      toast.success("Movie updated successfully");
+      router.push(`/movies/${movieId}`);
+    } catch (error: any) {
+      console.error("Update movie error:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update movie";
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
     }
-
-    createMovie(movieData)
-      .then(() => {
-        toast.success("Movie created successfully");
-        form.reset();
-        setThumbnail(null);
-        setTrailer(null);
-        setTrailerMode("file");
-        form.setValue("trailerUrl", "");
-      })
-      .catch((error) => {
-        console.error("Create movie error:", error);
-        const message =
-          error.response?.data?.message ||
-          error.message ||
-          "Failed to create movie";
-        toast.error(message);
-      });
   };
 
   const handleTrailerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,6 +225,26 @@ export default function CreateMovie() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading movie details...</span>
+      </div>
+    );
+  }
+
+  if (!movie) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Movie not found.</p>
+        <Link href="/movies">
+          <Button className="mt-4">Back to Movies</Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Breadcrumb>
@@ -175,7 +256,13 @@ export default function CreateMovie() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Create movie</BreadcrumbPage>
+            <BreadcrumbLink asChild>
+              <Link href={`/movies/${movieId}`}>{movie.title}</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Edit movie</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -187,7 +274,10 @@ export default function CreateMovie() {
               {/* Trailer Upload/URL */}
               <FormItem className="flex-2 min-w-64">
                 <FormLabel>
-                  Trailer <span className="text-xs text-red-500">*</span>
+                  Trailer{" "}
+                  <span className="text-xs text-muted-foreground">
+                    (Optional)
+                  </span>
                 </FormLabel>
                 <Tabs
                   value={trailerMode}
@@ -245,15 +335,17 @@ export default function CreateMovie() {
                                       />
                                       <div className="text-center">
                                         <p className="text-sm font-semibold text-gray-700">
-                                          {trailer.videoFile?.name}
+                                          {trailer.videoFile?.name ||
+                                            "Current trailer"}
                                         </p>
-                                        <p className="text-xs text-gray-500">
-                                          {trailer.videoFile &&
-                                            `${(
+                                        {trailer.videoFile && (
+                                          <p className="text-xs text-gray-500">
+                                            {`${(
                                               trailer.videoFile.size /
                                               (1024 * 1024)
                                             ).toFixed(2)} MB`}
-                                        </p>
+                                          </p>
+                                        )}
                                       </div>
                                       <p className="text-xs text-primary">
                                         Click to change
@@ -308,7 +400,10 @@ export default function CreateMovie() {
                 render={({ field }) => (
                   <FormItem className="flex-[1] min-w-64">
                     <FormLabel>
-                      Thumbnail <span className="text-xs text-red-500">*</span>
+                      Thumbnail{" "}
+                      <span className="text-xs text-muted-foreground">
+                        (Optional)
+                      </span>
                     </FormLabel>
                     <FormControl>
                       <div>
@@ -455,14 +550,19 @@ export default function CreateMovie() {
               <Button
                 type="submit"
                 className="bg-primary text-primary-foreground hover:cursor-pointer hover:bg-primary/90"
-                onClick={() => {
-                  form.handleSubmit(onSubmit)();
-                }}
+                disabled={submitting}
               >
-                Add movie
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update movie"
+                )}
               </Button>
               <Button type="button" variant="outline" asChild>
-                <Link href="/movies">Cancel</Link>
+                <Link href={`/movies/${movieId}`}>Cancel</Link>
               </Button>
             </div>
           </form>

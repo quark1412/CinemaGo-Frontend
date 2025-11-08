@@ -17,7 +17,7 @@ export interface Room {
   cinemaId: string;
   cinema?: Cinema;
   totalSeats: number;
-  seatLayout: any; // JSON data for seat layout
+  seatLayout: any;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
