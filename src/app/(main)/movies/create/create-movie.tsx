@@ -193,6 +193,13 @@ export default function CreateMovie() {
                   value={trailerMode}
                   onValueChange={(value) => {
                     setTrailerMode(value as "file" | "url");
+                    if (value === "file") {
+                      form.setValue("trailerUrl", "");
+                      setTrailer(null);
+                    } else {
+                      form.setValue("trailer", "");
+                      setTrailer(null);
+                    }
                   }}
                   className="w-full"
                 >

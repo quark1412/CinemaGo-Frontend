@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import dayjs from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import {
@@ -50,6 +50,18 @@ import {
 import { Loader2 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
 import ReportChart from "@/components/report-chart";
+import { LineChart } from "@/components/line-chart";
+import { BarChart } from "@/components/bar-chart";
+import { MonthPicker } from "@/components/month-picker";
+import { YearPicker } from "@/components/year-picker";
+import {
+  useRevenueByType,
+  useRevenueByCinema,
+  useRevenueByMovie,
+  useAvailableCinemas,
+  useAvailableMovies,
+} from "@/hooks/use-report";
+import { getMockRevenueData } from "@/lib/mock-revenue-data";
 
 // Dynamically import ExcelJS and file-saver to reduce initial bundle size
 const loadExcelExport = async () => {
@@ -78,6 +90,9 @@ export default function ReportPage() {
   const [selectedView, setSelectedView] = useState<ViewType>("week");
   const [currentPage, setCurrentPage] = useState(1);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedCinemaId, setSelectedCinemaId] = useState<string>("all");
+  const [selectedMovieId, setSelectedMovieId] = useState<string>("all");
+  const [calendarMonth, setCalendarMonth] = useState<Date>(dayjs().toDate());
 
   const year = selectedDate.year();
   const month = selectedDate.month() + 1;
@@ -92,6 +107,33 @@ export default function ReportPage() {
   );
   const { data: yearlyData, isLoading: yearlyLoading } = useYearlyReport(
     selectedView === "year" ? year : dayjs().year()
+  );
+
+  // Fetch data for the 4 charts
+  const { data: offlineRevenueData, isLoading: offlineLoading } =
+    useRevenueByType(selectedView, selectedDate, "offline");
+  const { data: onlineRevenueData, isLoading: onlineLoading } =
+    useRevenueByType(selectedView, selectedDate, "online");
+  const { data: cinemaRevenueData, isLoading: cinemaLoading } =
+    useRevenueByCinema(
+      selectedView,
+      selectedDate,
+      selectedCinemaId === "all" ? undefined : selectedCinemaId
+    );
+  const { data: movieRevenueData, isLoading: movieLoading } = useRevenueByMovie(
+    selectedView,
+    selectedDate,
+    selectedMovieId === "all" ? undefined : selectedMovieId
+  );
+
+  // Fetch available cinemas and movies for dropdowns
+  const { data: availableCinemas } = useAvailableCinemas(
+    selectedView,
+    selectedDate
+  );
+  const { data: availableMovies } = useAvailableMovies(
+    selectedView,
+    selectedDate
   );
 
   const getCurrentDateRange = (date: dayjs.Dayjs): string => {
@@ -159,6 +201,74 @@ export default function ReportPage() {
     }
   }, [statistics, selectedView]);
 
+  // Combine offline and online data for grouped bar chart with ticket and food/drink separated
+  const offlineOnlineChartData = useMemo(() => {
+    if (!offlineRevenueData || !onlineRevenueData) {
+      return [];
+    }
+
+    // Create a map to combine data by time
+    const dataMap = new Map<
+      string,
+      {
+        offlineTicket: number;
+        offlineFoodDrink: number;
+        onlineTicket: number;
+        onlineFoodDrink: number;
+      }
+    >();
+
+    // Add offline data
+    offlineRevenueData.forEach((item) => {
+      dataMap.set(item.time, {
+        offlineTicket: item.ticketRevenue,
+        offlineFoodDrink: item.foodDrinkRevenue,
+        onlineTicket: 0,
+        onlineFoodDrink: 0,
+      });
+    });
+
+    // Add online data
+    onlineRevenueData.forEach((item) => {
+      const existing = dataMap.get(item.time);
+      if (existing) {
+        existing.onlineTicket = item.ticketRevenue;
+        existing.onlineFoodDrink = item.foodDrinkRevenue;
+      } else {
+        dataMap.set(item.time, {
+          offlineTicket: 0,
+          offlineFoodDrink: 0,
+          onlineTicket: item.ticketRevenue,
+          onlineFoodDrink: item.foodDrinkRevenue,
+        });
+      }
+    });
+
+    // Convert map to array and sort by time
+    return Array.from(dataMap.entries())
+      .map(([time, values]) => ({
+        time,
+        offlineTicket: values.offlineTicket,
+        offlineFoodDrink: values.offlineFoodDrink,
+        onlineTicket: values.onlineTicket,
+        onlineFoodDrink: values.onlineFoodDrink,
+      }))
+      .sort((a, b) => a.time.localeCompare(b.time));
+  }, [offlineRevenueData, onlineRevenueData]);
+
+  // Use mock data if real data is not available (for testing/visualization)
+  const useMockData = true; // Set to true to test with mock data
+  const chartDataToDisplay = useMemo(() => {
+    if (useMockData) {
+      return getMockRevenueData(selectedView);
+    }
+    // Fallback to mock data if real data is empty (for visualization purposes)
+    if (offlineOnlineChartData.length === 0) {
+      return getMockRevenueData(selectedView);
+    }
+    return offlineOnlineChartData;
+  }, [useMockData, selectedView, offlineOnlineChartData]);
+
   const currentStatistics = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return statistics.slice(start, start + ITEMS_PER_PAGE);
@@ -166,309 +276,371 @@ export default function ReportPage() {
 
   const totalPages = Math.ceil(statistics.length / ITEMS_PER_PAGE);
 
+  const handleDateChange = (
+    date: Date | Date[] | { from: Date; to?: Date } | undefined
+  ) => {
+    if (!date) {
+      setCalendarOpen(false);
+      return;
+    }
+
+    let adjustedDate: dayjs.Dayjs;
+
+    if (selectedView === "week") {
+      // For week view, date comes as a range
+      if (Array.isArray(date)) {
+        adjustedDate = dayjs(date[0]);
+      } else if (typeof date === "object" && "from" in date) {
+        adjustedDate = dayjs(date.from);
+      } else {
+        adjustedDate = dayjs(date as Date);
+      }
+      // Set to start of week (Monday)
+      adjustedDate = adjustedDate.startOf("week").add(1, "day");
+    } else if (selectedView === "month") {
+      // For month/year views, date comes as single date
+      const dateObj = Array.isArray(date)
+        ? date[0]
+        : typeof date === "object" && "from" in date
+        ? date.from
+        : (date as Date);
+      adjustedDate = dayjs(dateObj).startOf("month");
+    } else if (selectedView === "year") {
+      const dateObj = Array.isArray(date)
+        ? date[0]
+        : typeof date === "object" && "from" in date
+        ? date.from
+        : (date as Date);
+      adjustedDate = dayjs(dateObj).startOf("year");
+    } else {
+      const dateObj = Array.isArray(date)
+        ? date[0]
+        : typeof date === "object" && "from" in date
+        ? date.from
+        : (date as Date);
+      adjustedDate = dayjs(dateObj);
+    }
+
+    setSelectedDate(adjustedDate);
+    setCurrentPage(1);
+    setSelectedCinemaId("all");
+    setSelectedMovieId("all");
+    setCalendarOpen(false);
+  };
+
+  // Calculate week range for week view
+  const weekRange = useMemo(() => {
+    if (selectedView === "week") {
+      const weekStart = selectedDate.startOf("week").add(1, "day");
+      const weekEnd = weekStart.add(6, "days");
+      return {
+        from: weekStart.toDate(),
+        to: weekEnd.toDate(),
+      };
+    }
+    return undefined;
+  }, [selectedView, selectedDate]);
+
   const handleViewChange = (value: ViewType) => {
     setSelectedView(value);
     setCurrentPage(1);
     setCalendarOpen(false);
+    setSelectedCinemaId("all");
+    setSelectedMovieId("all");
+    setCalendarMonth(selectedDate.toDate());
   };
 
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setSelectedDate(dayjs(date));
-      setCurrentPage(1);
+  useEffect(() => {
+    if (calendarOpen && selectedView === "week") {
+      setCalendarMonth(selectedDate.toDate());
     }
-    setCalendarOpen(false);
-  };
+  }, [calendarOpen, selectedView, selectedDate]);
 
-  const handleExportReport = async () => {
-    if (!statistics.length) return;
+  // const handleExportReport = async () => {
+  //   if (!statistics.length) return;
 
-    // Dynamically load ExcelJS and file-saver
-    const { ExcelJS, saveAs } = await loadExcelExport();
+  //   const { ExcelJS, saveAs } = await loadExcelExport();
 
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet(t("report.excel.worksheetName"));
+  //   const workbook = new ExcelJS.Workbook();
+  //   const worksheet = workbook.addWorksheet(t("report.excel.worksheetName"));
 
-    // Merge cells for title
-    worksheet.mergeCells("A2:D2");
-    const reportCell = worksheet.getCell("A2");
-    if (selectedView === "month") {
-      reportCell.value = `${t("report.excel.month")}: ${month}/${year}`;
-    } else if (selectedView === "year") {
-      reportCell.value = `${t("report.excel.year")}: ${year}`;
-    } else {
-      reportCell.value = `${t("report.excel.week")}: ${getCurrentDateRange(
-        selectedDate
-      )}`;
-    }
-    reportCell.font = { bold: true, size: 14 };
-    reportCell.alignment = { vertical: "middle", horizontal: "center" };
+  //   // Merge cells for title
+  //   worksheet.mergeCells("A2:D2");
+  //   const reportCell = worksheet.getCell("A2");
+  //   if (selectedView === "month") {
+  //     reportCell.value = `${t("report.excel.month")}: ${month}/${year}`;
+  //   } else if (selectedView === "year") {
+  //     reportCell.value = `${t("report.excel.year")}: ${year}`;
+  //   } else {
+  //     reportCell.value = `${t("report.excel.week")}: ${getCurrentDateRange(
+  //       selectedDate
+  //     )}`;
+  //   }
+  //   reportCell.font = { bold: true, size: 14 };
+  //   reportCell.alignment = { vertical: "middle", horizontal: "center" };
 
-    // Headers
-    worksheet.getRow(3).values = [
-      t("report.no"),
-      t("report.date"),
-      t("report.ticketRevenue"),
-      t("report.foodDrinkRevenue"),
-      t("report.totalRevenue"),
-    ];
-    const headerRow = worksheet.getRow(3);
-    headerRow.eachCell((cell) => {
-      cell.font = { bold: true };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFCCEEFF" },
-      };
-      cell.alignment = { horizontal: "left" };
-      cell.border = {
-        top: { style: "thin", color: { argb: "FF000000" } },
-        left: { style: "thin", color: { argb: "FF000000" } },
-        right: { style: "thin", color: { argb: "FF000000" } },
-        bottom: { style: "thin", color: { argb: "FF000000" } },
-      };
-    });
+  //   // Headers
+  //   worksheet.getRow(3).values = [
+  //     t("report.no"),
+  //     t("report.date"),
+  //     t("report.ticketRevenue"),
+  //     t("report.foodDrinkRevenue"),
+  //     t("report.totalRevenue"),
+  //   ];
+  //   const headerRow = worksheet.getRow(3);
+  //   headerRow.eachCell((cell) => {
+  //     cell.font = { bold: true };
+  //     cell.fill = {
+  //       type: "pattern",
+  //       pattern: "solid",
+  //       fgColor: { argb: "FFCCEEFF" },
+  //     };
+  //     cell.alignment = { horizontal: "left" };
+  //     cell.border = {
+  //       top: { style: "thin", color: { argb: "FF000000" } },
+  //       left: { style: "thin", color: { argb: "FF000000" } },
+  //       right: { style: "thin", color: { argb: "FF000000" } },
+  //       bottom: { style: "thin", color: { argb: "FF000000" } },
+  //     };
+  //   });
 
-    // Data rows
-    statistics.forEach((stat, index) => {
-      let timeLabel: string;
-      if (selectedView === "year") {
-        timeLabel = `${stat.month}/${stat.year}`;
-      } else if (hasDayProperty(stat)) {
-        timeLabel = `${stat.day}/${stat.month}/${stat.year}`;
-      } else {
-        timeLabel = `${stat.month}/${stat.year}`;
-      }
-      worksheet.addRow([
-        index + 1,
-        timeLabel,
-        stat.ticketRevenue,
-        stat.foodDrinkRevenue,
-        stat.totalRevenue,
-      ]);
-    });
+  //   // Data rows
+  //   statistics.forEach((stat, index) => {
+  //     let timeLabel: string;
+  //     if (selectedView === "year") {
+  //       timeLabel = `${stat.month}/${stat.year}`;
+  //     } else if (hasDayProperty(stat)) {
+  //       timeLabel = `${stat.day}/${stat.month}/${stat.year}`;
+  //     } else {
+  //       timeLabel = `${stat.month}/${stat.year}`;
+  //     }
+  //     worksheet.addRow([
+  //       index + 1,
+  //       timeLabel,
+  //       stat.ticketRevenue,
+  //       stat.foodDrinkRevenue,
+  //       stat.totalRevenue,
+  //     ]);
+  //   });
 
-    // Total row
-    const totalRowIndex = statistics.length + 4;
-    worksheet.mergeCells(`A${totalRowIndex}:B${totalRowIndex}`);
-    worksheet.getCell(`A${totalRowIndex}`).value = t("report.excel.total");
-    worksheet.getCell(`A${totalRowIndex}`).font = { bold: true };
-    worksheet.getCell(`C${totalRowIndex}`).value = totalTicketRevenue;
-    worksheet.getCell(`D${totalRowIndex}`).value = totalFoodDrinkRevenue;
-    worksheet.getCell(`E${totalRowIndex}`).value = totalRevenue;
-    worksheet.getRow(totalRowIndex).eachCell((cell) => {
-      cell.font = { bold: true };
-      cell.border = {
-        top: { style: "thin", color: { argb: "FF000000" } },
-        left: { style: "thin", color: { argb: "FF000000" } },
-        right: { style: "thin", color: { argb: "FF000000" } },
-        bottom: { style: "thin", color: { argb: "FF000000" } },
-      };
-    });
+  //   // Total row
+  //   const totalRowIndex = statistics.length + 4;
+  //   worksheet.mergeCells(`A${totalRowIndex}:B${totalRowIndex}`);
+  //   worksheet.getCell(`A${totalRowIndex}`).value = t("report.excel.total");
+  //   worksheet.getCell(`A${totalRowIndex}`).font = { bold: true };
+  //   worksheet.getCell(`C${totalRowIndex}`).value = totalTicketRevenue;
+  //   worksheet.getCell(`D${totalRowIndex}`).value = totalFoodDrinkRevenue;
+  //   worksheet.getCell(`E${totalRowIndex}`).value = totalRevenue;
+  //   worksheet.getRow(totalRowIndex).eachCell((cell) => {
+  //     cell.font = { bold: true };
+  //     cell.border = {
+  //       top: { style: "thin", color: { argb: "FF000000" } },
+  //       left: { style: "thin", color: { argb: "FF000000" } },
+  //       right: { style: "thin", color: { argb: "FF000000" } },
+  //       bottom: { style: "thin", color: { argb: "FF000000" } },
+  //     };
+  //   });
 
-    // Column widths
-    worksheet.columns = [
-      { key: "no", width: 5 },
-      { key: "date", width: 20 },
-      { key: "ticketRevenue", width: 20 },
-      { key: "foodDrinkRevenue", width: 20 },
-      { key: "totalRevenue", width: 25 },
-    ];
+  //   // Column widths
+  //   worksheet.columns = [
+  //     { key: "no", width: 5 },
+  //     { key: "date", width: 20 },
+  //     { key: "ticketRevenue", width: 20 },
+  //     { key: "foodDrinkRevenue", width: 20 },
+  //     { key: "totalRevenue", width: 25 },
+  //   ];
 
-    const fileName = `${t("report.excel.fileName")}${dayjs().format(
-      "YYYYMMDD"
-    )}.xlsx`;
-    workbook.xlsx.writeBuffer().then((buffer) => {
-      saveAs(new Blob([buffer]), fileName);
-    });
-  };
+  //   const fileName = `${t("report.excel.fileName")}${dayjs().format(
+  //     "YYYYMMDD"
+  //   )}.xlsx`;
+  //   workbook.xlsx.writeBuffer().then((buffer) => {
+  //     saveAs(new Blob([buffer]), fileName);
+  //   });
+  // };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-row gap-x-3 items-center flex-wrap">
-          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "font-semibold justify-start text-left",
-                  !selectedDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {getCurrentDateRange(selectedDate)}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+    <>
+      <div className="flex flex-row gap-x-3 items-center flex-wrap">
+        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "font-semibold justify-start text-left",
+                !selectedDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {getCurrentDateRange(selectedDate)}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            {selectedView === "week" ? (
               <Calendar
-                mode="single"
-                selected={selectedDate.toDate()}
-                onSelect={handleDateChange}
+                mode="range"
+                selected={weekRange || undefined}
+                month={calendarMonth}
+                onMonthChange={setCalendarMonth}
+                onSelect={(range) => {
+                  if (range?.from) {
+                    handleDateChange({
+                      from: range.from,
+                      to: range.to,
+                    });
+                  }
+                }}
                 autoFocus
+                captionLayout="label"
+                weekStartsOn={1}
+                numberOfMonths={1}
               />
-            </PopoverContent>
-          </Popover>
+            ) : selectedView === "month" ? (
+              <MonthPicker
+                selectedDate={selectedDate}
+                onSelect={(date) => handleDateChange(date)}
+                currentYear={year}
+                onYearChange={(newYear) => {
+                  const newDate = dayjs(`${newYear}-${month}-1`);
+                  handleDateChange(newDate.toDate());
+                }}
+              />
+            ) : (
+              <YearPicker
+                selectedDate={selectedDate}
+                onSelect={(date) => handleDateChange(date)}
+              />
+            )}
+          </PopoverContent>
+        </Popover>
 
-          <Select value={selectedView} onValueChange={handleViewChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={t("report.selectView")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="week">{t("report.week")}</SelectItem>
-              <SelectItem value="month">{t("report.month")}</SelectItem>
-              <SelectItem value="year">{t("report.year")}</SelectItem>
-            </SelectContent>
-          </Select>
+        <Select value={selectedView} onValueChange={handleViewChange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder={t("report.selectView")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="week">{t("report.week")}</SelectItem>
+            <SelectItem value="month">{t("report.month")}</SelectItem>
+            <SelectItem value="year">{t("report.year")}</SelectItem>
+          </SelectContent>
+        </Select>
 
-          <Button onClick={handleExportReport}>
-            <Download className="mr-2 h-4 w-4" />
-            {t("report.exportReport")}
-          </Button>
+        {/* <Button onClick={handleExportReport}>
+          <Download className="mr-2 h-4 w-4" />
+          {t("report.exportReport")}
+        </Button> */}
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
-      </CardHeader>
-
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center h-96">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : (
-          <>
-            <div className="flex justify-between gap-6 mb-6">
-              <div className="flex flex-col gap-y-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-20">{t("report.no")}</TableHead>
-                      <TableHead className="w-40">{t("report.date")}</TableHead>
-                      <TableHead className="w-40">
-                        {t("report.ticketRevenue")}
-                      </TableHead>
-                      <TableHead className="w-40">
-                        {t("report.foodDrinkRevenue")}
-                      </TableHead>
-                      <TableHead className="w-40">
-                        {t("report.totalRevenue")}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentStatistics.map((stat, index) => (
-                      <TableRow key={index}>
-                        <TableCell>
-                          {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
-                        </TableCell>
-                        <TableCell>
-                          {hasDayProperty(stat)
-                            ? `${stat.day}/${stat.month}/${stat.year}`
-                            : `${stat.month}/${stat.year}`}
-                        </TableCell>
-                        <TableCell>{formatPrice(stat.ticketRevenue)}</TableCell>
-                        <TableCell>
-                          {formatPrice(stat.foodDrinkRevenue)}
-                        </TableCell>
-                        <TableCell>{formatPrice(stat.totalRevenue)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <div className="flex items-center justify-end space-x-6 lg:space-x-8 mb-6">
-                  <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                    Page {currentPage} of {totalPages}
+      ) : (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Revenue by Type - Online vs Offline</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {offlineLoading || onlineLoading ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      className="hidden h-8 w-8 p-0 lg:flex"
-                      onClick={() => setCurrentPage(1)}
-                      disabled={currentPage === 1}
-                    >
-                      <span className="sr-only">Go to first page</span>
-                      <ChevronsLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-8 w-8 p-0"
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                    >
-                      <span className="sr-only">Go to previous page</span>
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-8 w-8 p-0"
-                      onClick={() =>
-                        setCurrentPage((p) => Math.min(totalPages, p + 1))
-                      }
-                      disabled={currentPage === totalPages}
-                    >
-                      <span className="sr-only">Go to next page</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="hidden h-8 w-8 p-0 lg:flex"
-                      onClick={() => setCurrentPage(totalPages)}
-                      disabled={currentPage === totalPages}
-                    >
-                      <span className="sr-only">Go to last page</span>
-                      <ChevronsRight className="h-4 w-4" />
-                    </Button>
+                ) : chartDataToDisplay.length === 0 ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <p className="text-muted-foreground">No data available</p>
                   </div>
-                </div>
-              </div>
-
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("report.information")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>
-                      <div className="w-[400px] flex justify-between font-semibold">
-                        <p>{t("report.totalTicketRevenue")}</p>
-                        <p>{formatPrice(totalTicketRevenue)}</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div className="w-[400px] flex justify-between font-semibold">
-                        <p>{t("report.totalFoodDrinkRevenue")}</p>
-                        <p>{formatPrice(totalFoodDrinkRevenue)}</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div className="w-[400px] flex justify-between font-semibold">
-                        <p>{t("report.totalRevenue")}</p>
-                        <p>{formatPrice(totalRevenue)}</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
+                ) : (
+                  <BarChart data={chartDataToDisplay} />
+                )}
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>{t("report.revenue")}</CardTitle>
-                <p className="text-2xl font-bold">
-                  {formatPrice(totalRevenue)}
-                </p>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Revenue by Cinema</CardTitle>
+                  <Select
+                    value={selectedCinemaId}
+                    onValueChange={setSelectedCinemaId}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select cinema" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Select cinema</SelectItem>
+                      {availableCinemas?.map((cinema) => (
+                        <SelectItem
+                          key={cinema.cinemaId}
+                          value={cinema.cinemaId}
+                        >
+                          {cinema.cinemaName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
-                <ReportChart data={chartData} />
+                {cinemaLoading ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <LineChart
+                    data={
+                      cinemaRevenueData?.map((item) => ({
+                        time: item.time,
+                        revenue: item.revenue,
+                      })) || []
+                    }
+                  />
+                )}
               </CardContent>
             </Card>
-          </>
-        )}
-      </CardContent>
-    </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Revenue by Movie</CardTitle>
+                  <Select
+                    value={selectedMovieId}
+                    onValueChange={setSelectedMovieId}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select movie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Select movie</SelectItem>
+                      {availableMovies?.map((movie) => (
+                        <SelectItem key={movie.movieId} value={movie.movieId}>
+                          {movie.movieName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {movieLoading ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <LineChart
+                    data={
+                      movieRevenueData?.map((item) => ({
+                        time: item.time,
+                        revenue: item.revenue,
+                      })) || []
+                    }
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+    </>
   );
 }

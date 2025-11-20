@@ -283,6 +283,13 @@ export default function EditMoviePage() {
                   value={trailerMode}
                   onValueChange={(value) => {
                     setTrailerMode(value as "file" | "url");
+                    if (value === "file") {
+                      form.setValue("trailerUrl", "");
+                      setTrailer(null);
+                    } else {
+                      form.setValue("trailer", "");
+                      setTrailer(null);
+                    }
                   }}
                   className="w-full"
                 >
@@ -370,7 +377,7 @@ export default function EditMoviePage() {
                           <FormControl>
                             <div className="space-y-2">
                               <Input
-                                placeholder="Enter trailer URL (e.g., YouTube embed URL, Vimeo URL, etc.)"
+                                placeholder="Enter trailer Youtube URL"
                                 {...field}
                               />
                               {field.value && (

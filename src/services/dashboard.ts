@@ -57,14 +57,71 @@ export const getDashboardStatistics =
 
 export const getRevenueByPeriod = async (
   startDate: string,
-  endDate: string
+  endDate: string,
+  type?: string
 ): Promise<RevenueData> => {
   try {
+    const params: any = { startDate, endDate };
+    if (type) {
+      params.type = type;
+    }
     const response = await instance.get("/bookings/dashboard/revenue", {
-      params: { startDate, endDate },
+      params,
       requiresAuth: true,
     } as any);
     return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export interface CinemaRevenue {
+  cinemaId: string;
+  cinemaName: string;
+  totalRevenue: number;
+}
+
+export interface MovieRevenue {
+  movieId: string;
+  movieName: string;
+  totalRevenue: number;
+}
+
+export const getRevenueByPeriodAndCinema = async (
+  startDate: string,
+  endDate: string,
+  type?: string
+): Promise<CinemaRevenue[]> => {
+  try {
+    const params: any = { startDate, endDate };
+    if (type) {
+      params.type = type;
+    }
+    const response = await instance.get("/bookings/dashboard/revenue/cinema", {
+      params,
+      requiresAuth: true,
+    } as any);
+    return response.data.data?.cinemasRevenue || [];
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getRevenueByPeriodAndMovie = async (
+  startDate: string,
+  endDate: string,
+  type?: string
+): Promise<MovieRevenue[]> => {
+  try {
+    const params: any = { startDate, endDate };
+    if (type) {
+      params.type = type;
+    }
+    const response = await instance.get("/bookings/dashboard/revenue/movie", {
+      params,
+      requiresAuth: true,
+    } as any);
+    return response.data.data?.moviesRevenue || [];
   } catch (error) {
     throw error;
   }

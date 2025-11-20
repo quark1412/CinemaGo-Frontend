@@ -45,11 +45,15 @@ const getServerCookies = async (): Promise<{
     const cookieStore = cookies();
     const resolvedCookieStore =
       cookieStore instanceof Promise ? await cookieStore : cookieStore;
+    const accessToken = resolvedCookieStore.get("accessToken")?.value;
+    const refreshToken = resolvedCookieStore.get("refreshToken")?.value;
+
     return {
-      accessToken: resolvedCookieStore.get("accessToken")?.value,
-      refreshToken: resolvedCookieStore.get("refreshToken")?.value,
+      accessToken: accessToken || undefined,
+      refreshToken: refreshToken || undefined,
     };
   } catch (error) {
+    console.warn("Failed to get server cookies:", error);
     return {};
   }
 };
@@ -89,19 +93,27 @@ const createAxiosInstance = (cookieGetter?: CookieGetter): AxiosInstance => {
       }
     }
 
+    let shouldRefresh = false;
     if (accessToken) {
       try {
         const user = jwt_decode<{ exp: number }>(accessToken);
-        const isExpired = dayjs.unix(user.exp).diff(dayjs()) < 1;
+        const expirationTime = dayjs.unix(user.exp);
+        const now = dayjs();
+        const timeUntilExpiry = expirationTime.diff(now, "second");
+        shouldRefresh = timeUntilExpiry < 60;
 
-        if (!isExpired) {
+        if (!shouldRefresh) {
           req.headers.Authorization = `Bearer ${accessToken}`;
           return req;
         }
-      } catch (error) {}
+      } catch (error) {
+        shouldRefresh = true;
+      }
+    } else {
+      shouldRefresh = true;
     }
 
-    if (refreshToken) {
+    if (shouldRefresh && refreshToken) {
       const isServer = typeof window === "undefined";
 
       if (isServer) {
@@ -115,8 +127,10 @@ const createAxiosInstance = (cookieGetter?: CookieGetter): AxiosInstance => {
           const { accessToken: newAccessToken } =
             response.data.data || response.data;
 
-          req.headers.Authorization = `Bearer ${newAccessToken}`;
-          return req;
+          if (newAccessToken) {
+            req.headers.Authorization = `Bearer ${newAccessToken}`;
+            return req;
+          }
         } catch (err) {
           return req;
         }
@@ -136,13 +150,19 @@ const createAxiosInstance = (cookieGetter?: CookieGetter): AxiosInstance => {
               refreshToken: newRefreshToken,
             } = response.data.data || response.data;
 
-            Cookies.set("accessToken", newAccessToken, { expires: 1 });
-            Cookies.set("refreshToken", newRefreshToken, { expires: 7 });
+            if (newAccessToken) {
+              Cookies.set("accessToken", newAccessToken, { expires: 1 });
+              if (newRefreshToken) {
+                Cookies.set("refreshToken", newRefreshToken, { expires: 7 });
+              }
 
-            onRefreshed(newAccessToken);
-            req.headers.Authorization = `Bearer ${newAccessToken}`;
-            isRefreshing = false;
-            return req;
+              onRefreshed(newAccessToken);
+              req.headers.Authorization = `Bearer ${newAccessToken}`;
+              isRefreshing = false;
+              return req;
+            } else {
+              throw new Error("No access token in refresh response");
+            }
           } catch (err) {
             Cookies.remove("accessToken");
             Cookies.remove("refreshToken");
@@ -163,6 +183,10 @@ const createAxiosInstance = (cookieGetter?: CookieGetter): AxiosInstance => {
           });
         }
       }
+    }
+
+    if (accessToken) {
+      req.headers.Authorization = `Bearer ${accessToken}`;
     }
 
     return req;
@@ -234,8 +258,10 @@ const createAxiosInstance = (cookieGetter?: CookieGetter): AxiosInstance => {
 
 const instance = createAxiosInstance();
 
-export const getServerAxiosInstance = (): AxiosInstance => {
-  return createAxiosInstance();
+export const getServerAxiosInstance = (
+  cookieGetter?: CookieGetter
+): AxiosInstance => {
+  return createAxiosInstance(cookieGetter);
 };
 
 export { createAxiosInstance };
