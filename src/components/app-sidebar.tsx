@@ -52,11 +52,11 @@ export const AppSidebar = React.memo(function AppSidebar({
       };
 
   const navMain = [
-    {
-      title: t("sidebar.dashboard"),
-      url: "/dashboard",
-      icon: LayoutDashboard,
-    },
+    // {
+    //   title: t("sidebar.dashboard"),
+    //   url: "/dashboard",
+    //   icon: LayoutDashboard,
+    // },
     {
       title: t("sidebar.movies"),
       url: "/movies",
