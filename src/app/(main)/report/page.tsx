@@ -10,20 +10,14 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Film,
+  Theater,
+  Users,
 } from "lucide-react";
-import dynamic from "next/dynamic";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+
 import {
   Select,
   SelectContent,
@@ -48,12 +42,14 @@ import {
   YearlyReport,
 } from "@/hooks/use-report";
 import { Loader2 } from "lucide-react";
-import { useI18n } from "@/contexts/I18nContext";
-import ReportChart from "@/components/report-chart";
 import { LineChart } from "@/components/line-chart";
 import { BarChart } from "@/components/bar-chart";
 import { MonthPicker } from "@/components/month-picker";
 import { YearPicker } from "@/components/year-picker";
+import {
+  useDashboardStatistics,
+  useMonthlyRevenue,
+} from "@/hooks/use-dashboard";
 import {
   useRevenueByType,
   useRevenueByCinema,
@@ -62,6 +58,8 @@ import {
   useAvailableMovies,
 } from "@/hooks/use-report";
 import { getMockRevenueData } from "@/lib/mock-revenue-data";
+import { DashboardCard } from "@/components/dashboard-card";
+import { useI18n } from "@/contexts/I18nContext";
 
 // Dynamically import ExcelJS and file-saver to reduce initial bundle size
 const loadExcelExport = async () => {
@@ -156,50 +154,7 @@ export default function ReportPage() {
     (selectedView === "month" && monthlyLoading) ||
     (selectedView === "year" && yearlyLoading);
 
-  const statistics = useMemo(() => {
-    if (selectedView === "week") {
-      return weeklyData || [];
-    } else if (selectedView === "month") {
-      return monthlyData || [];
-    } else {
-      return yearlyData || [];
-    }
-  }, [selectedView, weeklyData, monthlyData, yearlyData]);
-
-  const totalRevenue = useMemo(() => {
-    return statistics.reduce((sum, stat) => sum + stat.totalRevenue, 0);
-  }, [statistics]);
-
-  const totalTicketRevenue = useMemo(() => {
-    return statistics.reduce((sum, stat) => sum + stat.ticketRevenue, 0);
-  }, [statistics]);
-
-  const totalFoodDrinkRevenue = useMemo(() => {
-    return statistics.reduce((sum, stat) => sum + stat.foodDrinkRevenue, 0);
-  }, [statistics]);
-
-  const chartData = useMemo(() => {
-    if (selectedView === "year") {
-      return statistics.map((stat) => ({
-        date: `${stat.month}/${stat.year}`,
-        revenue: stat.totalRevenue,
-      }));
-    } else {
-      // For week and month views, both have day property
-      return statistics.map((stat) => {
-        if (hasDayProperty(stat)) {
-          return {
-            date: `${stat.day}/${stat.month}/${stat.year}`,
-            revenue: stat.totalRevenue,
-          };
-        }
-        return {
-          date: `${stat.month}/${stat.year}`,
-          revenue: stat.totalRevenue,
-        };
-      });
-    }
-  }, [statistics, selectedView]);
+  const { data: statistics } = useDashboardStatistics();
 
   // Combine offline and online data for grouped bar chart with ticket and food/drink separated
   const offlineOnlineChartData = useMemo(() => {
@@ -256,25 +211,17 @@ export default function ReportPage() {
       .sort((a, b) => a.time.localeCompare(b.time));
   }, [offlineRevenueData, onlineRevenueData]);
 
-  // Use mock data if real data is not available (for testing/visualization)
-  const useMockData = true; // Set to true to test with mock data
+  // Use mock data
+  const useMockData = true;
   const chartDataToDisplay = useMemo(() => {
     if (useMockData) {
       return getMockRevenueData(selectedView);
     }
-    // Fallback to mock data if real data is empty (for visualization purposes)
     if (offlineOnlineChartData.length === 0) {
       return getMockRevenueData(selectedView);
     }
     return offlineOnlineChartData;
   }, [useMockData, selectedView, offlineOnlineChartData]);
-
-  const currentStatistics = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return statistics.slice(start, start + ITEMS_PER_PAGE);
-  }, [statistics, currentPage]);
-
-  const totalPages = Math.ceil(statistics.length / ITEMS_PER_PAGE);
 
   const handleDateChange = (
     date: Date | Date[] | { from: Date; to?: Date } | undefined
@@ -298,7 +245,7 @@ export default function ReportPage() {
       // Set to start of week (Monday)
       adjustedDate = adjustedDate.startOf("week").add(1, "day");
     } else if (selectedView === "month") {
-      // For month/year views, date comes as single date
+      // For month/year views
       const dateObj = Array.isArray(date)
         ? date[0]
         : typeof date === "object" && "from" in date
@@ -356,110 +303,131 @@ export default function ReportPage() {
     }
   }, [calendarOpen, selectedView, selectedDate]);
 
-  // const handleExportReport = async () => {
-  //   if (!statistics.length) return;
+  /* const handleExportReport = async () => {
+    if (!statistics.length) return;
 
-  //   const { ExcelJS, saveAs } = await loadExcelExport();
+    const { ExcelJS, saveAs } = await loadExcelExport();
 
-  //   const workbook = new ExcelJS.Workbook();
-  //   const worksheet = workbook.addWorksheet(t("report.excel.worksheetName"));
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(t("report.excel.worksheetName"));
 
-  //   // Merge cells for title
-  //   worksheet.mergeCells("A2:D2");
-  //   const reportCell = worksheet.getCell("A2");
-  //   if (selectedView === "month") {
-  //     reportCell.value = `${t("report.excel.month")}: ${month}/${year}`;
-  //   } else if (selectedView === "year") {
-  //     reportCell.value = `${t("report.excel.year")}: ${year}`;
-  //   } else {
-  //     reportCell.value = `${t("report.excel.week")}: ${getCurrentDateRange(
-  //       selectedDate
-  //     )}`;
-  //   }
-  //   reportCell.font = { bold: true, size: 14 };
-  //   reportCell.alignment = { vertical: "middle", horizontal: "center" };
+    // Merge cells for title
+    worksheet.mergeCells("A2:D2");
+    const reportCell = worksheet.getCell("A2");
+    if (selectedView === "month") {
+      reportCell.value = `${t("report.excel.month")}: ${month}/${year}`;
+    } else if (selectedView === "year") {
+      reportCell.value = `${t("report.excel.year")}: ${year}`;
+    } else {
+      reportCell.value = `${t("report.excel.week")}: ${getCurrentDateRange(
+        selectedDate
+      )}`;
+    }
+    reportCell.font = { bold: true, size: 14 };
+    reportCell.alignment = { vertical: "middle", horizontal: "center" };
 
-  //   // Headers
-  //   worksheet.getRow(3).values = [
-  //     t("report.no"),
-  //     t("report.date"),
-  //     t("report.ticketRevenue"),
-  //     t("report.foodDrinkRevenue"),
-  //     t("report.totalRevenue"),
-  //   ];
-  //   const headerRow = worksheet.getRow(3);
-  //   headerRow.eachCell((cell) => {
-  //     cell.font = { bold: true };
-  //     cell.fill = {
-  //       type: "pattern",
-  //       pattern: "solid",
-  //       fgColor: { argb: "FFCCEEFF" },
-  //     };
-  //     cell.alignment = { horizontal: "left" };
-  //     cell.border = {
-  //       top: { style: "thin", color: { argb: "FF000000" } },
-  //       left: { style: "thin", color: { argb: "FF000000" } },
-  //       right: { style: "thin", color: { argb: "FF000000" } },
-  //       bottom: { style: "thin", color: { argb: "FF000000" } },
-  //     };
-  //   });
+    // Headers
+    worksheet.getRow(3).values = [
+      t("report.no"),
+      t("report.date"),
+      t("report.ticketRevenue"),
+      t("report.foodDrinkRevenue"),
+      t("report.totalRevenue"),
+    ];
+    const headerRow = worksheet.getRow(3);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFCCEEFF" },
+      };
+      cell.alignment = { horizontal: "left" };
+      cell.border = {
+        top: { style: "thin", color: { argb: "FF000000" } },
+        left: { style: "thin", color: { argb: "FF000000" } },
+        right: { style: "thin", color: { argb: "FF000000" } },
+        bottom: { style: "thin", color: { argb: "FF000000" } },
+      };
+    });
 
-  //   // Data rows
-  //   statistics.forEach((stat, index) => {
-  //     let timeLabel: string;
-  //     if (selectedView === "year") {
-  //       timeLabel = `${stat.month}/${stat.year}`;
-  //     } else if (hasDayProperty(stat)) {
-  //       timeLabel = `${stat.day}/${stat.month}/${stat.year}`;
-  //     } else {
-  //       timeLabel = `${stat.month}/${stat.year}`;
-  //     }
-  //     worksheet.addRow([
-  //       index + 1,
-  //       timeLabel,
-  //       stat.ticketRevenue,
-  //       stat.foodDrinkRevenue,
-  //       stat.totalRevenue,
-  //     ]);
-  //   });
+    // Data rows
+    statistics.forEach((stat, index) => {
+      let timeLabel: string;
+      if (selectedView === "year") {
+        timeLabel = `${stat.month}/${stat.year}`;
+      } else if (hasDayProperty(stat)) {
+        timeLabel = `${stat.day}/${stat.month}/${stat.year}`;
+      } else {
+        timeLabel = `${stat.month}/${stat.year}`;
+      }
+      worksheet.addRow([
+        index + 1,
+        timeLabel,
+        stat.ticketRevenue,
+        stat.foodDrinkRevenue,
+        stat.totalRevenue,
+      ]);
+    });
 
-  //   // Total row
-  //   const totalRowIndex = statistics.length + 4;
-  //   worksheet.mergeCells(`A${totalRowIndex}:B${totalRowIndex}`);
-  //   worksheet.getCell(`A${totalRowIndex}`).value = t("report.excel.total");
-  //   worksheet.getCell(`A${totalRowIndex}`).font = { bold: true };
-  //   worksheet.getCell(`C${totalRowIndex}`).value = totalTicketRevenue;
-  //   worksheet.getCell(`D${totalRowIndex}`).value = totalFoodDrinkRevenue;
-  //   worksheet.getCell(`E${totalRowIndex}`).value = totalRevenue;
-  //   worksheet.getRow(totalRowIndex).eachCell((cell) => {
-  //     cell.font = { bold: true };
-  //     cell.border = {
-  //       top: { style: "thin", color: { argb: "FF000000" } },
-  //       left: { style: "thin", color: { argb: "FF000000" } },
-  //       right: { style: "thin", color: { argb: "FF000000" } },
-  //       bottom: { style: "thin", color: { argb: "FF000000" } },
-  //     };
-  //   });
+    // Total row
+    const totalRowIndex = statistics.length + 4;
+    worksheet.mergeCells(`A${totalRowIndex}:B${totalRowIndex}`);
+    worksheet.getCell(`A${totalRowIndex}`).value = t("report.excel.total");
+    worksheet.getCell(`A${totalRowIndex}`).font = { bold: true };
+    worksheet.getCell(`C${totalRowIndex}`).value = totalTicketRevenue;
+    worksheet.getCell(`D${totalRowIndex}`).value = totalFoodDrinkRevenue;
+    worksheet.getCell(`E${totalRowIndex}`).value = totalRevenue;
+    worksheet.getRow(totalRowIndex).eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.border = {
+        top: { style: "thin", color: { argb: "FF000000" } },
+        left: { style: "thin", color: { argb: "FF000000" } },
+        right: { style: "thin", color: { argb: "FF000000" } },
+        bottom: { style: "thin", color: { argb: "FF000000" } },
+      };
+    });
 
-  //   // Column widths
-  //   worksheet.columns = [
-  //     { key: "no", width: 5 },
-  //     { key: "date", width: 20 },
-  //     { key: "ticketRevenue", width: 20 },
-  //     { key: "foodDrinkRevenue", width: 20 },
-  //     { key: "totalRevenue", width: 25 },
-  //   ];
+    // Column widths
+    worksheet.columns = [
+      { key: "no", width: 5 },
+      { key: "date", width: 20 },
+      { key: "ticketRevenue", width: 20 },
+      { key: "foodDrinkRevenue", width: 20 },
+      { key: "totalRevenue", width: 25 },
+    ];
 
-  //   const fileName = `${t("report.excel.fileName")}${dayjs().format(
-  //     "YYYYMMDD"
-  //   )}.xlsx`;
-  //   workbook.xlsx.writeBuffer().then((buffer) => {
-  //     saveAs(new Blob([buffer]), fileName);
-  //   });
-  // };
+    const fileName = `${t("report.excel.fileName")}${dayjs().format(
+      "YYYYMMDD"
+    )}.xlsx`;
+    workbook.xlsx.writeBuffer().then((buffer) => {
+      saveAs(new Blob([buffer]), fileName);
+    });
+  }; */
 
   return (
     <>
+      <div className="grid grid-cols-3 max-xl:grid-cols-1 max-sm:grid-cols-1 gap-4 mb-10">
+        <DashboardCard
+          title={t("dashboard.totalMovies")}
+          value={statistics?.totalMovies || 0}
+          description={t("dashboard.totalMoviesDesc")}
+          icon={Film}
+        />
+        <DashboardCard
+          title={t("dashboard.totalCinemas")}
+          value={statistics?.totalCinemas || 0}
+          description={t("dashboard.totalCinemasDesc")}
+          icon={Theater}
+        />
+        <DashboardCard
+          title={t("dashboard.totalUsers")}
+          value={statistics?.totalUsers || 0}
+          description={t("dashboard.totalUsersDesc")}
+          icon={Users}
+        />
+      </div>
+
       <div className="flex flex-row gap-x-3 items-center flex-wrap">
         <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <PopoverTrigger asChild>
