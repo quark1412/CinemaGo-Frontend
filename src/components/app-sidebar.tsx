@@ -11,6 +11,7 @@ import {
   Theater,
   UtensilsCrossed,
   Clock,
+  ShoppingCart,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -96,6 +97,11 @@ export const AppSidebar = React.memo(function AppSidebar({
       title: t("sidebar.report"),
       url: "/report",
       icon: PieChart,
+    },
+    {
+      title: "POS",
+      url: "/pos",
+      icon: ShoppingCart,
     },
   ].map((item) => ({
     ...item,

@@ -13,10 +13,11 @@ export function formatDate(date: Date) {
   });
 }
 
-export function formatTime(time: number) {
-  const hours = Math.floor(time / 60);
-  const minutes = time % 60;
-  return `${hours}h ${minutes}m`;
+export function formatTime(time: string) {
+  return new Date(time).toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function formatPrice(price: number) {

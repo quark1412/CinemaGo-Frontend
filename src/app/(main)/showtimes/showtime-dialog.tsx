@@ -324,15 +324,26 @@ export function ShowtimeDialog({
     [form, fetchMovie]
   );
 
-  const calculateEndTime = (startTime: string, duration: number) => {
+  const calculateEndTime = (
+    startTime: string,
+    duration: number
+  ): { time: string; isNextDay: boolean } => {
     const [hours, minutes] = startTime.split(":").map(Number);
     const startMinutes = hours * 60 + minutes;
     const endMinutes = startMinutes + duration;
     const endHours = Math.floor(endMinutes / 60);
     const endMins = endMinutes % 60;
-    return `${endHours.toString().padStart(2, "0")}:${endMins
-      .toString()
-      .padStart(2, "0")}`;
+
+    // Check if end time crosses to the next day (24 hours = 1440 minutes)
+    const isNextDay = endHours >= 24;
+    const displayHours = isNextDay ? endHours % 24 : endHours;
+
+    return {
+      time: `${displayHours.toString().padStart(2, "0")}:${endMins
+        .toString()
+        .padStart(2, "0")}`,
+      isNextDay,
+    };
   };
 
   const checkTimeOverlap = (
@@ -363,11 +374,24 @@ export function ShowtimeDialog({
       for (let j = i + 1; j < data.startTimes.length; j++) {
         if (!selectedMovie) return errors;
         const startTime1 = data.startTimes[i];
-        const endTime1 = calculateEndTime(startTime1, selectedMovie.duration);
+        const endTime1Result = calculateEndTime(
+          startTime1,
+          selectedMovie.duration
+        );
         const startTime2 = data.startTimes[j];
-        const endTime2 = calculateEndTime(startTime2, selectedMovie.duration);
+        const endTime2Result = calculateEndTime(
+          startTime2,
+          selectedMovie.duration
+        );
 
-        if (checkTimeOverlap(startTime1, endTime1, startTime2, endTime2)) {
+        if (
+          checkTimeOverlap(
+            startTime1,
+            endTime1Result.time,
+            startTime2,
+            endTime2Result.time
+          )
+        ) {
           errors.push(
             `Showtime at ${startTime1} overlaps with showtime at ${startTime2}`
           );
@@ -386,10 +410,19 @@ export function ShowtimeDialog({
           const startDateTime = new Date(startDate);
           startDateTime.setHours(startHours, startMinutes, 0, 0);
 
-          const endTime = calculateEndTime(startTime, selectedMovie.duration);
-          const [endHours, endMinutes] = endTime.split(":").map(Number);
+          const endTimeResult = calculateEndTime(
+            startTime,
+            selectedMovie.duration
+          );
+          const [endHours, endMinutes] = endTimeResult.time
+            .split(":")
+            .map(Number);
           const endDateTime = new Date(startDate);
           endDateTime.setHours(endHours, endMinutes, 0, 0);
+          // Add a day if end time crosses to the next day
+          if (endTimeResult.isNextDay) {
+            endDateTime.setDate(endDateTime.getDate() + 1);
+          }
 
           const busyRooms = await getBusyRoomIds(
             startDateTime.toISOString(),
@@ -435,13 +468,19 @@ export function ShowtimeDialog({
           toast.error("Please select a movie");
           return;
         }
-        const endTime = calculateEndTime(
+        const endTimeResult = calculateEndTime(
           data.startTimes[0],
           selectedMovie.duration
         );
-        const [endHours, endMinutes] = endTime.split(":").map(Number);
+        const [endHours, endMinutes] = endTimeResult.time
+          .split(":")
+          .map(Number);
         const endDateTime = new Date(data.startDate);
         endDateTime.setHours(endHours, endMinutes, 0, 0);
+        // Add a day if end time crosses to the next day
+        if (endTimeResult.isNextDay) {
+          endDateTime.setDate(endDateTime.getDate() + 1);
+        }
 
         const requestData = {
           movieId: data.movieId,
@@ -467,10 +506,19 @@ export function ShowtimeDialog({
             toast.error("Please select a movie");
             return;
           }
-          const endTime = calculateEndTime(startTime, selectedMovie.duration);
-          const [endHours, endMinutes] = endTime.split(":").map(Number);
+          const endTimeResult = calculateEndTime(
+            startTime,
+            selectedMovie.duration
+          );
+          const [endHours, endMinutes] = endTimeResult.time
+            .split(":")
+            .map(Number);
           const endDateTime = new Date(data.startDate);
           endDateTime.setHours(endHours, endMinutes, 0, 0);
+          // Add a day if end time crosses to the next day
+          if (endTimeResult.isNextDay) {
+            endDateTime.setDate(endDateTime.getDate() + 1);
+          }
 
           const requestData = {
             movieId: data.movieId,
@@ -742,8 +790,13 @@ export function ShowtimeDialog({
                 </Button>
               </div>
               {startTimes.map((time, index) => {
-                const endTime = selectedMovie
+                const endTimeResult = selectedMovie
                   ? calculateEndTime(time, selectedMovie.duration)
+                  : null;
+                const endTimeDisplay = endTimeResult
+                  ? endTimeResult.isNextDay
+                    ? `${endTimeResult.time} (next day)`
+                    : endTimeResult.time
                   : "";
                 return (
                   <div key={index} className="space-y-2">
@@ -769,7 +822,7 @@ export function ShowtimeDialog({
                     {selectedMovie && (
                       <div className="text-xs text-muted-foreground ml-2">
                         Duration: {selectedMovie.duration} min • Ends at:{" "}
-                        {endTime}
+                        {endTimeDisplay}
                       </div>
                     )}
                   </div>
