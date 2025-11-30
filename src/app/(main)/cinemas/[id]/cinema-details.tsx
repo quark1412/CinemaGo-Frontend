@@ -337,7 +337,7 @@ export default function CinemaDetails({ cinemaId }: CinemaDetailsProps) {
       <RoomDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        room={editingRoom}
+        roomId={editingRoom?.id}
         onSuccess={handleDialogSuccess}
         defaultCinemaId={cinemaId}
       />

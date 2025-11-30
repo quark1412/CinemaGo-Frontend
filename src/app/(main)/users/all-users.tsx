@@ -7,7 +7,7 @@ import { DataTable } from "./data-table";
 import { createColumns } from "./columns";
 import { UserDialog } from "./user-dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { GetUsersParams } from "@/services/users/users";
+import { GetUsersParams } from "@/services/users";
 import { useUsers, useArchiveUser, useRestoreUser } from "@/hooks/use-users";
 
 export default function AllUsers() {

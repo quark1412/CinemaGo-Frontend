@@ -35,7 +35,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useUser } from "@/contexts/UserContext";
-import { authService } from "@/services/users/auth";
+import { authService } from "@/services/auth";
 import { useI18n } from "@/contexts/I18nContext";
 
 const profileSchema = z.object({
@@ -240,7 +240,9 @@ export function AccountSettingsDialog({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Avatar Section */}
               <div className="space-y-4">
-                <p className="text-lg font-semibold">{t("account.profilePicture")}</p>
+                <p className="text-lg font-semibold">
+                  {t("account.profilePicture")}
+                </p>
                 <div className="flex flex-col items-center space-y-4 p-6 border rounded-lg">
                   <div className="relative">
                     <Avatar className="h-32 w-32">
@@ -276,7 +278,9 @@ export function AccountSettingsDialog({
 
               {/* Profile Information Section */}
               <div className="space-y-4">
-                <p className="text-lg font-semibold">{t("account.personalInformation")}</p>
+                <p className="text-lg font-semibold">
+                  {t("account.personalInformation")}
+                </p>
                 <Form {...profileForm}>
                   <form
                     onSubmit={profileForm.handleSubmit(onProfileSubmit)}
@@ -333,13 +337,21 @@ export function AccountSettingsDialog({
                             >
                               <FormControl>
                                 <SelectTrigger className="w-full">
-                                  <SelectValue placeholder={t("account.selectGender")} />
+                                  <SelectValue
+                                    placeholder={t("account.selectGender")}
+                                  />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="MALE">{t("account.male")}</SelectItem>
-                                <SelectItem value="FEMALE">{t("account.female")}</SelectItem>
-                                <SelectItem value="OTHER">{t("account.other")}</SelectItem>
+                                <SelectItem value="MALE">
+                                  {t("account.male")}
+                                </SelectItem>
+                                <SelectItem value="FEMALE">
+                                  {t("account.female")}
+                                </SelectItem>
+                                <SelectItem value="OTHER">
+                                  {t("account.other")}
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -358,7 +370,9 @@ export function AccountSettingsDialog({
                         {t("common.cancel")}
                       </Button>
                       <Button type="submit" disabled={isLoading}>
-                        {isLoading ? t("common.updating") : t("account.updateProfile")}
+                        {isLoading
+                          ? t("common.updating")
+                          : t("account.updateProfile")}
                       </Button>
                     </div>
                   </form>
@@ -420,7 +434,9 @@ export function AccountSettingsDialog({
                       <FormControl>
                         <Input
                           type="password"
-                          placeholder={t("account.confirmNewPasswordPlaceholder")}
+                          placeholder={t(
+                            "account.confirmNewPasswordPlaceholder"
+                          )}
                           {...field}
                           disabled={isLoading}
                         />
@@ -451,7 +467,9 @@ export function AccountSettingsDialog({
                     {t("common.cancel")}
                   </Button>
                   <Button type="submit" disabled={isLoading}>
-                    {isLoading ? t("account.changing") : t("account.changePassword")}
+                    {isLoading
+                      ? t("account.changing")
+                      : t("account.changePassword")}
                   </Button>
                 </div>
               </form>

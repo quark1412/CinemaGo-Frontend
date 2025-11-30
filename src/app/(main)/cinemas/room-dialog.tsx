@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Room, CreateRoomData, UpdateRoomData } from "@/types/cinema";
-import { createRoom, updateRoom } from "@/services/cinemas";
+import { createRoom, getRoomById, updateRoom } from "@/services/cinemas";
 import { CinemaSelector } from "@/components/cinema-selector";
 import { formatPrice } from "@/lib/utils";
 
@@ -42,7 +42,7 @@ type FormData = z.infer<typeof formSchema>;
 interface RoomDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  room?: Room | null;
+  roomId?: string | null;
   onSuccess?: () => void;
   defaultCinemaId?: string;
 }
@@ -50,13 +50,13 @@ interface RoomDialogProps {
 export function RoomDialog({
   open,
   onOpenChange,
-  room,
+  roomId,
   onSuccess,
   defaultCinemaId,
 }: RoomDialogProps) {
   const [loading, setLoading] = useState(false);
-  const isEditing = !!room;
-
+  const isEditing = !!roomId;
+  const [room, setRoom] = useState<Room | null>(null);
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -67,36 +67,54 @@ export function RoomDialog({
     },
   });
 
-  useEffect(() => {
-    if (room) {
+  const fetchRoom = async (roomId: string) => {
+    try {
+      setLoading(true);
+      const roomResponse = await getRoomById(roomId);
+      const roomData = roomResponse.data;
+      setRoom(roomData);
+
       form.reset({
-        name: room.name,
-        cinemaId: room.cinemaId,
-        vipPrice: 1,
-        couplePrice: 1,
+        name: roomData.name,
+        cinemaId: roomData.cinemaId,
+        vipPrice: roomData.VIP || 0,
+        couplePrice: roomData.COUPLE || 0,
       });
-    } else {
+    } catch (error: any) {
+      console.error("Error fetching room:", error);
+      toast.error(error.response?.data?.message || "Failed to load room data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open && roomId) {
+      fetchRoom(roomId);
+    } else if (open && !roomId) {
       form.reset({
         name: "",
         cinemaId: defaultCinemaId || "",
         vipPrice: 1,
         couplePrice: 1,
       });
+      setRoom(null);
     }
-  }, [room, form, defaultCinemaId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, open, defaultCinemaId]);
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      if (isEditing && room) {
+      if (isEditing && roomId) {
         const updateData: UpdateRoomData = {
           name: data.name,
           cinemaId: data.cinemaId,
-          seatLayout: room.seatLayout,
+          seatLayout: room?.seatLayout,
           vipPrice: data.vipPrice,
           couplePrice: data.couplePrice,
         };
-        await updateRoom(room.id, updateData);
+        await updateRoom(roomId, updateData);
         toast.success("Room updated successfully!");
       } else {
         const basicSeatLayout = Array(5)

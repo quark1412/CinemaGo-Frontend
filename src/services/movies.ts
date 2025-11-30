@@ -38,10 +38,7 @@ export const getAllMovies = async (
     if (params?.status) queryParams.append("status", params.status);
 
     const response = await instance.get(
-      `/movies/public?${queryParams.toString()}`,
-      {
-        requiresAuth: true,
-      } as any
+      `/v1/movies/public?${queryParams.toString()}`
     );
     return response.data;
   } catch (error) {
@@ -50,9 +47,7 @@ export const getAllMovies = async (
 };
 export const getMovieById = async (id: string) => {
   try {
-    const response = await instance.get(`/movies/public/${id}`, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.get(`/v1/movies/public/${id}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -84,12 +79,11 @@ export const createMovie = async (movieData: {
       formData.append("trailerPath", movieData.trailerPath);
     }
 
-    const response = await instance.post("/movies", formData, {
+    const response = await instance.post("/v1/movies", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
-      requiresAuth: true,
-    } as any);
+    });
 
     if (response.status !== 201 && response.status !== 200) {
       const error = response.data;
@@ -133,9 +127,7 @@ export const updateMovie = async (
       formData.append("trailerPath", movieData.trailerPath);
     }
 
-    const response = await instance.put(`/movies/${id}`, formData, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.put(`/v1/movies/${id}`, formData);
     return response.data;
   } catch (error) {
     throw error;
@@ -146,9 +138,7 @@ export const archiveMovie = async (
   id: string
 ): Promise<{ message: string }> => {
   try {
-    const response = await instance.put(`/movies/archive/${id}`, {}, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.put(`/v1/movies/archive/${id}`, {});
     return response.data;
   } catch (error) {
     throw error;
@@ -159,9 +149,7 @@ export const restoreMovie = async (
   id: string
 ): Promise<{ message: string }> => {
   try {
-    const response = await instance.put(`/movies/restore/${id}`, {}, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.put(`/v1/movies/restore/${id}`, {});
     return response.data;
   } catch (error) {
     throw error;

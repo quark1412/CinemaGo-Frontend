@@ -7,7 +7,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { authService } from "@/services/users/auth";
+import { authService } from "@/services/auth";
 import { useRouter } from "next/navigation";
 
 interface User {

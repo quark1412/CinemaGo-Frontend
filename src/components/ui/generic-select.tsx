@@ -18,17 +18,15 @@ export interface SelectOption {
   label: string;
 }
 
-export interface InfiniteSelectHookReturn<T> {
+export interface SelectHookReturn<T> {
   items: T[];
   loading: boolean;
-  hasMore: boolean;
-  loadMore: () => void;
   search: (searchTerm: string) => void;
   reset: () => void;
   setFilters?: (filters: Record<string, any>) => void;
 }
 
-interface GenericInfiniteSelectProps<T> {
+interface GenericSelectProps<T> {
   value?: string[];
   onValueChange?: (values: string[]) => void;
   placeholder?: string;
@@ -37,8 +35,8 @@ interface GenericInfiniteSelectProps<T> {
   disabled?: boolean;
   className?: string;
   // Hook and data transformation
-  useInfiniteHook: () => InfiniteSelectHookReturn<T>;
-  getOptionFromItem: (item: T) => SelectOption;
+  useSelectHook: () => SelectHookReturn<T>;
+  getOption: (item: T) => SelectOption;
   // Badge display
   showSelectedBadges?: boolean;
   badgeClassName?: string;
@@ -47,7 +45,7 @@ interface GenericInfiniteSelectProps<T> {
   showSearch?: boolean;
 }
 
-export function GenericInfiniteSelect<T>({
+export function GenericSelect<T>({
   value = [],
   onValueChange,
   placeholder = "Select options...",
@@ -55,20 +53,19 @@ export function GenericInfiniteSelect<T>({
   multiple = true,
   disabled = false,
   className,
-  useInfiniteHook,
-  getOptionFromItem,
+  useSelectHook,
+  getOption,
   showSelectedBadges = true,
   badgeClassName,
   onRemoveBadge,
   showSearch = true,
-}: GenericInfiniteSelectProps<T>) {
+}: GenericSelectProps<T>) {
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
-  const scrollRef = React.useRef<HTMLDivElement>(null);
 
-  const { items, loading, hasMore, loadMore, search } = useInfiniteHook();
+  const { items, loading, search } = useSelectHook();
 
-  const options: SelectOption[] = items.map(getOptionFromItem);
+  const options: SelectOption[] = items.map(getOption);
 
   const selectedOptions = React.useMemo(() => {
     return options.filter((option) => value.includes(option.value));
@@ -76,10 +73,10 @@ export function GenericInfiniteSelect<T>({
 
   const selectedItems = React.useMemo(() => {
     return items.filter((item) => {
-      const option = getOptionFromItem(item);
+      const option = getOption(item);
       return value.includes(option.value);
     });
-  }, [items, value, getOptionFromItem]);
+  }, [items, value, getOption]);
 
   const handleSelect = (optionValue: string) => {
     if (multiple) {
@@ -103,25 +100,6 @@ export function GenericInfiniteSelect<T>({
     onValueChange?.(newValue);
     onRemoveBadge?.(optionValue);
   };
-
-  const handleScroll = React.useCallback(() => {
-    if (!scrollRef.current || loading || !hasMore) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100;
-
-    if (isNearBottom) {
-      loadMore();
-    }
-  }, [loading, hasMore, loadMore]);
-
-  React.useEffect(() => {
-    const scrollElement = scrollRef.current;
-    if (!scrollElement) return;
-
-    scrollElement.addEventListener("scroll", handleScroll);
-    return () => scrollElement.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
 
   return (
     <div className="space-y-2">
@@ -157,7 +135,7 @@ export function GenericInfiniteSelect<T>({
                 />
               </div>
             )}
-            <div ref={scrollRef} className="max-h-64 overflow-y-auto">
+            <div className="max-h-64 overflow-y-auto">
               {options.length === 0 && !loading ? (
                 <div className="py-6 text-center text-sm text-muted-foreground">
                   No options found.
@@ -184,12 +162,10 @@ export function GenericInfiniteSelect<T>({
                       {option.label}
                     </div>
                   ))}
-                  {loading && (options.length === 0 || hasMore) && (
+                  {loading && (
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="ml-2 text-sm">
-                        {options.length > 0 ? "Loading more..." : "Loading..."}
-                      </span>
+                      <span className="ml-2 text-sm">Loading...</span>
                     </div>
                   )}
                 </div>
@@ -202,7 +178,7 @@ export function GenericInfiniteSelect<T>({
       {showSelectedBadges && selectedItems.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {selectedItems.map((item) => {
-            const option = getOptionFromItem(item);
+            const option = getOption(item);
             return (
               <Badge
                 key={option.value}

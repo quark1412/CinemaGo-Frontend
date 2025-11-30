@@ -22,20 +22,20 @@ export const getDashboardStatistics =
   async (): Promise<DashboardStatistics> => {
     try {
       const [moviesRes, cinemasRes, usersRes] = await Promise.all([
-        instance.get("/movies/dashboard/total-count", {
+        instance.get("/v1/movies/dashboard/total-count", {
           requiresAuth: true,
         } as any),
-        instance.get("/cinemas/dashboard/total-count", {
+        instance.get("/v1/cinemas/dashboard/total-count", {
           requiresAuth: true,
         } as any),
-        instance.get("/users/dashboard/total-count", {
+        instance.get("/v1/users/dashboard/total-count", {
           requiresAuth: true,
         } as any),
       ]);
 
       let totalBookings = 0;
       try {
-        const bookingsRes = await instance.get("/bookings", {
+        const bookingsRes = await instance.get("/v1/bookings", {
           requiresAuth: true,
           params: { page: 1, limit: 1 },
         } as any);
@@ -65,7 +65,7 @@ export const getRevenueByPeriod = async (
     if (type) {
       params.type = type;
     }
-    const response = await instance.get("/bookings/dashboard/revenue", {
+    const response = await instance.get("/v1/bookings/dashboard/revenue", {
       params,
       requiresAuth: true,
     } as any);
@@ -97,10 +97,13 @@ export const getRevenueByPeriodAndCinema = async (
     if (type) {
       params.type = type;
     }
-    const response = await instance.get("/bookings/dashboard/revenue/cinema", {
-      params,
-      requiresAuth: true,
-    } as any);
+    const response = await instance.get(
+      "/v1/bookings/dashboard/revenue/cinema",
+      {
+        params,
+        requiresAuth: true,
+      } as any
+    );
     return response.data.data?.cinemasRevenue || [];
   } catch (error) {
     throw error;
@@ -117,10 +120,13 @@ export const getRevenueByPeriodAndMovie = async (
     if (type) {
       params.type = type;
     }
-    const response = await instance.get("/bookings/dashboard/revenue/movie", {
-      params,
-      requiresAuth: true,
-    } as any);
+    const response = await instance.get(
+      "/v1/bookings/dashboard/revenue/movie",
+      {
+        params,
+        requiresAuth: true,
+      } as any
+    );
     return response.data.data?.moviesRevenue || [];
   } catch (error) {
     throw error;
@@ -146,13 +152,13 @@ export const getMonthlyRevenue = async (
         );
 
         return {
-          month: monthStart.toLocaleDateString("en-US", { month: "short" }),
+          month: monthStart.toLocaleDateString("vi-VN", { month: "short" }),
           revenue: revenue.totalRevenue,
           foodDrinkRevenue: revenue.totalRevenueFromFoodDrink,
         };
       } catch (error) {
         return {
-          month: monthStart.toLocaleDateString("en-US", { month: "short" }),
+          month: monthStart.toLocaleDateString("vi-VN", { month: "short" }),
           revenue: 0,
           foodDrinkRevenue: 0,
         };

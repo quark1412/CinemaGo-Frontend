@@ -25,7 +25,7 @@ export const getAllCinemas = async (
       queryParams.append("isActive", params.isActive.toString());
 
     const response = await instance.get(
-      `/cinemas/public?${queryParams.toString()}`,
+      `/v1/cinemas/public?${queryParams.toString()}`,
       {
         requiresAuth: true,
       } as any
@@ -38,7 +38,7 @@ export const getAllCinemas = async (
 
 export const getCinemaById = async (id: string): Promise<{ data: Cinema }> => {
   try {
-    const response = await instance.get(`/cinemas/public/${id}`, {
+    const response = await instance.get(`/v1/cinemas/public/${id}`, {
       requiresAuth: true,
     } as any);
     return response.data;
@@ -51,7 +51,7 @@ export const createCinema = async (
   data: CreateCinemaData
 ): Promise<{ data: Cinema }> => {
   try {
-    const response = await instance.post("/cinemas", data, {
+    const response = await instance.post("/v1/cinemas", data, {
       requiresAuth: true,
     } as any);
     return response.data;
@@ -65,7 +65,7 @@ export const updateCinema = async (
   data: UpdateCinemaData
 ): Promise<{ data: Cinema }> => {
   try {
-    const response = await instance.put(`/cinemas/${id}`, data, {
+    const response = await instance.put(`/v1/cinemas/${id}`, data, {
       requiresAuth: true,
     } as any);
     return response.data;
@@ -78,7 +78,7 @@ export const archiveCinema = async (
   id: string
 ): Promise<{ message: string }> => {
   try {
-    const response = await instance.put(`/cinemas/${id}/archive`, {}, {
+    const response = await instance.put(`/v1/cinemas/${id}/archive`, {}, {
       requiresAuth: true,
     } as any);
     return response.data;
@@ -91,7 +91,7 @@ export const restoreCinema = async (
   id: string
 ): Promise<{ message: string }> => {
   try {
-    const response = await instance.put(`/cinemas/${id}/restore`, {}, {
+    const response = await instance.put(`/v1/cinemas/${id}/restore`, {}, {
       requiresAuth: true,
     } as any);
     return response.data;
@@ -116,7 +116,7 @@ export const getAllRooms = async (
     if (params?.endTime) queryParams.append("endTime", params.endTime);
 
     const response = await instance.get(
-      `/rooms/public?${queryParams.toString()}`,
+      `/v1/rooms/public?${queryParams.toString()}`,
       {
         requiresAuth: true,
       } as any
@@ -129,7 +129,7 @@ export const getAllRooms = async (
 
 export const getRoomById = async (id: string): Promise<{ data: Room }> => {
   try {
-    const response = await instance.get(`/rooms/public/${id}`, {
+    const response = await instance.get(`/v1/rooms/public/${id}`, {
       requiresAuth: true,
     } as any);
     return response.data;
@@ -142,7 +142,7 @@ export const createRoom = async (
   data: CreateRoomData
 ): Promise<{ data: Room }> => {
   try {
-    const response = await instance.post("/rooms", data, {
+    const response = await instance.post("/v1/rooms", data, {
       requiresAuth: true,
     } as any);
     return response.data;
@@ -156,7 +156,7 @@ export const updateRoom = async (
   data: UpdateRoomData
 ): Promise<{ data: Room }> => {
   try {
-    const response = await instance.put(`/rooms/${id}`, data, {
+    const response = await instance.put(`/v1/rooms/${id}`, data, {
       requiresAuth: true,
     } as any);
     return response.data;
@@ -167,7 +167,7 @@ export const updateRoom = async (
 
 export const archiveRoom = async (id: string): Promise<{ message: string }> => {
   try {
-    const response = await instance.put(`/rooms/archive/${id}`, {}, {
+    const response = await instance.put(`/v1/rooms/archive/${id}`, {}, {
       requiresAuth: true,
     } as any);
     return response.data;
@@ -178,7 +178,7 @@ export const archiveRoom = async (id: string): Promise<{ message: string }> => {
 
 export const restoreRoom = async (id: string): Promise<{ message: string }> => {
   try {
-    const response = await instance.put(`/rooms/restore/${id}`, {}, {
+    const response = await instance.put(`/v1/rooms/restore/${id}`, {}, {
       requiresAuth: true,
     } as any);
     return response.data;

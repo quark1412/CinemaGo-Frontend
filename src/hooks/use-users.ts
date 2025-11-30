@@ -6,7 +6,7 @@ import {
   archiveUser,
   restoreUser,
   GetUsersParams,
-} from "@/services/users/users";
+} from "@/services/users";
 import { toast } from "sonner";
 
 // Query Keys

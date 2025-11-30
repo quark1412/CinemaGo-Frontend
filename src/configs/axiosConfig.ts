@@ -1,269 +1,72 @@
 import axios, {
-  InternalAxiosRequestConfig,
   AxiosError,
   AxiosInstance,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
 } from "axios";
-import Cookies from "js-cookie";
-import jwt_decode from "jwt-decode";
-import dayjs from "dayjs";
 
-const baseURL = "http://localhost:8000/v1";
-
-type CookieGetter = () => {
-  accessToken?: string;
-  refreshToken?: string;
-};
-
-let isRefreshing = false;
-let refreshSubscribers: Array<(token: string) => void> = [];
-
-const subscribeTokenRefresh = (cb: (token: string) => void) => {
-  refreshSubscribers.push(cb);
-};
-
-const onRefreshed = (token: string) => {
-  refreshSubscribers.forEach((cb) => cb(token));
-  refreshSubscribers = [];
-};
-
-const getClientCookies = (): {
-  accessToken?: string;
-  refreshToken?: string;
-} => {
-  return {
-    accessToken: Cookies.get("accessToken"),
-    refreshToken: Cookies.get("refreshToken"),
-  };
-};
-
-const getServerCookies = async (): Promise<{
-  accessToken?: string;
-  refreshToken?: string;
-}> => {
-  try {
-    const { cookies } = await import("next/headers");
-    const cookieStore = cookies();
-    const resolvedCookieStore =
-      cookieStore instanceof Promise ? await cookieStore : cookieStore;
-    const accessToken = resolvedCookieStore.get("accessToken")?.value;
-    const refreshToken = resolvedCookieStore.get("refreshToken")?.value;
-
-    return {
-      accessToken: accessToken || undefined,
-      refreshToken: refreshToken || undefined,
-    };
-  } catch (error) {
-    console.warn("Failed to get server cookies:", error);
-    return {};
+declare module "axios" {
+  export interface AxiosRequestConfig {
+    _retry?: boolean;
   }
-};
+  export interface InternalAxiosRequestConfig {
+    _retry?: boolean;
+  }
+}
 
-const createAxiosInstance = (cookieGetter?: CookieGetter): AxiosInstance => {
-  const instance = axios.create({
-    baseURL,
-    withCredentials: true,
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+const axiosInstance: AxiosInstance = axios.create({
+  baseURL: baseURL,
     headers: {
       "Content-Type": "application/json",
     },
+  withCredentials: true,
   });
 
-  instance.interceptors.request.use(async (req: any) => {
-    const requiresAuth = req.requiresAuth !== false;
-
-    if (!requiresAuth) {
-      return req;
-    }
-
-    let accessToken: string | undefined;
-    let refreshToken: string | undefined;
-
+axiosInstance.interceptors.request.use(
+  async (config) => {
     if (typeof window !== "undefined") {
-      const cookies = getClientCookies();
-      accessToken = cookies.accessToken;
-      refreshToken = cookies.refreshToken;
-    } else {
-      if (cookieGetter) {
-        const cookies = cookieGetter();
-        accessToken = cookies.accessToken;
-        refreshToken = cookies.refreshToken;
-      } else {
-        const cookies = await getServerCookies();
-        accessToken = cookies.accessToken;
-        refreshToken = cookies.refreshToken;
+      const accessToken = localStorage.getItem("accessToken");
+      if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
       }
     }
 
-    let shouldRefresh = false;
-    if (accessToken) {
-      try {
-        const user = jwt_decode<{ exp: number }>(accessToken);
-        const expirationTime = dayjs.unix(user.exp);
-        const now = dayjs();
-        const timeUntilExpiry = expirationTime.diff(now, "second");
-        shouldRefresh = timeUntilExpiry < 60;
-
-        if (!shouldRefresh) {
-          req.headers.Authorization = `Bearer ${accessToken}`;
-          return req;
-        }
-      } catch (error) {
-        shouldRefresh = true;
+    return config;
+  },
+  (error: AxiosError) => {
+    return Promise.reject(error);
       }
-    } else {
-      shouldRefresh = true;
-    }
+);
 
-    if (shouldRefresh && refreshToken) {
-      const isServer = typeof window === "undefined";
+axiosInstance.interceptors.response.use(
+  (response: AxiosResponse) => {
+    return response;
+  },
+  async (error: AxiosError) => {
+    const { response, config } = error;
+    const originalRequest = config as InternalAxiosRequestConfig;
 
-      if (isServer) {
-        try {
-          const response = await axios.post(
-            `${baseURL}/auth/refreshToken`,
-            { refreshToken },
-            { withCredentials: true }
-          );
-
-          const { accessToken: newAccessToken } =
-            response.data.data || response.data;
-
-          if (newAccessToken) {
-            req.headers.Authorization = `Bearer ${newAccessToken}`;
-            return req;
-          }
-        } catch (err) {
-          return req;
-        }
-      } else {
-        if (!isRefreshing) {
-          isRefreshing = true;
-
+    if (response?.status === 401 && !originalRequest?._retry) {
+      originalRequest!._retry = true;
           try {
-            const response = await axios.post(
-              `${baseURL}/auth/refreshToken`,
-              { refreshToken },
+        const { data } = await axios.post(
+          `/api/auth/refreshToken`,
+          {},
               { withCredentials: true }
             );
 
-            const {
-              accessToken: newAccessToken,
-              refreshToken: newRefreshToken,
-            } = response.data.data || response.data;
+        localStorage.setItem("accessToken", data.accessToken);
 
-            if (newAccessToken) {
-              Cookies.set("accessToken", newAccessToken, { expires: 1 });
-              if (newRefreshToken) {
-                Cookies.set("refreshToken", newRefreshToken, { expires: 7 });
-              }
-
-              onRefreshed(newAccessToken);
-              req.headers.Authorization = `Bearer ${newAccessToken}`;
-              isRefreshing = false;
-              return req;
-            } else {
-              throw new Error("No access token in refresh response");
-            }
+        return axiosInstance(originalRequest);
           } catch (err) {
-            Cookies.remove("accessToken");
-            Cookies.remove("refreshToken");
-            isRefreshing = false;
-            refreshSubscribers = [];
-
-            if (typeof window !== "undefined") {
-              window.location.href = "/login";
+        localStorage.removeItem("accessToken");
+        return Promise.reject(err);
             }
-            return req;
-          }
-        } else {
-          return new Promise((resolve) => {
-            subscribeTokenRefresh((token: string) => {
-              req.headers.Authorization = `Bearer ${token}`;
-              resolve(req);
-            });
-          });
-        }
-      }
     }
-
-    if (accessToken) {
-      req.headers.Authorization = `Bearer ${accessToken}`;
-    }
-
-    return req;
-  });
-
-  if (typeof window !== "undefined") {
-    instance.interceptors.response.use(
-      (response) => response,
-      async (error: AxiosError) => {
-        const originalRequest = error.config as any;
-
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-
-          const cookies = getClientCookies();
-          const refreshToken = cookies.refreshToken;
-
-          if (refreshToken && !isRefreshing) {
-            isRefreshing = true;
-
-            try {
-              const response = await axios.post(
-                `${baseURL}/auth/refreshToken`,
-                { refreshToken },
-                { withCredentials: true }
-              );
-
-              const {
-                accessToken: newAccessToken,
-                refreshToken: newRefreshToken,
-              } = response.data.data || response.data;
-
-              Cookies.set("accessToken", newAccessToken, { expires: 1 });
-              Cookies.set("refreshToken", newRefreshToken, { expires: 7 });
-
-              onRefreshed(newAccessToken);
-              originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-              isRefreshing = false;
-
-              return instance(originalRequest);
-            } catch (err) {
-              Cookies.remove("accessToken");
-              Cookies.remove("refreshToken");
-              isRefreshing = false;
-              refreshSubscribers = [];
-
-              if (typeof window !== "undefined") {
-                window.location.href = "/login";
-              }
-              return Promise.reject(error);
-            }
-          } else if (isRefreshing) {
-            return new Promise((resolve, reject) => {
-              subscribeTokenRefresh((token: string) => {
-                originalRequest.headers.Authorization = `Bearer ${token}`;
-                resolve(instance(originalRequest));
-              });
-            });
-          }
-        }
-
         return Promise.reject(error);
       }
     );
-  }
 
-  return instance;
-};
-
-const instance = createAxiosInstance();
-
-export const getServerAxiosInstance = (
-  cookieGetter?: CookieGetter
-): AxiosInstance => {
-  return createAxiosInstance(cookieGetter);
-};
-
-export { createAxiosInstance };
-
-export default instance;
+export default axiosInstance;

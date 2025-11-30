@@ -1,8 +1,11 @@
 "use client";
 
-import { GenericInfiniteSelect } from "@/components/ui/generic-infinite-select";
-import { useInfiniteCinemas } from "@/hooks/use-infinite-cinemas";
+import { useQuery } from "@tanstack/react-query";
+import { GenericSelect } from "@/components/ui/generic-select";
+import { getAllCinemas } from "@/services/cinemas";
 import { Cinema } from "@/types/cinema";
+import { SelectHookReturn } from "@/components/ui/generic-select";
+import { useMemo, useState } from "react";
 
 interface CinemaSelectorProps {
   value?: string[];
@@ -21,23 +24,52 @@ export function CinemaSelector({
   className,
   multiple = false,
 }: CinemaSelectorProps) {
-  const useCinemaHook = () => useInfiniteCinemas(20);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const getOptionFromCinema = (cinema: Cinema) => ({
+  const { data, isLoading } = useQuery({
+    queryKey: ["cinemas"],
+    queryFn: () =>
+      getAllCinemas({
+        limit: undefined,
+        isActive: true,
+      }),
+  });
+
+  const filteredCinemas = useMemo(() => {
+    const cinemas = data?.data || [];
+    if (!searchTerm) return cinemas;
+    const lowerSearch = searchTerm.toLowerCase();
+    return cinemas.filter(
+      (cinema) =>
+        cinema.name.toLowerCase().includes(lowerSearch) ||
+        cinema.city.toLowerCase().includes(lowerSearch)
+    );
+  }, [data?.data, searchTerm]);
+
+  const useCinemaHook = (): SelectHookReturn<Cinema> => {
+    return {
+      items: filteredCinemas,
+      loading: isLoading,
+      search: (term: string) => setSearchTerm(term),
+      reset: () => setSearchTerm(""),
+    };
+  };
+
+  const getOption = (cinema: Cinema) => ({
     value: cinema.id,
     label: `${cinema.name} - ${cinema.city}`,
   });
 
   return (
-    <GenericInfiniteSelect<Cinema>
+    <GenericSelect<Cinema>
       value={value}
       onValueChange={onValueChange}
       placeholder={placeholder}
       multiple={multiple}
       disabled={disabled}
       className={className}
-      useInfiniteHook={useCinemaHook}
-      getOptionFromItem={getOptionFromCinema}
+      useSelectHook={useCinemaHook}
+      getOption={getOption}
       showSelectedBadges={multiple}
       badgeClassName="bg-blue-50 text-blue-700"
       showSearch={false}

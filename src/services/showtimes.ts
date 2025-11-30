@@ -60,10 +60,7 @@ export const getAllShowtimes = async (
     if (params?.endTime) queryParams.append("endTime", params.endTime);
 
     const response = await instance.get(
-      `/showtimes/public?${queryParams.toString()}`,
-      {
-        requiresAuth: true,
-      } as any
+      `/v1/showtimes/public?${queryParams.toString()}`
     );
     return response.data;
   } catch (error) {
@@ -79,9 +76,7 @@ export const getShowtimes = async (
 
 export const getShowtimeById = async (id: string) => {
   try {
-    const response = await instance.get(`/showtimes/public/${id}`, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.get(`/v1/showtimes/public/${id}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -92,9 +87,7 @@ export const createShowtime = async (
   showtimeData: CreateShowtimeRequest
 ): Promise<{ data: Showtime }> => {
   try {
-    const response = await instance.post("/showtimes", showtimeData, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.post("/v1/showtimes", showtimeData);
 
     if (response.status !== 201 && response.status !== 200) {
       const error = response.data;
@@ -112,9 +105,7 @@ export const updateShowtime = async (
   showtimeData: UpdateShowtimeRequest
 ): Promise<{ data: Showtime }> => {
   try {
-    const response = await instance.put(`/showtimes/${id}`, showtimeData, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.put(`/v1/showtimes/${id}`, showtimeData);
     return response.data;
   } catch (error) {
     throw error;
@@ -125,9 +116,7 @@ export const archiveShowtime = async (
   id: string
 ): Promise<{ message: string }> => {
   try {
-    const response = await instance.put(`/showtimes/archive/${id}`, {}, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.put(`/v1/showtimes/archive/${id}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -138,9 +127,7 @@ export const restoreShowtime = async (
   id: string
 ): Promise<{ message: string }> => {
   try {
-    const response = await instance.put(`/showtimes/restore/${id}`, {}, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.put(`/v1/showtimes/restore/${id}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -159,10 +146,7 @@ export const getBusyRoomIds = async (
     if (cinemaId) queryParams.append("cinemaId", cinemaId);
 
     const response = await instance.get(
-      `/showtimes/public/get-busy-rooms?${queryParams.toString()}`,
-      {
-        requiresAuth: true,
-      } as any
+      `/v1/showtimes/public/get-busy-rooms?${queryParams.toString()}`
     );
     return response.data;
   } catch (error) {

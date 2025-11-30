@@ -32,10 +32,7 @@ export const getAllGenres = async (
       queryParams.append("isActive", params.isActive.toString());
 
     const response = await instance.get(
-      `/genres/public?${queryParams.toString()}`,
-      {
-        requiresAuth: true,
-      } as any
+      `/v1/genres/public?${queryParams.toString()}`
     );
     return response.data;
   } catch (error) {
@@ -45,9 +42,7 @@ export const getAllGenres = async (
 
 export const getGenreById = async (id: string): Promise<{ data: Genre }> => {
   try {
-    const response = await instance.get(`/genres/public/${id}`, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.get(`/v1/genres/public/${id}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -59,9 +54,7 @@ export const createGenre = async (genreData: {
   description: string;
 }): Promise<{ data: Genre }> => {
   try {
-    const response = await instance.post("/genres", genreData, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.post("/v1/genres", genreData);
     return response.data;
   } catch (error) {
     throw error;
@@ -76,9 +69,7 @@ export const updateGenre = async (
   }
 ): Promise<{ data: Genre }> => {
   try {
-    const response = await instance.put(`/genres/${id}`, genreData, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.put(`/v1/genres/${id}`, genreData);
     return response.data;
   } catch (error) {
     throw error;
@@ -89,9 +80,7 @@ export const archiveGenre = async (
   id: string
 ): Promise<{ message: string }> => {
   try {
-    const response = await instance.put(`/genres/archive/${id}`, {}, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.put(`/v1/genres/archive/${id}`, {});
     return response.data;
   } catch (error) {
     throw error;
@@ -102,9 +91,7 @@ export const restoreGenre = async (
   id: string
 ): Promise<{ message: string }> => {
   try {
-    const response = await instance.put(`/genres/restore/${id}`, {}, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.put(`/v1/genres/restore/${id}`, {});
     return response.data;
   } catch (error) {
     throw error;

@@ -22,6 +22,9 @@ export interface Room {
   createdAt: Date;
   updatedAt: Date;
   seats?: Seat[];
+  NORMAL: number;
+  VIP: number;
+  COUPLE: number;
 }
 
 export interface Seat {

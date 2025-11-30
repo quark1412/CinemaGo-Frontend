@@ -187,16 +187,10 @@ export const getAllReviews = async (
   params?: GetReviewsParams
 ): Promise<ReviewsResponse> => {
   try {
-    const response = await instance.post(
-      "/reviews/graphql",
-      {
-        query: GET_REVIEWS_QUERY,
-        variables: params,
-      },
-      {
-        requiresAuth: true,
-      } as any
-    );
+    const response = await instance.post("/v1/reviews/graphql", {
+      query: GET_REVIEWS_QUERY,
+      variables: params,
+    });
 
     if (response.data.errors) {
       throw new Error(response.data.errors[0].message);
@@ -210,16 +204,10 @@ export const getAllReviews = async (
 
 export const getReviewById = async (id: string): Promise<Review> => {
   try {
-    const response = await instance.post(
-      "/reviews/graphql",
-      {
-        query: GET_REVIEW_BY_ID_QUERY,
-        variables: { reviewId: id },
-      },
-      {
-        requiresAuth: true,
-      } as any
-    );
+    const response = await instance.post("/v1/reviews/graphql", {
+      query: GET_REVIEW_BY_ID_QUERY,
+      variables: { reviewId: id },
+    });
 
     if (response.data.errors) {
       throw new Error(response.data.errors[0].message);
@@ -236,16 +224,10 @@ export const replyToReview = async (
   content: string
 ): Promise<Review> => {
   try {
-    const response = await instance.post(
-      "/reviews/graphql",
-      {
-        query: REPLY_TO_REVIEW_MUTATION,
-        variables: { reviewId, content },
-      },
-      {
-        requiresAuth: true,
-      } as any
-    );
+    const response = await instance.post("/v1/reviews/graphql", {
+      query: REPLY_TO_REVIEW_MUTATION,
+      variables: { reviewId, content },
+    });
 
     if (response.data.errors) {
       throw new Error(response.data.errors[0].message);
@@ -265,16 +247,10 @@ export const updateReview = async (
   }
 ): Promise<Review> => {
   try {
-    const response = await instance.post(
-      "/reviews/graphql",
-      {
-        query: UPDATE_REVIEW_MUTATION,
-        variables: { reviewId: id, ...reviewData },
-      },
-      {
-        requiresAuth: true,
-      } as any
-    );
+    const response = await instance.post("/v1/reviews/graphql", {
+      query: UPDATE_REVIEW_MUTATION,
+      variables: { reviewId: id, ...reviewData },
+    });
 
     if (response.data.errors) {
       throw new Error(response.data.errors[0].message);
@@ -288,16 +264,10 @@ export const updateReview = async (
 
 export const hideReview = async (id: string): Promise<Review> => {
   try {
-    const response = await instance.post(
-      "/reviews/graphql",
-      {
-        query: HIDE_REVIEW_MUTATION,
-        variables: { reviewId: id },
-      },
-      {
-        requiresAuth: true,
-      } as any
-    );
+    const response = await instance.post("/v1/reviews/graphql", {
+      query: HIDE_REVIEW_MUTATION,
+      variables: { reviewId: id },
+    });
 
     if (response.data.errors) {
       throw new Error(response.data.errors[0].message);
@@ -311,16 +281,10 @@ export const hideReview = async (id: string): Promise<Review> => {
 
 export const unhideReview = async (id: string): Promise<Review> => {
   try {
-    const response = await instance.post(
-      "/reviews/graphql",
-      {
-        query: UNHIDE_REVIEW_MUTATION,
-        variables: { reviewId: id },
-      },
-      {
-        requiresAuth: true,
-      } as any
-    );
+    const response = await instance.post("/v1/reviews/graphql", {
+      query: UNHIDE_REVIEW_MUTATION,
+      variables: { reviewId: id },
+    });
 
     if (response.data.errors) {
       throw new Error(response.data.errors[0].message);

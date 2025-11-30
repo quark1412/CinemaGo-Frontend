@@ -32,7 +32,7 @@ export const createBooking = async (
   data: CreateBookingRequest
 ): Promise<{ data: Booking }> => {
   try {
-    const response = await instance.post("/bookings", data, {
+    const response = await instance.post("/v1/bookings", data, {
       requiresAuth: true,
     } as any);
     return response.data;
@@ -41,12 +41,21 @@ export const createBooking = async (
   }
 };
 
+export interface BookedSeat {
+  id: string;
+  bookingId: string;
+  seatId: string;
+  showtimeId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const getBookedSeats = async (
   showtimeId: string
-): Promise<{ data: string[] }> => {
+): Promise<{ data: BookedSeat[] }> => {
   try {
     const response = await instance.get(
-      `/bookings/public/${showtimeId}/booking-seat`,
+      `/v1/bookings/public/${showtimeId}/booking-seat`,
       {
         requiresAuth: true,
       } as any
@@ -62,7 +71,7 @@ export const holdSeat = async (data: {
   seatId: string;
 }): Promise<{ message: string }> => {
   try {
-    const response = await instance.post("/rooms/hold-seat", data, {
+    const response = await instance.post("/v1/rooms/hold-seat", data, {
       requiresAuth: true,
     } as any);
     return response.data;
@@ -76,7 +85,7 @@ export const releaseSeat = async (data: {
   seatId: string;
 }): Promise<{ message: string }> => {
   try {
-    const response = await instance.post("/rooms/release-seat", data, {
+    const response = await instance.post("/v1/rooms/release-seat", data, {
       requiresAuth: true,
     } as any);
     return response.data;
@@ -96,7 +105,7 @@ export const getHeldSeats = async (
   showtimeId: string
 ): Promise<{ data: HeldSeat[] }> => {
   try {
-    const response = await instance.get(`/rooms/${showtimeId}/hold-seat`, {
+    const response = await instance.get(`/v1/rooms/${showtimeId}/hold-seat`, {
       requiresAuth: true,
     } as any);
     return response.data;

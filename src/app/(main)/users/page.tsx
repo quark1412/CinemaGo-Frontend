@@ -4,7 +4,7 @@ import {
   dehydrate,
   HydrationBoundary,
 } from "@/lib/server-query-client";
-import { getAllUsers } from "@/services/users/users";
+import { getAllUsers } from "@/services/users";
 import { userKeys } from "@/hooks/use-users";
 
 export const metadata = {

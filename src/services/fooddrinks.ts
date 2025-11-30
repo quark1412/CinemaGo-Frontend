@@ -32,10 +32,7 @@ export const getAllFoodDrinks = async (
       queryParams.append("isAvailable", params.isAvailable.toString());
 
     const response = await instance.get(
-      `/food-drinks/public?${queryParams.toString()}`,
-      {
-        requiresAuth: true,
-      } as any
+      `/v1/food-drinks/public?${queryParams.toString()}`
     );
     return response.data;
   } catch (error) {
@@ -45,9 +42,7 @@ export const getAllFoodDrinks = async (
 
 export const getFoodDrinkById = async (id: string) => {
   try {
-    const response = await instance.get(`/food-drinks/public/${id}`, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.get(`/v1/food-drinks/public/${id}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -70,12 +65,11 @@ export const createFoodDrink = async (foodDrinkData: {
     formData.append("type", foodDrinkData.type);
     formData.append("image", foodDrinkData.image);
 
-    const response = await instance.post("/food-drinks", formData, {
+    const response = await instance.post("/v1/food-drinks", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
-      requiresAuth: true,
-    } as any);
+    });
 
     if (response.status !== 201 && response.status !== 200) {
       const error = response.data;
@@ -109,12 +103,11 @@ export const updateFoodDrink = async (
     if (foodDrinkData.type) formData.append("type", foodDrinkData.type);
     if (foodDrinkData.image) formData.append("image", foodDrinkData.image);
 
-    const response = await instance.put(`/food-drinks/${id}`, formData, {
+    const response = await instance.put(`/v1/food-drinks/${id}`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
-      requiresAuth: true,
-    } as any);
+    });
     return response.data;
   } catch (error) {
     throw error;
@@ -126,11 +119,7 @@ export const toggleFoodDrinkAvailability = async (
 ): Promise<{ data: FoodDrink }> => {
   try {
     const response = await instance.put(
-      `/food-drinks/${id}/toggle-availability`,
-      {},
-      {
-        requiresAuth: true,
-      } as any
+      `/v1/food-drinks/${id}/toggle-availability`
     );
     return response.data;
   } catch (error) {

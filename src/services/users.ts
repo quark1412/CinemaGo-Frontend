@@ -33,9 +33,7 @@ export const getAllUsers = async (
     if (params?.isActive !== undefined)
       queryParams.append("isActive", params.isActive.toString());
 
-    const response = await instance.get(`/users?${queryParams.toString()}`, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.get(`/v1/users?${queryParams.toString()}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -44,9 +42,7 @@ export const getAllUsers = async (
 
 export const getUserById = async (id: string): Promise<{ data: User }> => {
   try {
-    const response = await instance.get(`/users/${id}`, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.get(`/v1/users/${id}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -61,9 +57,7 @@ export const createUser = async (userData: {
   role: string;
 }): Promise<{ data: User }> => {
   try {
-    const response = await instance.post("/users", userData, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.post("/v1/users", userData);
     return response.data;
   } catch (error) {
     throw error;
@@ -80,9 +74,7 @@ export const updateUser = async (
   }
 ): Promise<{ data: User }> => {
   try {
-    const response = await instance.put(`/users/${id}`, userData, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.put(`/v1/users/${id}`, userData);
     return response.data;
   } catch (error) {
     throw error;
@@ -91,9 +83,7 @@ export const updateUser = async (
 
 export const archiveUser = async (id: string): Promise<{ message: string }> => {
   try {
-    const response = await instance.put(`/users/${id}/archive`, {}, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.put(`/v1/users/${id}/archive`);
     return response.data;
   } catch (error) {
     throw error;
@@ -102,9 +92,7 @@ export const archiveUser = async (id: string): Promise<{ message: string }> => {
 
 export const restoreUser = async (id: string): Promise<{ message: string }> => {
   try {
-    const response = await instance.put(`/users/${id}/restore`, {}, {
-      requiresAuth: true,
-    } as any);
+    const response = await instance.put(`/v1/users/${id}/restore`);
     return response.data;
   } catch (error) {
     throw error;
