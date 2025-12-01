@@ -43,6 +43,7 @@
     "movies": "Quản lý phim",
     "genres": "Quản lý thể loại",
     "cinemas": "Quản lý rạp",
+    "rooms": "Quản lý phòng",
     "reviews": "Quản lý đánh giá",
     "showtimes": "Quản lý lịch chiếu",
     "users": "Quản lý người dùng",

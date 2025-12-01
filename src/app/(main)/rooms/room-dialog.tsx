@@ -9,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Room, CreateRoomData, UpdateRoomData } from "@/types/cinema";
 import { createRoom, getRoomById, updateRoom } from "@/services/cinemas";
 import { CinemaSelector } from "@/components/cinema-selector";
-import { formatPrice } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +28,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { SeatLayout, SeatType, SeatPosition } from "@/types/seat";
+import { RoomLayoutModal } from "./room-layout-modal";
+import { MAX_COLS, MAX_ROWS } from "@/lib/constants";
 
 const formSchema = z.object({
   name: z.string().min(1, "Room name is required"),
@@ -57,6 +59,8 @@ export function RoomDialog({
   const [loading, setLoading] = useState(false);
   const isEditing = !!roomId;
   const [room, setRoom] = useState<Room | null>(null);
+  const [layoutModalOpen, setLayoutModalOpen] = useState(false);
+  const [seatLayout, setSeatLayout] = useState<SeatLayout | null>(null);
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -73,6 +77,82 @@ export function RoomDialog({
       const roomResponse = await getRoomById(roomId);
       const roomData = roomResponse.data;
       setRoom(roomData);
+
+      if (roomData.seatLayout && Array.isArray(roomData.seatLayout)) {
+        let maxRow = 0;
+        let maxCol = 0;
+
+        roomData.seatLayout.forEach((seat: any) => {
+          const rowIndex = seat.row.charCodeAt(0) - 65;
+          const colIndex = seat.col - 1;
+
+          if (rowIndex > maxRow) maxRow = rowIndex;
+          if (colIndex > maxCol) maxCol = colIndex;
+        });
+
+        const rows = Math.max(maxRow + 1, MAX_ROWS);
+        const cols = Math.max(maxCol + 1, MAX_COLS);
+        const seats: SeatPosition[][] = Array.from(
+          { length: rows },
+          (_, rowIndex) =>
+            Array.from({ length: cols }, (_, colIndex) => ({
+              row: rowIndex,
+              col: colIndex,
+              type: SeatType.EMPTY,
+            }))
+        );
+
+        roomData.seatLayout.forEach((seat: any) => {
+          const rowIndex = seat.row.charCodeAt(0) - 65;
+          const colIndex = seat.col - 1;
+
+          if (rowIndex < rows && colIndex < cols) {
+            const seatNumber = `${seat.row}${seat.col}`;
+            seats[rowIndex][colIndex] = {
+              row: rowIndex,
+              col: colIndex,
+              type: seat.type as SeatType,
+              seatNumber,
+            };
+          }
+        });
+
+        // Couple seat pairing
+        for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
+          for (let colIndex = 0; colIndex < cols - 1; colIndex++) {
+            const currentSeat = seats[rowIndex][colIndex];
+            const nextSeat = seats[rowIndex][colIndex + 1];
+
+            if (
+              currentSeat.type === SeatType.COUPLE &&
+              nextSeat.type === SeatType.COUPLE &&
+              !currentSeat.isCoupleSeat &&
+              !nextSeat.isCoupleSeat
+            ) {
+              const rowLetter = String.fromCharCode(65 + rowIndex);
+              const coupleSeatNumber = `${rowLetter}${colIndex + 1}-${
+                colIndex + 2
+              }`;
+
+              seats[rowIndex][colIndex] = {
+                ...currentSeat,
+                seatNumber: coupleSeatNumber,
+                isCoupleSeat: true,
+                coupleWith: colIndex + 1,
+              };
+
+              seats[rowIndex][colIndex + 1] = {
+                ...nextSeat,
+                seatNumber: coupleSeatNumber,
+                isCoupleSeat: true,
+                coupleWith: colIndex,
+              };
+            }
+          }
+        }
+
+        setSeatLayout({ rows, cols, seats });
+      }
 
       form.reset({
         name: roomData.name,
@@ -99,6 +179,7 @@ export function RoomDialog({
         couplePrice: 1,
       });
       setRoom(null);
+      setSeatLayout(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, open, defaultCinemaId]);
@@ -106,34 +187,51 @@ export function RoomDialog({
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
+      const convertLayoutToBackendFormat = (layout: SeatLayout | null) => {
+        if (!layout) return undefined;
+        return layout.seats
+          .map((row, rowIndex) =>
+            row.map((seat, colIndex) => ({
+              row: String.fromCharCode(65 + rowIndex),
+              col: colIndex + 1,
+              type: seat.type,
+            }))
+          )
+          .flat()
+          .filter((seat) => seat.type !== SeatType.EMPTY);
+      };
+
       if (isEditing && roomId) {
         const updateData: UpdateRoomData = {
           name: data.name,
           cinemaId: data.cinemaId,
-          seatLayout: room?.seatLayout,
+          seatLayout:
+            convertLayoutToBackendFormat(seatLayout) ?? room?.seatLayout,
           vipPrice: data.vipPrice,
           couplePrice: data.couplePrice,
         };
         await updateRoom(roomId, updateData);
         toast.success("Room updated successfully!");
       } else {
-        const basicSeatLayout = Array(5)
-          .fill(null)
-          .map((_, row) =>
-            Array(10)
-              .fill(null)
-              .map((_, col) => ({
-                row: String.fromCharCode(65 + row),
-                col: col + 1,
-                type: "NORMAL",
-              }))
-          )
-          .flat(); // Flatten the 2D array to 1D array
+        const layoutToUse =
+          convertLayoutToBackendFormat(seatLayout) ??
+          Array(5)
+            .fill(null)
+            .map((_, row) =>
+              Array(10)
+                .fill(null)
+                .map((_, col) => ({
+                  row: String.fromCharCode(65 + row),
+                  col: col + 1,
+                  type: "NORMAL",
+                }))
+            )
+            .flat();
 
         const createData: CreateRoomData = {
           name: data.name,
           cinemaId: data.cinemaId,
-          seatLayout: basicSeatLayout,
+          seatLayout: layoutToUse,
           vipPrice: data.vipPrice,
           couplePrice: data.couplePrice,
         };
@@ -156,6 +254,7 @@ export function RoomDialog({
   const handleClose = () => {
     onOpenChange(false);
     form.reset();
+    setSeatLayout(null);
   };
 
   return (
@@ -262,6 +361,18 @@ export function RoomDialog({
               />
             </div>
 
+            <div className="space-y-2">
+              <FormLabel>Seat Layout</FormLabel>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => setLayoutModalOpen(true)}
+              >
+                {seatLayout ? "Edit room layout" : "Configure room layout"}
+              </Button>
+            </div>
+
             <DialogFooter>
               <Button
                 type="button"
@@ -281,6 +392,17 @@ export function RoomDialog({
           </form>
         </Form>
       </DialogContent>
+
+      <RoomLayoutModal
+        open={layoutModalOpen}
+        onOpenChange={setLayoutModalOpen}
+        roomName={form.getValues("name") || "Room"}
+        onSave={(layout) => {
+          setSeatLayout(layout);
+          toast.success("Room layout saved!");
+        }}
+        initialLayout={seatLayout ?? undefined}
+      />
     </Dialog>
   );
 }

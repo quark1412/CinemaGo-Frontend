@@ -100,54 +100,6 @@ export function DataTable<TData, TValue>({
     onPaginationChange?.(1, parseInt(pageSize));
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
-          {/* Search */}
-          <div className="h-10 max-w-sm w-80 bg-gray-200 animate-pulse rounded"></div>
-          {/* Add Cinema */}
-          <div className="h-10 w-32 bg-gray-200 animate-pulse rounded"></div>
-        </div>
-
-        {/* Table */}
-        <div className="overflow-hidden rounded-md border flex-1 min-h-0">
-          <div className="h-full overflow-auto">
-            <Table>
-              <TableHeader className="sticky top-0 bg-background z-10">
-                <TableRow>
-                  {Array.from({ length: 6 }).map((_, index) => (
-                    <TableHead key={index}>
-                      <div className="h-4 bg-gray-200 animate-pulse rounded"></div>
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Array.from({ length: 10 }).map((_, index) => (
-                  <TableRow key={index}>
-                    {Array.from({ length: 6 }).map((_, cellIndex) => (
-                      <TableCell key={cellIndex}>
-                        <div className="h-4 bg-gray-200 animate-pulse rounded"></div>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-end space-x-2 py-4 flex-shrink-0">
-          <div className="h-8 w-20 bg-gray-200 animate-pulse rounded"></div>
-          <div className="h-8 w-16 bg-gray-200 animate-pulse rounded"></div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col">
       {/* Header */}

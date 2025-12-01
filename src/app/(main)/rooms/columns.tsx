@@ -28,14 +28,12 @@ interface ColumnProps {
   onEdit: (room: Room) => void;
   onArchive: (room: Room) => void;
   onRestore: (room: Room) => void;
-  onDesignLayout: (room: Room) => void;
 }
 
 export const createColumns = ({
   onEdit,
   onArchive,
   onRestore,
-  onDesignLayout,
 }: ColumnProps): ColumnDef<Room>[] => [
   {
     accessorKey: "name",
@@ -103,13 +101,6 @@ export const createColumns = ({
             >
               <Pencil className="text-primary" />
               <span className="text-xs">Edit</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onClick={() => onDesignLayout(room)}
-            >
-              <Layout className="text-primary" />
-              <span className="text-xs">Design Layout</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer"

@@ -76,6 +76,11 @@ export const AppSidebar = React.memo(function AppSidebar({
       icon: Theater,
     },
     {
+      title: t("sidebar.rooms"),
+      url: "/rooms",
+      icon: LayoutDashboard,
+    },
+    {
       title: t("sidebar.showtimes"),
       url: "/showtimes",
       icon: Clock,

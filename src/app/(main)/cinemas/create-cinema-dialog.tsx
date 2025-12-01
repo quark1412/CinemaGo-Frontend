@@ -36,7 +36,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RoomLayoutModal } from "./room-layout-modal";
+import { RoomLayoutModal } from "../rooms/room-layout-modal";
 import { ChevronDown, ChevronRight, Plus, Edit, Trash2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import axios from "axios";

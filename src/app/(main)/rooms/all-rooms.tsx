@@ -1,81 +1,73 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-
-import { Cinema } from "@/types/cinema";
-import { DataTable } from "./data-table";
-import { createColumns } from "./columns";
-import { CinemaDialog } from "./cinema-dialog";
-import { CreateCinemaDialog } from "./create-cinema-dialog";
+import { Room } from "@/types/cinema";
+import { RoomDataTable } from "@/app/(main)/rooms/data-table";
+import { createColumns } from "@/app/(main)/rooms/columns";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { GetCinemasParams } from "@/types/cinema";
-import {
-  useCinemas,
-  useArchiveCinema,
-  useRestoreCinema,
-} from "@/hooks/use-cinemas";
+import { GetRoomsParams } from "@/types/cinema";
+import { useRooms, useArchiveRoom, useRestoreRoom } from "@/hooks/use-rooms";
+import { RoomDialog } from "@/app/(main)/rooms/room-dialog";
 
-export default function AllCinemas() {
-  const router = useRouter();
+export function AllRooms() {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingCinema, setEditingCinema] = useState<Cinema | null>(null);
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
   const [confirmationDialog, setConfirmationDialog] = useState<{
     open: boolean;
-    cinema: Cinema | null;
+    room: Room | null;
     action: "archive" | "restore";
   }>({
     open: false,
-    cinema: null,
+    room: null,
     action: "archive",
   });
-  const [currentParams, setCurrentParams] = useState<GetCinemasParams>({
+  const [currentParams, setCurrentParams] = useState<GetRoomsParams>({
     page: 1,
     limit: 10,
   });
 
-  const { data, isLoading } = useCinemas(currentParams);
-  const archiveMutation = useArchiveCinema();
-  const restoreMutation = useRestoreCinema();
+  const { data, isLoading } = useRooms(currentParams);
+  const archiveMutation = useArchiveRoom();
+  const restoreMutation = useRestoreRoom();
 
   const handleCreateClick = () => {
-    setEditingCinema(null);
+    setEditingRoomId(null);
     setDialogOpen(true);
   };
 
-  const handleEditClick = (cinema: Cinema) => {
-    setEditingCinema(cinema);
+  const handleEditClick = (room: Room) => {
+    setEditingRoomId(room.id);
     setDialogOpen(true);
   };
 
-  const handleArchiveClick = (cinema: Cinema) => {
+  const handleArchiveClick = (room: Room) => {
     setConfirmationDialog({
       open: true,
-      cinema,
+      room,
       action: "archive",
     });
   };
 
-  const handleRestoreClick = (cinema: Cinema) => {
+  const handleRestoreClick = (room: Room) => {
     setConfirmationDialog({
       open: true,
-      cinema,
+      room,
       action: "restore",
     });
   };
 
   const handleConfirmAction = async () => {
-    if (!confirmationDialog.cinema) return;
+    if (!confirmationDialog.room) return;
 
     try {
       if (confirmationDialog.action === "archive") {
-        await archiveMutation.mutateAsync(confirmationDialog.cinema.id);
+        await archiveMutation.mutateAsync(confirmationDialog.room.id);
       } else {
-        await restoreMutation.mutateAsync(confirmationDialog.cinema.id);
+        await restoreMutation.mutateAsync(confirmationDialog.room.id);
       }
       setConfirmationDialog({
         open: false,
-        cinema: null,
+        room: null,
         action: "archive",
       });
     } catch (error) {}
@@ -99,7 +91,7 @@ export default function AllCinemas() {
 
   return (
     <div className="h-full">
-      <DataTable
+      <RoomDataTable
         columns={columns}
         data={data?.data || []}
         onCreateClick={handleCreateClick}
@@ -118,20 +110,12 @@ export default function AllCinemas() {
         loading={isLoading}
       />
 
-      {editingCinema ? (
-        <CinemaDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          cinema={editingCinema}
-          onSuccess={handleDialogSuccess}
-        />
-      ) : (
-        <CreateCinemaDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          onSuccess={handleDialogSuccess}
-        />
-      )}
+      <RoomDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        roomId={editingRoomId}
+        onSuccess={handleDialogSuccess}
+      />
 
       <ConfirmationDialog
         open={confirmationDialog.open}
@@ -140,13 +124,13 @@ export default function AllCinemas() {
         }
         title={
           confirmationDialog.action === "archive"
-            ? "Archive Cinema"
-            : "Restore Cinema"
+            ? "Archive Room"
+            : "Restore Room"
         }
         description={
           confirmationDialog.action === "archive"
-            ? `Are you sure you want to archive "${confirmationDialog.cinema?.name}"? This will make it unavailable for new showtimes.`
-            : `Are you sure you want to restore "${confirmationDialog.cinema?.name}"? This will make it available for new showtimes again.`
+            ? `Are you sure you want to archive "${confirmationDialog.room?.name}"? This will make it unavailable for new showtimes.`
+            : `Are you sure you want to restore "${confirmationDialog.room?.name}"? This will make it available for new showtimes again.`
         }
         confirmText={
           confirmationDialog.action === "archive" ? "Archive" : "Restore"
