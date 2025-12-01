@@ -39,7 +39,7 @@ import {
   Loader2,
   ShoppingCart,
   User,
-  Calendar,
+  Calendar as CalendarIcon,
   Film,
   Armchair,
   Clock,
@@ -48,6 +48,7 @@ import {
   MessageSquare,
   Play,
   X,
+  Search,
 } from "lucide-react";
 import { getAllShowtimes } from "@/services/showtimes";
 import { getRoomById } from "@/services/cinemas";
@@ -72,11 +73,17 @@ import {
 import { BookingSeatGrid } from "@/components/seat-layout/booking-seat-grid";
 import { format } from "date-fns";
 import Image from "next/image";
-import { convertToEmbedUrl, formatPrice } from "@/lib/utils";
+import { convertToEmbedUrl, formatPrice, cn } from "@/lib/utils";
 import { getSocket } from "@/services/socket";
 import { getAllUsers } from "@/services/users";
 import { getAllMovies } from "@/services/movies";
 import { getAllFoodDrinks } from "@/services/fooddrinks";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface SelectedFoodDrink {
   foodDrink: FoodDrink;
@@ -90,6 +97,7 @@ interface MovieWithShowtimes extends Movie {
 export default function POSPage() {
   const { user: adminUser } = useUser();
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [movieSearchTerm, setMovieSearchTerm] = useState<string>("");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [selectedShowtime, setSelectedShowtime] = useState<Showtime | null>(
     null
@@ -215,11 +223,18 @@ export default function POSPage() {
       }
     });
 
-    // Filter out movies with no showtimes and sort by title
-    return Array.from(movieMap.values())
+    // Filter out movies with no showtimes, filter by search term, and sort by title
+    const filtered = Array.from(movieMap.values())
       .filter((movie) => movie.showtimes.length > 0)
+      .filter((movie) => {
+        if (!movieSearchTerm.trim()) return true;
+        const searchLower = movieSearchTerm.toLowerCase();
+        return movie.title.toLowerCase().includes(searchLower);
+      })
       .sort((a, b) => a.title.localeCompare(b.title));
-  }, [showtimesData, moviesData, movieIdsWithShowtimes]);
+
+    return filtered;
+  }, [showtimesData, moviesData, movieIdsWithShowtimes, movieSearchTerm]);
 
   // Food & Drinks with pagination
   const { data: foodDrinksData, isLoading: foodDrinksLoading } = useQuery({
@@ -590,7 +605,11 @@ export default function POSPage() {
         setSelectedSeats([...selectedSeats, ...seatsToProcess]);
         setHeldSeatIds([...heldSeatIds, ...seatsToProcess.map((s) => s.id)]);
       } catch (error: any) {
-        toast.error(error.response?.data?.message || "Failed to hold seat(s)");
+        if (error.response?.status === 409) {
+          toast.error("Seat is already held by another user");
+          return;
+        }
+        toast.error("Failed to hold seat(s)");
       }
     }
   };
@@ -714,25 +733,62 @@ export default function POSPage() {
     }
   };
 
+  // Convert selectedDate string to Date for Calendar
+  const selectedDateAsDate = selectedDate ? new Date(selectedDate) : new Date();
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Date Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Chọn ngày
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="max-w-xs"
-          />
-        </CardContent>
-      </Card>
+    <div className="container space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center">
+        {/* Movie Search */}
+        <div className="flex-1 sm:w-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Tìm kiếm phim..."
+              value={movieSearchTerm}
+              onChange={(e) => setMovieSearchTerm(e.target.value)}
+              className="pl-10 w-3/4"
+            />
+          </div>
+        </div>
+
+        {/* Date Picker */}
+        <div className="">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full sm:w-[280px] justify-start text-left font-normal",
+                  !selectedDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? (
+                  format(selectedDateAsDate, "dd/MM/yyyy")
+                ) : (
+                  <span>Chọn ngày</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDateAsDate}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(format(date, "yyyy-MM-dd"));
+                  }
+                }}
+                // disabled={(date) =>
+                //   date < new Date(new Date().setHours(0, 0, 0, 0))
+                // }
+                autoFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
 
       {/* Movies with Showtimes */}
       {showtimesLoading || moviesLoading ? (
@@ -740,11 +796,9 @@ export default function POSPage() {
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : moviesWithShowtimes.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            Không có phim nào có suất chiếu cho ngày đã chọn
-          </CardContent>
-        </Card>
+        <div className="py-8 text-center text-muted-foreground">
+          Không có phim nào có suất chiếu cho ngày đã chọn
+        </div>
       ) : (
         <div className="flex flex-row gap-6">
           {moviesWithShowtimes.map((movie) => (

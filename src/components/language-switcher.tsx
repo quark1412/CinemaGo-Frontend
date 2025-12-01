@@ -1,6 +1,6 @@
 "use client";
 
-import { Languages } from "lucide-react";
+import { Globe, Languages } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,21 +15,29 @@ const languages = [
   { value: "vi" as const, label: "Tiếng Việt" },
 ];
 
-export function LanguageSwitcher() {
+export function LanguageSwitcher({ collapsed }: { collapsed: boolean }) {
   const { language, setLanguage } = useI18n();
 
   return (
     <Select value={language} onValueChange={setLanguage}>
-      <SelectTrigger className="w-[150px]">
-        <div className="flex items-center gap-2">
-          <Languages className="h-4 w-4" />
+      <SelectTrigger
+        className={`w-full ${
+          collapsed ? "[&>*:last-child]:hidden justify-center" : ""
+        }`}
+      >
+        <div
+          className={`flex items-center ${
+            collapsed ? "flex-col justify-center" : "flex-row gap-2"
+          }`}
+        >
+          {!collapsed && <Globe className="h-4 w-4" />}
           <SelectValue />
         </div>
       </SelectTrigger>
       <SelectContent>
         {languages.map((lang) => (
           <SelectItem key={lang.value} value={lang.value}>
-            {lang.label}
+            {collapsed ? lang.value : lang.label}
           </SelectItem>
         ))}
       </SelectContent>

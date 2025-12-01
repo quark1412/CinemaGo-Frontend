@@ -39,11 +39,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RoomLayoutModal } from "./room-layout-modal";
 import { ChevronDown, ChevronRight, Plus, Edit, Trash2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import axios from "axios";
+import {
+  SelectItem,
+  SelectContent,
+  Select,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Cinema name is required"),
-  address: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
+  name: z.string().min(1, "Vui lòng điền tên rạp"),
+  address: z.string().min(1, "Vui lòng điền địa chỉ"),
+  city: z.string().min(1, "Vui lòng chọn thành phố"),
   longitude: z.number().optional(),
   latitude: z.number().optional(),
 });
@@ -77,6 +85,23 @@ export function CreateCinemaDialog({
     number | null
   >(null);
   const [openRooms, setOpenRooms] = useState<Set<string>>(new Set());
+  const [cities, setCities] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      const response = await axios.get(
+        "https://open.oapi.vn/location/provinces?page=0&size=100"
+      );
+      setCities(
+        response.data.data.map((city: any) => ({
+          id: city.id,
+          name: city.name,
+        }))
+      );
+      console.log(response.data.data);
+    };
+    fetchCities();
+  }, []);
 
   const createMutation = useCreateCinema();
 
@@ -230,14 +255,14 @@ export function CreateCinemaDialog({
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create New Cinema</DialogTitle>
+            <DialogTitle>Tạo rạp mới</DialogTitle>
             <DialogDescription>
-              Step {currentStep} of 3:{" "}
+              Bước {currentStep} / 3:{" "}
               {currentStep === 1
-                ? "Fill in cinema information"
+                ? "Điền thông tin rạp"
                 : currentStep === 2
-                ? "Add rooms"
-                : "Review and create"}
+                ? "Thêm phòng"
+                : "Xem lại và tạo"}
             </DialogDescription>
           </DialogHeader>
 
@@ -269,43 +294,59 @@ export function CreateCinemaDialog({
           {currentStep === 1 && (
             <Form {...form}>
               <form className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cinema Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter cinema name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="flex flex-row gap-8">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Tên rạp</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nhập tên rạp" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>City</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter city" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Thành phố</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Chọn thành phố" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {cities.map((city) => (
+                                <SelectItem key={city.id} value={city.name}>
+                                  {city.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>Địa chỉ</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Enter full address"
+                          placeholder="Nhập địa chỉ chi tiết"
                           className="resize-none"
                           {...field}
                         />
@@ -321,12 +362,12 @@ export function CreateCinemaDialog({
                     name="latitude"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Latitude (Optional)</FormLabel>
+                        <FormLabel>Kinh độ (Tùy chọn)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             step="any"
-                            placeholder="e.g., 40.7128"
+                            placeholder="Ví dụ: 40.7128"
                             value={field.value?.toString() ?? ""}
                             onChange={(e) => {
                               const value = e.target.value;
@@ -348,12 +389,12 @@ export function CreateCinemaDialog({
                     name="longitude"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Longitude (Optional)</FormLabel>
+                        <FormLabel>Vĩ độ (Tùy chọn)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             step="any"
-                            placeholder="e.g., -74.0060"
+                            placeholder="Ví dụ: -74.0060"
                             value={field.value?.toString() ?? ""}
                             onChange={(e) => {
                               const value = e.target.value;
@@ -378,17 +419,17 @@ export function CreateCinemaDialog({
           {currentStep === 2 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Rooms</h3>
+                <h3 className="text-lg font-semibold">Phòng</h3>
                 <Button onClick={handleAddRoom} size="sm">
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Room
+                  Thêm phòng
                 </Button>
               </div>
 
               {rooms.length === 0 ? (
                 <Card>
                   <CardContent className="py-8 text-center text-muted-foreground">
-                    No rooms added yet.
+                    Chưa có phòng nào được thêm
                   </CardContent>
                 </Card>
               ) : (
@@ -424,7 +465,7 @@ export function CreateCinemaDialog({
                             <div className="flex items-center gap-2">
                               {room.layout && (
                                 <span className="text-xs text-muted-foreground">
-                                  Layout configured
+                                  Phòng đã sắp xếp bố cục
                                 </span>
                               )}
                               <Button
@@ -444,10 +485,10 @@ export function CreateCinemaDialog({
                               <div className="w-full">
                                 <div>
                                   <label className="text-sm font-medium">
-                                    Room Name
+                                    Tên phòng
                                   </label>
                                   <Input
-                                    placeholder="Enter room name"
+                                    placeholder="Nhập tên phòng"
                                     value={room.name}
                                     onChange={(e) =>
                                       handleUpdateRoom(index, {
@@ -462,7 +503,7 @@ export function CreateCinemaDialog({
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <label className="text-sm font-medium">
-                                    VIP Price (VND)
+                                    Giá ghế VIP (VND)
                                   </label>
                                   <Input
                                     type="number"
@@ -480,7 +521,7 @@ export function CreateCinemaDialog({
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium">
-                                    Couple Price (VND)
+                                    Giá ghế đôi (VND)
                                   </label>
                                   <Input
                                     type="number"
@@ -505,8 +546,8 @@ export function CreateCinemaDialog({
                               >
                                 <Edit className="mr-2 h-4 w-4" />
                                 {room.layout
-                                  ? "Edit Room Layout"
-                                  : "Configure Room Layout"}
+                                  ? "Sửa bố cục phòng"
+                                  : "Cấu hình bố cục phòng"}
                               </Button>
                             </CardContent>
                           </CollapsibleContent>
@@ -524,19 +565,19 @@ export function CreateCinemaDialog({
             <div className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Cinema Information</CardTitle>
+                  <CardTitle>Thông tin rạp</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div>
-                    <span className="font-medium">Name:</span>{" "}
+                    <span className="font-medium">Tên:</span>{" "}
                     {form.getValues().name}
                   </div>
                   <div>
-                    <span className="font-medium">City:</span>{" "}
+                    <span className="font-medium">Thành phố:</span>{" "}
                     {form.getValues().city}
                   </div>
                   <div>
-                    <span className="font-medium">Address:</span>{" "}
+                    <span className="font-medium">Địa chỉ:</span>{" "}
                     {form.getValues().address}
                   </div>
                 </CardContent>
@@ -544,11 +585,13 @@ export function CreateCinemaDialog({
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Rooms ({rooms.length})</CardTitle>
+                  <CardTitle>Phòng ({rooms.length})</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {rooms.length === 0 ? (
-                    <p className="text-muted-foreground">No rooms added</p>
+                    <p className="text-muted-foreground">
+                      Chưa có phòng nào được thêm
+                    </p>
                   ) : (
                     <div className="space-y-2">
                       {rooms.map((room, index) => (
@@ -558,17 +601,17 @@ export function CreateCinemaDialog({
                         >
                           <div>
                             <div className="font-medium">
-                              {room.name || `Room ${index + 1}`}
+                              {room.name || `Phòng ${index + 1}`}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              VIP: {formatPrice(room.vipPrice)} | Couple:{" "}
+                              VIP: {formatPrice(room.vipPrice)} | Đôi:{" "}
                               {formatPrice(room.couplePrice)}
                             </div>
                           </div>
                           <div className="text-sm text-muted-foreground">
                             {room.layout
-                              ? "✓ Layout configured"
-                              : "⚠ No layout"}
+                              ? "Bố cục đã cấu hình"
+                              : "Chưa có bố cục"}
                           </div>
                         </div>
                       ))}
@@ -586,7 +629,7 @@ export function CreateCinemaDialog({
               onClick={handleClose}
               disabled={loading}
             >
-              Cancel
+              Hủy
             </Button>
             {currentStep > 1 && (
               <Button
@@ -595,7 +638,7 @@ export function CreateCinemaDialog({
                 onClick={() => setCurrentStep(currentStep - 1)}
                 disabled={loading}
               >
-                Previous
+                Trước
               </Button>
             )}
             {currentStep < 3 ? (
@@ -623,7 +666,7 @@ export function CreateCinemaDialog({
                     );
                     if (invalidRooms.length > 0) {
                       toast.error(
-                        "Please complete all room information and configure layouts before proceeding"
+                        "Vui lòng hoàn thành tất cả thông tin phòng và cấu hình bố cục trước khi tiếp tục"
                       );
                       return;
                     }
@@ -632,7 +675,7 @@ export function CreateCinemaDialog({
                 }}
                 disabled={loading}
               >
-                Next
+                Tiếp
               </Button>
             ) : (
               <Button
@@ -647,7 +690,7 @@ export function CreateCinemaDialog({
                 {loading && (
                   <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
                 )}
-                Create Cinema
+                Tạo rạp
               </Button>
             )}
           </DialogFooter>

@@ -24,6 +24,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { PROJECT_NAME } from "@/lib/constants";
 import { NavMain } from "@/components/nav-main";
@@ -39,6 +40,7 @@ export const AppSidebar = React.memo(function AppSidebar({
   const { user, isLoading } = useUser();
   const { t } = useI18n();
   const pathname = usePathname();
+  const { state } = useSidebar();
 
   const userData = user
     ? {
@@ -130,10 +132,8 @@ export const AppSidebar = React.memo(function AppSidebar({
       <SidebarContent>
         <NavMain items={navMain} />
       </SidebarContent>
-      <SidebarFooter>
-        <div className="px-2 py-2 mb-2">
-          <LanguageSwitcher />
-        </div>
+      <SidebarFooter className="flex gap-10">
+        <LanguageSwitcher collapsed={state === "collapsed"} />
         <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
