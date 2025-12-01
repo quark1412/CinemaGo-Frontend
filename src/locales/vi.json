@@ -9,12 +9,22 @@
     "add": "Thêm",
     "search": "Tìm kiếm",
     "filter": "Lọc",
-    "actions": "Hành động",
+    "actions": {
+      "edit": "Sửa",
+      "copyId": "Sao chép ID",
+      "viewDetails": "Xem chi tiết",
+      "archive": "Lưu trữ",
+      "restore": "Khôi phục"
+    },
+    "status": {
+      "active": "Đang hoạt động",
+      "inactive": "Không hoạt động"
+    },
     "loading": "Đang tải...",
     "noData": "Không có dữ liệu",
     "page": "Trang",
-    "of": "của",
-    "rowsPerPage": "Số lượng trên trang",
+    "of": "trên",
+    "rowsPerPage": "Số lượng",
     "goToFirstPage": "Về trang đầu",
     "goToPreviousPage": "Trang trước",
     "goToNextPage": "Trang sau",
@@ -88,15 +98,8 @@
       "movieStatus": "Trạng thái phim",
       "activeStatus": "Trạng thái hoạt động"
     },
-    "actions": {
-      "edit": "Sửa",
-      "copyMovieId": "Sao chép ID phim",
-      "viewDetails": "Xem chi tiết",
-      "archive": "Xóa",
-      "restore": "Khôi phục"
-    },
     "createMovie": {
-      "title": "Tạo phim",
+      "title": "Thêm phim",
       "movieInformation": "Thông tin phim",
       "trailer": "Trailer",
       "uploadFile": "Tải lên file",
@@ -110,21 +113,19 @@
       "clickToChange": "Nhấp để thay đổi",
       "selectGenres": "Chọn thể loại",
       "enterDescriptionPlaceholder": "Viết một mô tả ngắn về phim...",
-      "createMovie": "Tạo phim",
       "cancel": "Hủy",
-      "createMovieSuccess": "Tạo phim thành công",
-      "createMovieError": "Tạo phim thất bại",
+      "createMovieSuccess": "Thêm phim thành công",
+      "createMovieError": "Thêm phim thất bại",
       "pleaseUploadTrailerFileOrSwitchToUrlMode": "Vui lòng tải lên file trailer hoặc chuyển sang chế độ URL",
       "pleaseEnterTrailerUrlOrSwitchToFileUploadMode": "Vui lòng nhập URL trailer hoặc chuyển sang chế độ tải lên file"
     },
-    "editMovie": {
+    "updateMovie": {
       "title": "Cập nhật phim",
       "movieInformation": "Thông tin phim",
-      "trailerOptional": "Trailer ",
+      "trailerOptional": "Trailer",
       "thumbnailOptional": "Thumbnail",
       "enterTrailerUrlPlaceholder": "Nhập URL trailer YouTube",
       "minutesPlaceholder": "Phút",
-      "updateMovie": "Cập nhật phim",
       "cancel": "Hủy",
       "loadingMovieDetails": "Đang tải chi tiết phim...",
       "movieNotFound": "Không tìm thấy phim.",
@@ -143,7 +144,6 @@
       "noData": "Không có thông tin phim."
     },
     "allMovies": "Tất cả phim",
-    "addMovie": "Thêm phim",
     "searchMovies": "Tìm kiếm phim",
     "filterMovies": {
       "movieStatus": "Trạng thái phim",
@@ -153,22 +153,60 @@
       "COMING_SOON": "Sắp chiếu",
       "ENDED": "Đã kết thúc",
       "active": "Hoạt động",
-      "archived": "Đã xóa"
+      "inactive": "Không hoạt động"
     },
-    "deleteMovie": "Xóa phim",
-    "movieDetails": "Chi tiết phim",
-    "showtimes": "Lịch chiếu",
-    "noShowtimes": "Không có lịch chiếu",
-    "addShowtime": "Thêm lịch chiếu",
-    "createShowtime": "Tạo lịch chiếu",
-    "updateShowtime": "Cập nhật lịch chiếu",
-    "validationErrors": "Lỗi xác thực:"
+    "archiveMovie": {
+      "title": "Lưu trữ phim",
+      "description": "Lưu trữ thông tin phim dưới đây",
+      "archiveMovieSuccess": "Lưu trữ phim thành công",
+      "archiveMovieError": "Lưu trữ phim thất bại",
+      "confirmText": "Bạn có chắc chắn muốn lưu trữ phim này?"
+    },
+    "restoreMovie": {
+      "title": "Khôi phục phim",
+      "description": "Khôi phục thông tin phim dưới đây",
+      "restoreMovieSuccess": "Khôi phục phim thành công",
+      "restoreMovieError": "Khôi phục phim thất bại",
+      "confirmText": "Bạn có chắc chắn muốn khôi phục phim này?"
+    }
   },
   "genres": {
-    "title": "Thể loại",
-    "createGenre": "Tạo thể loại",
-    "updateGenre": "Cập nhật thể loại",
-    "deleteGenre": "Xóa thể loại"
+    "name": "Tên",
+    "description": "Mô tả",
+    "status": "Trạng thái",
+    "searchGenres": "Tìm kiếm thể loại",
+    "enterGenreNamePlaceholder": "Nhập tên thể loại",
+    "enterGenreDescriptionPlaceholder": "Nhập mô tả thể loại",
+    "createGenre": {
+      "title": "Thêm thể loại",
+      "description": "Thêm một thể loại mới vào danh sách thể loại của bạn",
+      "createGenreSuccess": "Thêm thể loại thành công",
+      "createGenreError": "Thêm thể loại thất bại"
+    },
+    "updateGenre": {
+      "title": "Cập nhật thể loại",
+      "description": "Cập nhật thông tin thể loại dưới đây",
+      "updateGenreSuccess": "Cập nhật thể loại thành công",
+      "updateGenreError": "Cập nhật thể loại thất bại"
+    },
+    "archiveGenre": {
+      "title": "Lưu trữ thể loại",
+      "description": "Lưu trữ thông tin thể loại dưới đây",
+      "archiveGenreSuccess": "Lưu trữ thể loại thành công",
+      "archiveGenreError": "Lưu trữ thể loại thất bại",
+      "confirmText": "Bạn có chắc chắn muốn lưu trữ thể loại này?"
+    },
+    "restoreGenre": {
+      "title": "Khôi phục thể loại",
+      "description": "Khôi phục thông tin thể loại dưới đây",
+      "restoreGenreSuccess": "Khôi phục thể loại thành công",
+      "restoreGenreError": "Khôi phục thể loại thất bại",
+      "confirmText": "Bạn có chắc chắn muốn khôi phục thể loại này?"
+    },
+    "header": {
+      "createdAt": "Ngày tạo",
+      "updatedAt": "Ngày cập nhật"
+    }
   },
   "cinemas": {
     "title": "Rạp chiếu phim",

@@ -118,7 +118,7 @@ export const createColumns = ({
         const isActive = row.original.isActive;
         return (
           <Badge variant={isActive ? "default" : "secondary"}>
-            {isActive ? "Active" : "Archived"}
+            {isActive ? t("common.status.active") : t("common.status.inactive")}
           </Badge>
         );
       },
@@ -130,13 +130,6 @@ export const createColumns = ({
       ),
       cell: ({ row }) => {
         const status = row.original.status;
-
-        if (process.env.NODE_ENV === "development" && !status) {
-          console.warn(
-            "Movie status is undefined for movie:",
-            row.original.title
-          );
-        }
 
         const getStatusVariant = (status: string | undefined) => {
           switch (status) {
@@ -152,7 +145,7 @@ export const createColumns = ({
         };
         return (
           <Badge variant={getStatusVariant(status)}>
-            {status ? status.replace("_", " ") : "Unknown"}
+            {status ? t(`movies.filterMovies.${status}`) : "Unknown"}
           </Badge>
         );
       },
@@ -180,7 +173,7 @@ export const createColumns = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only text-xs">{t("common.actions")}</span>
+                <span className="sr-only text-xs"></span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -190,16 +183,14 @@ export const createColumns = ({
                 onClick={() => onEdit(movie)}
               >
                 <Pencil className="text-primary" />
-                <span className="text-xs">{t("movies.actions.edit")}</span>
+                <span className="text-xs">{t("common.actions.edit")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={() => navigator.clipboard.writeText(movie.id)}
               >
                 <Clipboard className="text-primary" />
-                <span className="text-xs">
-                  {t("movies.actions.copyMovieId")}
-                </span>
+                <span className="text-xs">{t("common.actions.copyId")}</span>
               </DropdownMenuItem>
               {onView ? (
                 <DropdownMenuItem
@@ -208,7 +199,7 @@ export const createColumns = ({
                 >
                   <Eye className="text-primary" />
                   <span className="text-xs">
-                    {t("movies.actions.viewDetails")}
+                    {t("common.actions.viewDetails")}
                   </span>
                 </DropdownMenuItem>
               ) : (
@@ -216,7 +207,7 @@ export const createColumns = ({
                   <DropdownMenuItem className="cursor-pointer">
                     <Eye className="text-primary" />
                     <span className="text-xs">
-                      {t("movies.actions.viewDetails")}
+                      {t("common.actions.viewDetails")}
                     </span>
                   </DropdownMenuItem>
                 </Link>
@@ -229,7 +220,7 @@ export const createColumns = ({
                 >
                   <Archive className="text-orange-500" />
                   <span className="text-xs text-orange-500">
-                    {t("movies.actions.archive")}
+                    {t("common.actions.archive")}
                   </span>
                 </DropdownMenuItem>
               ) : (
@@ -239,7 +230,7 @@ export const createColumns = ({
                 >
                   <ArchiveRestore className="text-green-500" />
                   <span className="text-xs text-green-500">
-                    {t("movies.actions.restore")}
+                    {t("common.actions.restore")}
                   </span>
                 </DropdownMenuItem>
               )}

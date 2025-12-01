@@ -155,14 +155,14 @@ export function EditMovieDialog({
     if (trailerMode === "file") {
       if (!trailer?.videoFile && !trailer?.videoPath) {
         toast.error(
-          t("movies.editMovie.pleaseUploadTrailerFileOrSwitchToUrlMode")
+          t("movies.updateMovie.pleaseUploadTrailerFileOrSwitchToUrlMode")
         );
         return;
       }
     } else {
       if (!values.trailerUrl) {
         toast.error(
-          t("movies.editMovie.pleaseEnterTrailerUrlOrSwitchToFileUploadMode")
+          t("movies.updateMovie.pleaseEnterTrailerUrlOrSwitchToFileUploadMode")
         );
         return;
       }
@@ -199,14 +199,14 @@ export function EditMovieDialog({
       }
 
       await updateMovie(movieId, updateData);
-      toast.success(t("movies.editMovie.updateMovieSuccess"));
+      toast.success(t("movies.updateMovie.updateMovieSuccess"));
       handleClose();
     } catch (error: any) {
       console.error("Update movie error:", error);
       const message =
         error.response?.data?.message ||
         error.message ||
-        t("movies.editMovie.updateMovieError");
+        t("movies.updateMovie.updateMovieError");
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -252,21 +252,21 @@ export function EditMovieDialog({
     >
       <DialogContent className="min-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t("movies.editMovie.title")}</DialogTitle>
+          <DialogTitle>{t("movies.updateMovie.title")}</DialogTitle>
         </DialogHeader>
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin" />
             <span className="ml-2">
-              {t("movies.editMovie.loadingMovieDetails")}
+              {t("movies.updateMovie.loadingMovieDetails")}
             </span>
           </div>
         ) : movie ? (
           <div className="flex flex-col gap-4">
             <div className="mt-4 flex flex-col gap-6 bg-background px-4 py-4 rounded-lg">
               <p className="text-xl font-bold">
-                {t("movies.editMovie.movieInformation")}
+                {t("movies.updateMovie.movieInformation")}
               </p>
               <Form {...form}>
                 <form
@@ -277,7 +277,7 @@ export function EditMovieDialog({
                     {/* Trailer Upload/URL */}
                     <FormItem className="flex-2 min-w-64">
                       <FormLabel>
-                        {t("movies.editMovie.trailerOptional")}
+                        {t("movies.updateMovie.trailerOptional")}
                       </FormLabel>
                       <Tabs
                         value={trailerMode}
@@ -388,7 +388,7 @@ export function EditMovieDialog({
                                   <div className="space-y-2">
                                     <Input
                                       placeholder={t(
-                                        "movies.editMovie.enterTrailerUrlPlaceholder"
+                                        "movies.updateMovie.enterTrailerUrlPlaceholder"
                                       )}
                                       {...field}
                                     />
@@ -419,7 +419,7 @@ export function EditMovieDialog({
                       render={({ field }) => (
                         <FormItem className="flex-[1] min-w-64">
                           <FormLabel>
-                            {t("movies.editMovie.thumbnailOptional")}
+                            {t("movies.updateMovie.thumbnailOptional")}
                           </FormLabel>
                           <FormControl>
                             <div>
@@ -508,7 +508,7 @@ export function EditMovieDialog({
                                 <Input
                                   type="number"
                                   placeholder={t(
-                                    "movies.editMovie.minutesPlaceholder"
+                                    "movies.updateMovie.minutesPlaceholder"
                                   )}
                                   {...field}
                                   value={field.value?.toString() ?? ""}
@@ -586,7 +586,7 @@ export function EditMovieDialog({
                           {t("common.updating")}
                         </>
                       ) : (
-                        t("movies.editMovie.updateMovie")
+                        t("movies.updateMovie.title")
                       )}
                     </Button>
                     <Button
@@ -594,7 +594,7 @@ export function EditMovieDialog({
                       variant="outline"
                       onClick={handleClose}
                     >
-                      {t("movies.editMovie.cancel")}
+                      {t("common.cancel")}
                     </Button>
                   </div>
                 </form>
@@ -603,7 +603,7 @@ export function EditMovieDialog({
           </div>
         ) : (
           <div className="text-center py-8 text-muted-foreground">
-            {t("movies.editMovie.movieNotFound")}
+            {t("common.noData")}
           </div>
         )}
       </DialogContent>

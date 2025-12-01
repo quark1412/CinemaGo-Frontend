@@ -30,10 +30,10 @@ export function useArchiveMovie() {
     mutationFn: archiveMovie,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: movieKeys.lists() });
-      toast.success("Movie archived successfully!");
+      toast.success("Lưu trữ phim thành công!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to archive movie");
+      toast.error(error.response?.data?.message || "Lưu trữ phim thất bại!");
     },
   });
 }
@@ -44,10 +44,10 @@ export function useRestoreMovie() {
     mutationFn: restoreMovie,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: movieKeys.lists() });
-      toast.success("Movie restored successfully!");
+      toast.success("Khôi phục phim thành công!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to restore movie");
+      toast.error(error.response?.data?.message || "Khôi phục phim thất bại!");
     },
   });
 }

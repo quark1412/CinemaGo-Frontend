@@ -202,7 +202,7 @@ export function DataTable<TData, TValue>({
                   {t("movies.filterMovies.active")}
                 </SelectItem>
                 <SelectItem value="false" className="text-xs">
-                  {t("movies.filterMovies.archived")}
+                  {t("movies.filterMovies.inactive")}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -214,17 +214,24 @@ export function DataTable<TData, TValue>({
             size="default"
             type="button"
             onClick={onCreateClick}
-            className="gap-2"
+            className="gap-2 cursor-pointer"
           >
             <CirclePlus />
-            <span className="text-sm font-medium">{t("movies.addMovie")}</span>
+            <span className="text-sm font-medium">
+              {t("movies.createMovie.title")}
+            </span>
           </Button>
         ) : (
-          <Button variant="default" size="default" asChild className="gap-2">
+          <Button
+            variant="default"
+            size="default"
+            asChild
+            className="gap-2 cursor-pointer"
+          >
             <Link href="/movies/create">
               <CirclePlus />
               <span className="text-sm font-medium">
-                {t("movies.addMovie")}
+                {t("movies.createMovie.title")}
               </span>
             </Link>
           </Button>
@@ -275,7 +282,7 @@ export function DataTable<TData, TValue>({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No results.
+                    {t("common.noData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -286,7 +293,7 @@ export function DataTable<TData, TValue>({
 
       <div className="flex items-center justify-between space-x-6 lg:space-x-8 mt-4">
         <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">{t("common.rowsPerPage")}:</p>
+          <p className="text-sm font-medium">{t("common.rowsPerPage")}</p>
           <Select
             value={`${
               pagination?.pageSize || table.getState().pagination.pageSize
@@ -314,10 +321,10 @@ export function DataTable<TData, TValue>({
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page{" "}
+            {t("common.page")}{" "}
             {pagination?.currentPage ||
               table.getState().pagination.pageIndex + 1}{" "}
-            of {pagination?.totalPages || table.getPageCount()}
+            {t("common.of")} {pagination?.totalPages || table.getPageCount()}
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -336,7 +343,7 @@ export function DataTable<TData, TValue>({
                   : !table.getCanPreviousPage()
               }
             >
-              <span className="sr-only">Go to first page</span>
+              <span className="sr-only">{t("common.goToFirstPage")}</span>
               <ChevronsLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -358,7 +365,7 @@ export function DataTable<TData, TValue>({
                   : !table.getCanPreviousPage()
               }
             >
-              <span className="sr-only">Go to previous page</span>
+              <span className="sr-only">{t("common.goToPreviousPage")}</span>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -378,7 +385,7 @@ export function DataTable<TData, TValue>({
                 pagination ? !pagination.hasNextPage : !table.getCanNextPage()
               }
             >
-              <span className="sr-only">Go to next page</span>
+              <span className="sr-only">{t("common.goToNextPage")}</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
@@ -398,7 +405,7 @@ export function DataTable<TData, TValue>({
                 pagination ? !pagination.hasNextPage : !table.getCanNextPage()
               }
             >
-              <span className="sr-only">Go to last page</span>
+              <span className="sr-only">{t("common.goToLastPage")}</span>
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>

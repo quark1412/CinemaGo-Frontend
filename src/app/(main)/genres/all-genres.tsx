@@ -13,8 +13,10 @@ import {
   useArchiveGenre,
   useRestoreGenre,
 } from "@/hooks/use-genres";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function AllGenres() {
+  const { t } = useI18n();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingGenre, setEditingGenre] = useState<Genre | null>(null);
   const [confirmationDialog, setConfirmationDialog] = useState<{
@@ -92,6 +94,16 @@ export default function AllGenres() {
     setCurrentParams({ ...currentParams, page: 1, search });
   };
 
+  const handleFilterChange = (filterType: string, value: string) => {
+    if (filterType === "isActive") {
+      setCurrentParams({
+        ...currentParams,
+        page: 1,
+        isActive: value === "" ? undefined : value === "true",
+      });
+    }
+  };
+
   const columns = createColumns({
     onEdit: handleEditClick,
     onArchive: handleArchiveClick,
@@ -116,6 +128,7 @@ export default function AllGenres() {
         }
         onPaginationChange={handlePaginationChange}
         onSearchChange={handleSearchChange}
+        onFilterChange={handleFilterChange}
         loading={isLoading}
       />
 
@@ -133,16 +146,18 @@ export default function AllGenres() {
         }
         title={
           confirmationDialog.action === "archive"
-            ? "Archive Genre"
-            : "Restore Genre"
+            ? t("genres.archiveGenre.title")
+            : t("genres.restoreGenre.title")
         }
         description={
           confirmationDialog.action === "archive"
-            ? `Are you sure you want to archive "${confirmationDialog.genre?.name}"? This will make it unavailable for new movies.`
-            : `Are you sure you want to restore "${confirmationDialog.genre?.name}"? This will make it available for new movies again.`
+            ? t("genres.archiveGenre.confirmText")
+            : t("genres.restoreGenre.confirmText")
         }
         confirmText={
-          confirmationDialog.action === "archive" ? "Archive" : "Restore"
+          confirmationDialog.action === "archive"
+            ? t("common.actions.archive")
+            : t("common.actions.restore")
         }
         variant={confirmationDialog.action}
         onConfirm={handleConfirmAction}

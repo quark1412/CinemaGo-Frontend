@@ -15,8 +15,10 @@ import {
 import CreateMovie from "./create-movie";
 import { EditMovieDialog } from "./edit-movie-dialog";
 import { MovieDetailsDialog } from "./movie-details-dialog";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function AllMovies() {
+  const { t } = useI18n();
   const [confirmationDialog, setConfirmationDialog] = useState<{
     open: boolean;
     movie: Movie | null;
@@ -142,16 +144,18 @@ export default function AllMovies() {
         }
         title={
           confirmationDialog.action === "archive"
-            ? "Archive Movie"
-            : "Restore Movie"
+            ? t("movies.archiveMovie.title")
+            : t("movies.restoreMovie.title")
         }
         description={
           confirmationDialog.action === "archive"
-            ? `Are you sure you want to archive "${confirmationDialog.movie?.title}"? This will make it unavailable for new showtimes.`
-            : `Are you sure you want to restore "${confirmationDialog.movie?.title}"? This will make it available for new showtimes again.`
+            ? t("movies.archiveMovie.confirmText")
+            : t("movies.restoreMovie.confirmText")
         }
         confirmText={
-          confirmationDialog.action === "archive" ? "Archive" : "Restore"
+          confirmationDialog.action === "archive"
+            ? t("common.actions.archive")
+            : t("common.actions.restore")
         }
         variant={confirmationDialog.action}
         onConfirm={handleConfirmAction}

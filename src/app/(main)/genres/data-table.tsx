@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   ColumnDef,
@@ -40,6 +40,8 @@ import {
   CirclePlus,
 } from "lucide-react";
 import { GenresSkeleton } from "@/components/genres-skeleton";
+import { useI18n } from "@/contexts/I18nContext";
+import { Label } from "@/components/ui/label";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -55,6 +57,7 @@ interface DataTableProps<TData, TValue> {
   };
   onPaginationChange?: (page: number, pageSize: number) => void;
   onSearchChange?: (search: string) => void;
+  onFilterChange?: (filterType: string, value: string) => void;
   loading?: boolean;
 }
 
@@ -65,12 +68,14 @@ export function DataTable<TData, TValue>({
   pagination,
   onPaginationChange,
   onSearchChange,
+  onFilterChange,
   loading = false,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
+  const { t } = useI18n();
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [searchValue, setSearchValue] = useState("");
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const table = useReactTable({
     data,
@@ -96,29 +101,89 @@ export function DataTable<TData, TValue>({
     },
   });
 
-  if (loading) {
-    return <GenresSkeleton />;
-  }
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // if (loading) {
+  //   return <GenresSkeleton />;
+  // }
 
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
-        <Input
-          placeholder="Filter genres..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => {
-            const value = event.target.value;
-            if (pagination && onSearchChange) {
-              onSearchChange(value);
-            } else {
+        <div className="flex items-center gap-6">
+          <Input
+            placeholder={t("genres.searchGenres") + "..."}
+            value={searchValue}
+            onChange={(event) => {
+              const value = event.target.value;
+              setSearchValue(value);
+
               table.getColumn("name")?.setFilterValue(value);
-            }
-          }}
-          className="max-w-sm text-xs placeholder:text-[13px] placeholder:font-medium"
-        />
-        <Button variant="default" size="default" onClick={onCreateClick}>
+
+              if (pagination && onSearchChange) {
+                if (searchTimeoutRef.current) {
+                  clearTimeout(searchTimeoutRef.current);
+                }
+
+                searchTimeoutRef.current = setTimeout(() => {
+                  onSearchChange(value);
+                }, 500);
+              }
+            }}
+            className="max-w-sm text-xs placeholder:text-[13px] placeholder:font-medium"
+          />
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            <Label className="text-xs font-medium">
+              {t("movies.filterMovies.activeStatus")}:
+            </Label>
+            <Select
+              value={
+                (table.getColumn("isActive")?.getFilterValue() as string) ||
+                "all"
+              }
+              onValueChange={(value) => {
+                const normalizedValue = value === "all" ? "" : value;
+
+                table.getColumn("isActive")?.setFilterValue(normalizedValue);
+
+                if (pagination && onFilterChange) {
+                  onFilterChange("isActive", normalizedValue);
+                }
+              }}
+            >
+              <SelectTrigger className="w-fit text-xs">
+                <SelectValue placeholder="Filter by active" />
+              </SelectTrigger>
+              <SelectContent className="text-xs">
+                <SelectItem value="all" className="text-xs">
+                  {t("movies.filterMovies.all")}
+                </SelectItem>
+                <SelectItem value="true" className="text-xs">
+                  {t("movies.filterMovies.active")}
+                </SelectItem>
+                <SelectItem value="false" className="text-xs">
+                  {t("movies.filterMovies.inactive")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <Button
+          variant="default"
+          size="default"
+          onClick={onCreateClick}
+          className="cursor-pointer"
+        >
           <CirclePlus />
-          <span className="text-sm font-medium">Add Genre</span>
+          <span className="text-sm font-medium">
+            {t("genres.createGenre.title")}
+          </span>
         </Button>
       </div>
       <div className="overflow-hidden rounded-md border flex-1 min-h-0">
@@ -166,7 +231,7 @@ export function DataTable<TData, TValue>({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No results.
+                    {t("common.noData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -177,7 +242,7 @@ export function DataTable<TData, TValue>({
 
       <div className="flex items-center justify-between space-x-6 lg:space-x-8 mt-4">
         <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Rows per page</p>
+          <p className="text-sm font-medium">{t("common.rowsPerPage")}</p>
           <Select
             value={`${
               pagination?.pageSize || table.getState().pagination.pageSize
@@ -209,10 +274,10 @@ export function DataTable<TData, TValue>({
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page{" "}
+            {t("common.page")}{" "}
             {pagination?.currentPage ||
               table.getState().pagination.pageIndex + 1}{" "}
-            of {pagination?.totalPages || table.getPageCount()}
+            {t("common.of")} {pagination?.totalPages || table.getPageCount()}
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -231,7 +296,7 @@ export function DataTable<TData, TValue>({
                   : !table.getCanPreviousPage()
               }
             >
-              <span className="sr-only">Go to first page</span>
+              <span className="sr-only">{t("common.goToFirstPage")}</span>
               <ChevronsLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -253,7 +318,7 @@ export function DataTable<TData, TValue>({
                   : !table.getCanPreviousPage()
               }
             >
-              <span className="sr-only">Go to previous page</span>
+              <span className="sr-only">{t("common.goToPreviousPage")}</span>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -273,7 +338,7 @@ export function DataTable<TData, TValue>({
                 pagination ? !pagination.hasNextPage : !table.getCanNextPage()
               }
             >
-              <span className="sr-only">Go to next page</span>
+              <span className="sr-only">{t("common.goToNextPage")}</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
@@ -293,7 +358,7 @@ export function DataTable<TData, TValue>({
                 pagination ? !pagination.hasNextPage : !table.getCanNextPage()
               }
             >
-              <span className="sr-only">Go to last page</span>
+              <span className="sr-only">{t("common.goToLastPage")}</span>
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>

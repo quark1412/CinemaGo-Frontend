@@ -9,11 +9,21 @@
     "add": "Add",
     "search": "Search",
     "filter": "Filter",
-    "actions": "Actions",
     "loading": "Loading...",
     "noData": "No data available",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
     "page": "Page",
     "of": "of",
+    "actions": {
+      "edit": "Edit",
+      "copyId": "Copy ID",
+      "viewDetails": "View details",
+      "archive": "Archive",
+      "restore": "Restore"
+    },
     "rowsPerPage": "Rows per page",
     "goToFirstPage": "Go to first page",
     "goToPreviousPage": "Go to previous page",
@@ -117,14 +127,13 @@
       "pleaseUploadTrailerFileOrSwitchToUrlMode": "Please upload a trailer file or switch to URL mode",
       "pleaseEnterTrailerUrlOrSwitchToFileUploadMode": "Please enter a trailer URL or switch to file upload mode"
     },
-    "editMovie": {
-      "title": "Edit movie",
+    "updateMovie": {
+      "title": "Update movie",
       "movieInformation": "Movie information",
-      "trailerOptional": "Trailer (Optional)",
-      "thumbnailOptional": "Thumbnail (Optional)",
+      "trailerOptional": "Trailer",
+      "thumbnailOptional": "Thumbnail",
       "enterTrailerUrlPlaceholder": "Enter trailer YouTube URL",
       "minutesPlaceholder": "Minutes",
-      "updateMovie": "Update movie",
       "cancel": "Cancel",
       "loadingMovieDetails": "Loading movie details...",
       "movieNotFound": "Movie not found.",
@@ -143,7 +152,6 @@
       "noData": "No movie details available."
     },
     "allMovies": "All movies",
-    "addMovie": "Add movie",
     "searchMovies": "Search movies",
     "filterMovies": {
       "movieStatus": "Movie Status",
@@ -153,22 +161,60 @@
       "COMING_SOON": "Coming Soon",
       "ENDED": "Ended",
       "active": "Active",
-      "archived": "Archived"
+      "inactive": "Inactive"
     },
-    "deleteMovie": "Delete Movie",
-    "movieDetails": "Movie Details",
-    "showtimes": "Showtimes",
-    "noShowtimes": "No showtimes available",
-    "addShowtime": "Add Showtime",
-    "createShowtime": "Create Showtime",
-    "updateShowtime": "Update Showtime",
-    "validationErrors": "Validation Errors:"
+    "archiveMovie": {
+      "title": "Archive movie",
+      "description": "Archive the movie information below",
+      "archiveMovieSuccess": "Movie archived successfully",
+      "archiveMovieError": "Failed to archive movie",
+      "confirmText": "Are you sure you want to archive this movie?"
+    },
+    "restoreMovie": {
+      "title": "Restore movie",
+      "description": "Restore the movie information below",
+      "restoreMovieSuccess": "Movie restored successfully",
+      "restoreMovieError": "Failed to restore movie",
+      "confirmText": "Are you sure you want to restore this movie?"
+    }
   },
   "genres": {
-    "title": "Genres",
-    "createGenre": "Create Genre",
-    "updateGenre": "Update Genre",
-    "deleteGenre": "Delete Genre"
+    "name": "Name",
+    "description": "Description",
+    "status": "Status",
+    "searchGenres": "Search genres",
+    "enterGenreNamePlaceholder": "Enter genre name",
+    "enterGenreDescriptionPlaceholder": "Enter genre description",
+    "header": {
+      "createdAt": "Created At",
+      "updatedAt": "Updated At"
+    },
+    "updateGenre": {
+      "title": "Update genre",
+      "description": "Update the genre information below",
+      "updateGenreSuccess": "Genre updated successfully",
+      "updateGenreError": "Failed to update genre"
+    },
+    "createGenre": {
+      "title": "Create genre",
+      "description": "Add a new genre to your movie catalog",
+      "createGenreSuccess": "Genre created successfully",
+      "createGenreError": "Failed to create genre"
+    },
+    "archiveGenre": {
+      "title": "Archive genre",
+      "description": "Archive the genre information below",
+      "archiveGenreSuccess": "Genre archived successfully",
+      "archiveGenreError": "Failed to archive genre",
+      "confirmText": "Are you sure you want to archive this genre?"
+    },
+    "restoreGenre": {
+      "title": "Restore genre",
+      "description": "Restore the genre information below",
+      "restoreGenreSuccess": "Genre restored successfully",
+      "restoreGenreError": "Failed to restore genre",
+      "confirmText": "Are you sure you want to restore this genre?"
+    }
   },
   "cinemas": {
     "title": "Cinemas",

@@ -32,10 +32,10 @@ export function useCreateGenre() {
     mutationFn: createGenre,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: genreKeys.lists() });
-      toast.success("Genre created successfully!");
+      toast.success("Thêm thể loại thành công!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to create genre");
+      toast.error(error.response?.data?.message || "Thêm thể loại thất bại!");
     },
   });
 }
@@ -47,10 +47,12 @@ export function useUpdateGenre() {
       updateGenre(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: genreKeys.lists() });
-      toast.success("Genre updated successfully!");
+      toast.success("Cập nhật thể loại thành công!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to update genre");
+      toast.error(
+        error.response?.data?.message || "Cập nhật thể loại thất bại!"
+      );
     },
   });
 }
@@ -61,10 +63,12 @@ export function useArchiveGenre() {
     mutationFn: archiveGenre,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: genreKeys.lists() });
-      toast.success("Genre archived successfully!");
+      toast.success("Lưu trữ thể loại thành công!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to archive genre");
+      toast.error(
+        error.response?.data?.message || "Lưu trữ thể loại thất bại!"
+      );
     },
   });
 }
@@ -75,10 +79,12 @@ export function useRestoreGenre() {
     mutationFn: restoreGenre,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: genreKeys.lists() });
-      toast.success("Genre restored successfully!");
+      toast.success("Khôi phục thể loại thành công!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to restore genre");
+      toast.error(
+        error.response?.data?.message || "Khôi phục thể loại thất bại!"
+      );
     },
   });
 }

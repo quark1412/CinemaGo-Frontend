@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Genre } from "@/types/genre";
 import { useCreateGenre, useUpdateGenre } from "@/hooks/use-genres";
+import { useI18n } from "@/contexts/I18nContext";
 
 const genreSchema = z.object({
   name: z
@@ -55,6 +56,7 @@ export function GenreDialog({
   genre,
   onSuccess,
 }: GenreDialogProps) {
+  const { t } = useI18n();
   const isEditing = !!genre;
   const createMutation = useCreateGenre();
   const updateMutation = useUpdateGenre();
@@ -94,9 +96,7 @@ export function GenreDialog({
       onSuccess();
       onOpenChange(false);
       form.reset();
-    } catch (error) {
-      // Error handling is done in the mutation hooks
-    }
+    } catch (error) {}
   };
 
   const handleClose = () => {
@@ -111,12 +111,14 @@ export function GenreDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Genre" : "Create New Genre"}
+            {isEditing
+              ? t("genres.updateGenre.title")
+              : t("genres.createGenre.title")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the genre information below."
-              : "Add a new genre to your movie catalog."}
+              ? t("genres.updateGenre.description")
+              : t("genres.createGenre.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -127,10 +129,10 @@ export function GenreDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>{t("genres.name")}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter genre name"
+                      placeholder={t("genres.enterGenreNamePlaceholder")}
                       {...field}
                       disabled={isLoading}
                     />
@@ -145,10 +147,10 @@ export function GenreDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t("genres.description")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter genre description"
+                      placeholder={t("genres.enterGenreDescriptionPlaceholder")}
                       className="resize-none"
                       rows={4}
                       {...field}
@@ -167,16 +169,16 @@ export function GenreDialog({
                 onClick={handleClose}
                 disabled={isLoading}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading
                   ? isEditing
-                    ? "Updating..."
-                    : "Creating..."
+                    ? t("common.updating")
+                    : t("common.creating")
                   : isEditing
-                  ? "Update Genre"
-                  : "Create Genre"}
+                  ? t("genres.updateGenre.title")
+                  : t("genres.createGenre.title")}
               </Button>
             </DialogFooter>
           </form>
