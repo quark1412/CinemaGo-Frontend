@@ -23,6 +23,7 @@ export const getAllCinemas = async (
     if (params?.search) queryParams.append("search", params.search);
     if (params?.isActive !== undefined)
       queryParams.append("isActive", params.isActive.toString());
+    if (params?.city) queryParams.append("city", params.city);
 
     const response = await instance.get(
       `/v1/cinemas/public?${queryParams.toString()}`,

@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   ColumnDef,
@@ -43,6 +43,7 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  allCities?: string[];
   onCreateClick: () => void;
   pagination?: {
     totalItems: number;
@@ -54,23 +55,41 @@ interface DataTableProps<TData, TValue> {
   };
   onPaginationChange?: (page: number, pageSize: number) => void;
   onSearchChange?: (search: string) => void;
+  onCityChange?: (city: string) => void;
+  onStatusChange?: (status: string) => void;
   loading?: boolean;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  allCities = [],
   onCreateClick,
   pagination,
   onPaginationChange,
   onSearchChange,
+  onCityChange,
+  onStatusChange,
   loading = false,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [searchValue, setSearchValue] = React.useState("");
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [searchValue, setSearchValue] = useState("");
+  const [selectedCity, setSelectedCity] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+
+  const cities = useMemo(() => {
+    if (allCities.length > 0) {
+      return allCities;
+    }
+    const citySet = new Set<string>();
+    (data as any[]).forEach((item) => {
+      if (item?.city) {
+        citySet.add(item.city as string);
+      }
+    });
+    return Array.from(citySet).sort();
+  }, [allCities, data]);
 
   const table = useReactTable({
     data,
@@ -89,8 +108,15 @@ export function DataTable<TData, TValue>({
 
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
-    onSearchChange?.(value);
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearchChange?.(searchValue);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchValue, onSearchChange]);
 
   const handlePageChange = (page: number) => {
     onPaginationChange?.(page, pagination?.pageSize || 10);
@@ -103,16 +129,63 @@ export function DataTable<TData, TValue>({
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
-        {/* Search */}
-        <Input
-          placeholder="Search cinemas..."
-          value={searchValue}
-          onChange={(event) => handleSearchChange(event.target.value)}
-          className="max-w-sm"
-        />
+      <div className="flex flex-col gap-3 py-4 flex-shrink-0 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+          {/* Search */}
+          <Input
+            placeholder="Search cinemas..."
+            value={searchValue}
+            onChange={(event) => handleSearchChange(event.target.value)}
+            className="max-w-sm"
+          />
+
+          {/* City filter */}
+          <Select
+            value={selectedCity || "all"}
+            onValueChange={(value) => {
+              const cityValue = value === "all" ? "" : value;
+              setSelectedCity(cityValue);
+              onCityChange?.(cityValue);
+            }}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Filter by city" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All cities</SelectItem>
+              {cities.map((city) => (
+                <SelectItem key={city} value={city}>
+                  {city}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Status filter */}
+          <Select
+            value={selectedStatus || "all"}
+            onValueChange={(value) => {
+              const statusValue = value === "all" ? "" : value;
+              setSelectedStatus(statusValue);
+              onStatusChange?.(statusValue);
+            }}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Add Cinema */}
-        <Button onClick={onCreateClick} className="gap-2">
+        <Button
+          onClick={onCreateClick}
+          className="gap-2 self-start sm:self-auto"
+        >
           <CirclePlus className="h-4 w-4" />
           Add Cinema
         </Button>

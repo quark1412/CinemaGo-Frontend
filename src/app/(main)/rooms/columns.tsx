@@ -60,7 +60,7 @@ export const createColumns = ({
   },
   {
     accessorKey: "isActive",
-    header: () => <div className="font-bold text-sm">Status</div>,
+    header: () => <div className="font-bold text-xs">Status</div>,
     cell: ({ row }) => {
       const isActive = row.original.isActive;
       return (

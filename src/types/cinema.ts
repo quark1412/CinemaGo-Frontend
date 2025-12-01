@@ -63,6 +63,7 @@ export interface GetCinemasParams {
   limit?: number;
   search?: string;
   isActive?: boolean;
+  city?: string;
 }
 
 export interface GetRoomsParams {

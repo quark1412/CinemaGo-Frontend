@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import { Cinema } from "@/types/cinema";
@@ -35,6 +35,19 @@ export default function AllCinemas() {
   });
 
   const { data, isLoading } = useCinemas(currentParams);
+  const { data: allCinemasData } = useCinemas({ limit: undefined });
+
+  const allCities = useMemo(() => {
+    const citySet = new Set<string>();
+    if (allCinemasData?.data) {
+      allCinemasData.data.forEach((cinema) => {
+        if (cinema.city) {
+          citySet.add(cinema.city);
+        }
+      });
+    }
+    return Array.from(citySet).sort();
+  }, [allCinemasData]);
   const archiveMutation = useArchiveCinema();
   const restoreMutation = useRestoreCinema();
 
@@ -91,6 +104,19 @@ export default function AllCinemas() {
     setCurrentParams({ ...currentParams, page: 1, search });
   };
 
+  const handleCityChange = (city: string) => {
+    setCurrentParams({ ...currentParams, page: 1, city: city || undefined });
+  };
+
+  const handleStatusChange = (status: string) => {
+    setCurrentParams({
+      ...currentParams,
+      page: 1,
+      isActive:
+        status === "active" ? true : status === "inactive" ? false : undefined,
+    });
+  };
+
   const columns = createColumns({
     onEdit: handleEditClick,
     onArchive: handleArchiveClick,
@@ -102,6 +128,7 @@ export default function AllCinemas() {
       <DataTable
         columns={columns}
         data={data?.data || []}
+        allCities={allCities}
         onCreateClick={handleCreateClick}
         pagination={
           data?.pagination || {
@@ -115,6 +142,8 @@ export default function AllCinemas() {
         }
         onPaginationChange={handlePaginationChange}
         onSearchChange={handleSearchChange}
+        onCityChange={handleCityChange}
+        onStatusChange={handleStatusChange}
         loading={isLoading}
       />
 

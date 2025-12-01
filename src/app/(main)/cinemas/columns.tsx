@@ -55,18 +55,16 @@ export const createColumns = ({
   },
   {
     accessorKey: "address",
-    header: () => <div className="font-bold text-sm">Address</div>,
+    header: () => <div className="font-bold text-xs">Address</div>,
     cell: ({ row }) => {
       return (
-        <div className="max-w-80 text-wrap text-xs text-muted-foreground">
-          {row.original.address}
-        </div>
+        <div className="max-w-80 text-wrap text-xs">{row.original.address}</div>
       );
     },
   },
   {
     accessorKey: "isActive",
-    header: () => <div className="font-bold text-sm">Status</div>,
+    header: () => <div className="font-bold text-xs">Status</div>,
     cell: ({ row }) => {
       const isActive = row.original.isActive;
       return (
