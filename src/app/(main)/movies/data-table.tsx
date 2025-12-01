@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import {
   ColumnDef,
@@ -40,6 +40,8 @@ import {
   ChevronsRight,
   CirclePlus,
 } from "lucide-react";
+import { useI18n } from "@/contexts/I18nContext";
+import { Label } from "@/components/ui/label";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -56,6 +58,7 @@ interface DataTableProps<TData, TValue> {
   onSearchChange?: (search: string) => void;
   onFilterChange?: (filterType: string, value: string) => void;
   loading?: boolean;
+  onCreateClick?: () => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -66,11 +69,13 @@ export function DataTable<TData, TValue>({
   onSearchChange,
   onFilterChange,
   loading = false,
+  onCreateClick,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
+  const { t } = useI18n();
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [searchValue, setSearchValue] = useState("");
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const table = useReactTable({
     data,
@@ -96,77 +101,134 @@ export function DataTable<TData, TValue>({
     },
   });
 
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-6">
           <Input
-            placeholder="Filter movies..."
-            value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+            placeholder={t("movies.searchMovies") + "..."}
+            value={searchValue}
             onChange={(event) => {
               const value = event.target.value;
+              setSearchValue(value);
+
+              table.getColumn("title")?.setFilterValue(value);
+
               if (pagination && onSearchChange) {
-                onSearchChange(value);
-              } else {
-                table.getColumn("title")?.setFilterValue(value);
+                if (searchTimeoutRef.current) {
+                  clearTimeout(searchTimeoutRef.current);
+                }
+
+                searchTimeoutRef.current = setTimeout(() => {
+                  onSearchChange(value);
+                }, 500);
               }
             }}
             className="max-w-sm text-xs placeholder:text-[13px] placeholder:font-medium"
           />
-          <Select
-            value={
-              (table.getColumn("status")?.getFilterValue() as string) ?? "all"
-            }
-            onValueChange={(value) => {
-              if (pagination && onFilterChange) {
-                onFilterChange("status", value === "all" ? "" : value);
-              } else {
-                table
-                  .getColumn("status")
-                  ?.setFilterValue(value === "all" ? "" : value);
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            <Label className="text-xs font-medium">
+              {t("movies.filterMovies.movieStatus")}:
+            </Label>
+            <Select
+              value={
+                (table.getColumn("status")?.getFilterValue() as string) ?? "all"
               }
-            }}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="NOW_SHOWING">Now Showing</SelectItem>
-              <SelectItem value="COMING_SOON">Coming Soon</SelectItem>
-              <SelectItem value="ENDED">Ended</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={
-              (table.getColumn("isActive")?.getFilterValue() as string) ?? "all"
-            }
-            onValueChange={(value) => {
-              if (pagination && onFilterChange) {
-                onFilterChange("isActive", value === "all" ? "" : value);
-              } else {
-                table
-                  .getColumn("isActive")
-                  ?.setFilterValue(value === "all" ? "" : value);
+              onValueChange={(value) => {
+                const normalizedValue =
+                  value === t("movies.filterMovies.all") ? "" : value;
+
+                table.getColumn("status")?.setFilterValue(normalizedValue);
+
+                if (pagination && onFilterChange) {
+                  onFilterChange("status", normalizedValue);
+                }
+              }}
+            >
+              <SelectTrigger className="w-fit text-xs">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent className="text-xs">
+                <SelectItem value="all" className="text-xs">
+                  {t("movies.filterMovies.all")}
+                </SelectItem>
+                <SelectItem value="NOW_SHOWING" className="text-xs">
+                  {t("movies.filterMovies.NOW_SHOWING")}
+                </SelectItem>
+                <SelectItem value="COMING_SOON" className="text-xs">
+                  {t("movies.filterMovies.COMING_SOON")}
+                </SelectItem>
+                <SelectItem value="ENDED" className="text-xs">
+                  {t("movies.filterMovies.ENDED")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            <Label className="text-xs font-medium">
+              {t("movies.filterMovies.activeStatus")}:
+            </Label>
+            <Select
+              value={
+                (table.getColumn("isActive")?.getFilterValue() as string) ??
+                "all"
               }
-            }}
-          >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Filter by active" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Movies</SelectItem>
-              <SelectItem value="true">Active Only</SelectItem>
-              <SelectItem value="false">Archived Only</SelectItem>
-            </SelectContent>
-          </Select>
+              onValueChange={(value) => {
+                const normalizedValue = value === "all" ? "" : value;
+
+                table.getColumn("isActive")?.setFilterValue(normalizedValue);
+
+                if (pagination && onFilterChange) {
+                  onFilterChange("isActive", normalizedValue);
+                }
+              }}
+            >
+              <SelectTrigger className="w-fit text-xs">
+                <SelectValue placeholder="Filter by active" />
+              </SelectTrigger>
+              <SelectContent className="text-xs">
+                <SelectItem value="all" className="text-xs">
+                  {t("movies.filterMovies.all")}
+                </SelectItem>
+                <SelectItem value="true" className="text-xs">
+                  {t("movies.filterMovies.active")}
+                </SelectItem>
+                <SelectItem value="false" className="text-xs">
+                  {t("movies.filterMovies.archived")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <Button variant="default" size="default">
-          <CirclePlus />
-          <Link href="/movies/create" className="text-sm font-medium">
-            Add Movie
-          </Link>
-        </Button>
+        {onCreateClick ? (
+          <Button
+            variant="default"
+            size="default"
+            type="button"
+            onClick={onCreateClick}
+            className="gap-2"
+          >
+            <CirclePlus />
+            <span className="text-sm font-medium">{t("movies.addMovie")}</span>
+          </Button>
+        ) : (
+          <Button variant="default" size="default" asChild className="gap-2">
+            <Link href="/movies/create">
+              <CirclePlus />
+              <span className="text-sm font-medium">
+                {t("movies.addMovie")}
+              </span>
+            </Link>
+          </Button>
+        )}
       </div>
       <div className="overflow-hidden rounded-md border flex-1 min-h-0">
         <div className="overflow-auto h-full">
@@ -224,7 +286,7 @@ export function DataTable<TData, TValue>({
 
       <div className="flex items-center justify-between space-x-6 lg:space-x-8 mt-4">
         <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Rows per page</p>
+          <p className="text-sm font-medium">{t("common.rowsPerPage")}:</p>
           <Select
             value={`${
               pagination?.pageSize || table.getState().pagination.pageSize

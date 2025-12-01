@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { Movie } from "@/types/movie";
 import { DataTable } from "./data-table";
@@ -13,9 +12,11 @@ import {
   useArchiveMovie,
   useRestoreMovie,
 } from "@/hooks/use-movies";
+import CreateMovie from "./create-movie";
+import { EditMovieDialog } from "./edit-movie-dialog";
+import { MovieDetailsDialog } from "./movie-details-dialog";
 
 export default function AllMovies() {
-  const router = useRouter();
   const [confirmationDialog, setConfirmationDialog] = useState<{
     open: boolean;
     movie: Movie | null;
@@ -33,13 +34,16 @@ export default function AllMovies() {
     status?: string;
     isActive?: string;
   }>({});
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingMovieId, setEditingMovieId] = useState<string | null>(null);
+  const [viewingMovieId, setViewingMovieId] = useState<string | null>(null);
 
   const { data, isLoading } = useMovies(currentParams);
   const archiveMutation = useArchiveMovie();
   const restoreMutation = useRestoreMovie();
 
   const handleEditClick = (movie: Movie) => {
-    router.push(`/movies/${movie.id}/edit`);
+    setEditingMovieId(movie.id);
   };
 
   const handleArchiveClick = (movie: Movie) => {
@@ -106,6 +110,7 @@ export default function AllMovies() {
     onEdit: handleEditClick,
     onArchive: handleArchiveClick,
     onRestore: handleRestoreClick,
+    onView: (movie) => setViewingMovieId(movie.id),
   });
 
   return (
@@ -127,6 +132,7 @@ export default function AllMovies() {
         onSearchChange={handleSearchChange}
         onFilterChange={handleFilterChange}
         loading={isLoading}
+        onCreateClick={() => setCreateDialogOpen(true)}
       />
 
       <ConfirmationDialog
@@ -150,6 +156,29 @@ export default function AllMovies() {
         variant={confirmationDialog.action}
         onConfirm={handleConfirmAction}
         loading={archiveMutation.isPending || restoreMutation.isPending}
+      />
+
+      <CreateMovie
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+      />
+
+      {editingMovieId && (
+        <EditMovieDialog
+          movieId={editingMovieId}
+          open={!!editingMovieId}
+          onClose={() => setEditingMovieId(null)}
+        />
+      )}
+
+      <MovieDetailsDialog
+        open={!!viewingMovieId}
+        movieId={viewingMovieId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setViewingMovieId(null);
+          }
+        }}
       />
     </div>
   );

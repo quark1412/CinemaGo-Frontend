@@ -20,6 +20,12 @@ export function formatTime(time: string) {
   });
 }
 
+export function formatDuration(duration: number) {
+  const hours = Math.floor(duration / 60);
+  const minutes = duration % 60;
+  return `${hours}h ${minutes}m`;
+}
+
 export function formatPrice(price: number) {
   const formatter = new Intl.NumberFormat("vi-VN", {
     style: "currency",

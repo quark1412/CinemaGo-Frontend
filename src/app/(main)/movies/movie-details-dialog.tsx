@@ -9,16 +9,17 @@ import {
   formatDate,
   convertToEmbedUrl,
   isVideoPlatformUrl,
+  formatDuration,
 } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useI18n } from "@/contexts/I18nContext";
 import { Loader2, Star, Calendar, Clock, Tag } from "lucide-react";
 import Image from "next/image";
 
@@ -33,6 +34,7 @@ export function MovieDetailsDialog({
   onOpenChange,
   movieId,
 }: MovieDetailsDialogProps) {
+  const { t } = useI18n();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -50,7 +52,7 @@ export function MovieDetailsDialog({
       const response = await getMovieById(movieId);
       setMovie(response.data);
     } catch (error: any) {
-      toast.error("Failed to fetch movie details");
+      toast.error(t("movies.details.fetchError"));
       console.error("Error fetching movie:", error);
     } finally {
       setLoading(false);
@@ -74,7 +76,7 @@ export function MovieDetailsDialog({
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Loading movie details...</span>
+            <span className="ml-2">{t("movies.details.loading")}</span>
           </div>
         ) : movie ? (
           <div className="space-y-8">
@@ -85,7 +87,7 @@ export function MovieDetailsDialog({
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                     <div className="flex items-center space-x-1">
                       <Clock className="h-4 w-4" />
-                      <span>{formatTime(movie.duration)}</span>
+                      <span>{formatDuration(movie.duration)}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Calendar className="h-4 w-4" />
@@ -93,12 +95,16 @@ export function MovieDetailsDialog({
                     </div>
                     <div className="flex items-center space-x-1">
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span>{movie.rating || "Not rated yet"}</span>
+                      <span>
+                        {movie.rating || t("movies.details.notRatedYet")}
+                      </span>
                     </div>
                   </div>
                 </div>
                 <Badge variant={movie.isActive ? "default" : "secondary"}>
-                  {movie.isActive ? "Active" : "Archived"}
+                  {movie.isActive
+                    ? t("movies.filterMovies.active")
+                    : t("movies.filterMovies.archived")}
                 </Badge>
               </div>
 
@@ -156,7 +162,9 @@ export function MovieDetailsDialog({
 
             {/* Description */}
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold">Description</h3>
+              <h3 className="text-lg font-semibold">
+                {t("movies.description")}
+              </h3>
               <p className="text-muted-foreground leading-relaxed">
                 {movie.description}
               </p>
@@ -165,13 +173,17 @@ export function MovieDetailsDialog({
             {/* Additional Info */}
             <div className="grid grid-cols-2 gap-4 pt-4 border-t">
               <div className="space-y-1">
-                <p className="text-sm font-medium">Created</p>
+                <p className="text-sm font-medium">
+                  {t("movies.details.created")}
+                </p>
                 <p className="text-sm text-muted-foreground">
                   {formatDate(movie.createdAt)}
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium">Last Updated</p>
+                <p className="text-sm font-medium">
+                  {t("movies.details.lastUpdated")}
+                </p>
                 <p className="text-sm text-muted-foreground">
                   {formatDate(movie.updatedAt)}
                 </p>
@@ -180,12 +192,12 @@ export function MovieDetailsDialog({
 
             {/* Actions */}
             <div className="flex justify-end pt-4 border-t">
-              <Button onClick={handleClose}>Close</Button>
+              <Button onClick={handleClose}>{t("common.close")}</Button>
             </div>
           </div>
         ) : (
           <div className="text-center py-8 text-muted-foreground">
-            No movie details available.
+            {t("movies.details.noData")}
           </div>
         )}
       </DialogContent>
