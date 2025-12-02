@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Download, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { MAX_ROWS, MAX_COLS } from "@/lib/constants";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface RoomLayoutModalProps {
   open: boolean;
@@ -34,6 +35,7 @@ export function RoomLayoutModal({
   onSave,
   initialLayout,
 }: RoomLayoutModalProps) {
+  const { t } = useI18n();
   const [selectedSeatType, setSelectedSeatType] = useState<SeatType>(
     SeatType.NORMAL
   );
@@ -88,7 +90,7 @@ export function RoomLayoutModal({
     linkElement.setAttribute("download", exportFileDefaultName);
     linkElement.click();
 
-    toast.success("Layout exported successfully!");
+    toast.success(t("rooms.layout.layoutExportedSuccessfully"));
   };
 
   const handleImportLayout = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,12 +107,12 @@ export function RoomLayoutModal({
           importedLayout.seats
         ) {
           setLayout(importedLayout);
-          toast.success("Layout imported successfully!");
+          toast.success(t("rooms.layout.layoutImportedSuccessfully"));
         } else {
-          toast.error("Invalid layout file format");
+          toast.error(t("rooms.layout.invalidLayoutFileFormat"));
         }
       } catch (error) {
-        toast.error("Invalid layout file");
+        toast.error(t("rooms.layout.invalidLayoutFile"));
       }
     };
     reader.readAsText(file);
@@ -131,17 +133,18 @@ export function RoomLayoutModal({
       ),
     };
     setLayout(emptyLayout);
-    toast.success("Layout cleared successfully!");
+    toast.success(t("rooms.layout.layoutClearedSuccessfully"));
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="min-w-[95vw] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Room Layout: {roomName}</DialogTitle>
+          <DialogTitle>
+            {t("rooms.layout.editRoomLayout")}: {roomName}
+          </DialogTitle>
           <DialogDescription>
-            Design the seat layout for this room. Click on seats to place them,
-            or use drag to paint multiple seats.
+            {t("rooms.layout.editRoomLayoutDescription")}
           </DialogDescription>
         </DialogHeader>
 
@@ -165,13 +168,15 @@ export function RoomLayoutModal({
             <div className="flex-1">
               <Card className="h-full">
                 <CardHeader>
-                  <CardTitle className="text-lg">Actions</CardTitle>
+                  <CardTitle className="text-lg">
+                    {t("rooms.layout.actions")}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Secondary Actions */}
                   <div className="space-y-3">
                     <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Manage Layout
+                      {t("rooms.layout.manageLayout")}
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -181,7 +186,7 @@ export function RoomLayoutModal({
                         className="h-10 font-medium hover:bg-gray-50 border-gray-200"
                       >
                         <Download className="mr-2 h-4 w-4" />
-                        Export
+                        {t("rooms.layout.export")}
                       </Button>
 
                       <label className="cursor-pointer">
@@ -192,7 +197,7 @@ export function RoomLayoutModal({
                         >
                           <span>
                             <Upload className="mr-2 h-4 w-4" />
-                            Import
+                            {t("rooms.layout.import")}
                           </span>
                         </Button>
                         <input
@@ -210,7 +215,7 @@ export function RoomLayoutModal({
                       className="w-full h-10 font-medium text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Clear Layout
+                      {t("rooms.layout.clearLayout")}
                     </Button>
                   </div>
                 </CardContent>
@@ -234,11 +239,11 @@ export function RoomLayoutModal({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button onClick={handleSave}>
             <Save className="mr-2 h-4 w-4" />
-            Save Layout
+            {t("rooms.layout.saveLayout")}
           </Button>
         </DialogFooter>
       </DialogContent>

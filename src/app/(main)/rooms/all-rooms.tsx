@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Room } from "@/types/cinema";
 import { RoomDataTable } from "@/app/(main)/rooms/data-table";
 import { createColumns } from "@/app/(main)/rooms/columns";
@@ -8,8 +8,11 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { GetRoomsParams } from "@/types/cinema";
 import { useRooms, useArchiveRoom, useRestoreRoom } from "@/hooks/use-rooms";
 import { RoomDialog } from "@/app/(main)/rooms/room-dialog";
+import { useCinemas } from "@/hooks/use-cinemas";
+import { useI18n } from "@/contexts/I18nContext";
 
 export function AllRooms() {
+  const { t } = useI18n();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
   const [confirmationDialog, setConfirmationDialog] = useState<{
@@ -27,8 +30,23 @@ export function AllRooms() {
   });
 
   const { data, isLoading } = useRooms(currentParams);
+  const { data: cinemaData } = useCinemas({
+    page: 1,
+    limit: 100,
+    isActive: true,
+  });
   const archiveMutation = useArchiveRoom();
   const restoreMutation = useRestoreRoom();
+
+  const cinemaMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (cinemaData?.data) {
+      cinemaData.data.forEach((cinema) => {
+        map.set(cinema.id, cinema.name);
+      });
+    }
+    return map;
+  }, [cinemaData]);
 
   const handleCreateClick = () => {
     setEditingRoomId(null);
@@ -83,10 +101,35 @@ export function AllRooms() {
     setCurrentParams({ ...currentParams, page: 1, search });
   };
 
+  const handleStatusChange = (status: "all" | "active" | "inactive") => {
+    setCurrentParams((prev) => {
+      const next: GetRoomsParams = { ...prev, page: 1 };
+      if (status === "all") {
+        delete next.isActive;
+      } else {
+        next.isActive = status === "active";
+      }
+      return next;
+    });
+  };
+
+  const handleCinemaChange = (cinemaId: string | "all") => {
+    setCurrentParams((prev) => {
+      const next: GetRoomsParams = { ...prev, page: 1 };
+      if (cinemaId === "all") {
+        delete next.cinemaId;
+      } else {
+        next.cinemaId = cinemaId;
+      }
+      return next;
+    });
+  };
+
   const columns = createColumns({
     onEdit: handleEditClick,
     onArchive: handleArchiveClick,
     onRestore: handleRestoreClick,
+    cinemaMap,
   });
 
   return (
@@ -94,6 +137,10 @@ export function AllRooms() {
       <RoomDataTable
         columns={columns}
         data={data?.data || []}
+        cinemas={cinemaData?.data?.map((cinema) => ({
+          id: cinema.id,
+          name: cinema.name,
+        }))}
         onCreateClick={handleCreateClick}
         pagination={
           data?.pagination || {
@@ -107,6 +154,8 @@ export function AllRooms() {
         }
         onPaginationChange={handlePaginationChange}
         onSearchChange={handleSearchChange}
+        onStatusChange={handleStatusChange}
+        onCinemaChange={handleCinemaChange}
         loading={isLoading}
       />
 
@@ -124,16 +173,18 @@ export function AllRooms() {
         }
         title={
           confirmationDialog.action === "archive"
-            ? "Archive Room"
-            : "Restore Room"
+            ? t("rooms.archiveRoom.title")
+            : t("rooms.restoreRoom.title")
         }
         description={
           confirmationDialog.action === "archive"
-            ? `Are you sure you want to archive "${confirmationDialog.room?.name}"? This will make it unavailable for new showtimes.`
-            : `Are you sure you want to restore "${confirmationDialog.room?.name}"? This will make it available for new showtimes again.`
+            ? t("rooms.archiveRoom.confirmText")
+            : t("rooms.restoreRoom.confirmText")
         }
         confirmText={
-          confirmationDialog.action === "archive" ? "Archive" : "Restore"
+          confirmationDialog.action === "archive"
+            ? t("common.actions.archive")
+            : t("common.actions.restore")
         }
         variant={confirmationDialog.action}
         onConfirm={handleConfirmAction}

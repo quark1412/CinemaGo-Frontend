@@ -9,6 +9,8 @@
     "add": "Add",
     "search": "Search",
     "filter": "Filter",
+    "updatedAt": "Updated At",
+    "createdAt": "Created At",
     "loading": "Loading...",
     "noData": "No data available",
     "status": {
@@ -254,6 +256,88 @@
       "addressPlaceholder": "Enter full address",
       "latitudeOptional": "Latitude (Optional)",
       "longitudeOptional": "Longitude (Optional)"
+    }
+  },
+  "rooms": {
+    "name": "Room Name",
+    "cinema": "Cinema",
+    "cinemaPlaceholder": "Select a cinema",
+    "namePlaceholder": "Enter room name",
+    "unknownCinema": "Unknown cinema",
+    "totalSeats": "Total Seats",
+    "status": "Status",
+    "createdAt": "Created At",
+    "searchRooms": "Search rooms",
+    "filterRooms": {
+      "cinema": "Filter by cinema",
+      "status": "Filter by status",
+      "allCinemas": "All cinemas",
+      "allStatus": "All status",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "editRoomLayout": "Edit room layout",
+    "configureRoomLayout": "Configure room layout",
+    "roomLayoutSaved": "Room layout saved!",
+    "vipPrice": "VIP Seat Extra Price",
+    "couplePrice": "Couple Seat Extra Price",
+    "seatLayout": "Seat Layout",
+    "createRoom": {
+      "title": "Create room",
+      "description": "Fill in the details to create a new room.",
+      "createRoomSuccess": "Room created successfully",
+      "createRoomError": "Failed to create room"
+    },
+    "updateRoom": {
+      "title": "Update room",
+      "description": "Update the room information below",
+      "updateRoomSuccess": "Room updated successfully",
+      "updateRoomError": "Failed to update room"
+    },
+    "archiveRoom": {
+      "title": "Archive room",
+      "description": "Archive the room information below",
+      "confirmText": "Are you sure you want to archive this room?"
+    },
+    "restoreRoom": {
+      "title": "Restore room",
+      "description": "Restore the room information below",
+      "confirmText": "Are you sure you want to restore this room?"
+    },
+    "layout": {
+      "seatTypes": {
+        "title": "Seat Types",
+        "NORMAL": "NORMAL",
+        "VIP": "VIP",
+        "COUPLE": "COUPLE",
+        "BLOCKED": "BLOCKED"
+      },
+      "gridSize": "Grid Size",
+      "gridSizeValidation": "Grid size must be between 1x1 and 10x10",
+      "clearLayoutConfirmation": "Are you sure you want to clear the entire layout?",
+      "rows": "Rows",
+      "columns": "Columns",
+      "resizeGrid": "Resize Grid",
+      "editRoomLayout": "Edit room layout",
+      "editRoomLayoutDescription": "Design the seat layout for this room. Click on seats to place them, or use drag to paint multiple seats.",
+      "actions": "Actions",
+      "manageLayout": "Manage layout",
+      "export": "Export",
+      "import": "Import",
+      "clearLayout": "Clear layout",
+      "saveLayout": "Save layout",
+      "layoutExportedSuccessfully": "Layout exported successfully!",
+      "layoutImportedSuccessfully": "Layout imported successfully!",
+      "invalidLayoutFileFormat": "Invalid layout file format",
+      "invalidLayoutFile": "Invalid layout file",
+      "layoutClearedSuccessfully": "Layout cleared successfully!",
+      "singleClick": "Single click",
+      "singleClickDescription": "Place selected seat type",
+      "longPressDrag": "Long press + drag",
+      "longPressDragDescription": "Paint multiple seats",
+      "rightClick": "Right click",
+      "rightClickDescription": "Remove seat",
+      "coupleSeatsRequireTwoAdjacentEmptySeatsInTheSameRow": "Couple seats require two adjacent empty seats in the same row."
     }
   },
   "reviews": {

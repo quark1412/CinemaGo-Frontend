@@ -31,12 +31,13 @@ import { Input } from "@/components/ui/input";
 import { SeatLayout, SeatType, SeatPosition } from "@/types/seat";
 import { RoomLayoutModal } from "./room-layout-modal";
 import { MAX_COLS, MAX_ROWS } from "@/lib/constants";
+import { useI18n } from "@/contexts/I18nContext";
 
 const formSchema = z.object({
   name: z.string().min(1, "Room name is required"),
   cinemaId: z.string().min(1, "Cinema is required"),
-  vipPrice: z.number().min(1, "VIP price must be greater than 0"),
-  couplePrice: z.number().min(1, "Couple price must be greater than 0"),
+  vipPrice: z.number().min(0, "VIP price must be greater than 0"),
+  couplePrice: z.number().min(0, "Couple price must be greater than 0"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -56,6 +57,7 @@ export function RoomDialog({
   onSuccess,
   defaultCinemaId,
 }: RoomDialogProps) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const isEditing = !!roomId;
   const [room, setRoom] = useState<Room | null>(null);
@@ -66,8 +68,8 @@ export function RoomDialog({
     defaultValues: {
       name: "",
       cinemaId: defaultCinemaId || "",
-      vipPrice: 1,
-      couplePrice: 1,
+      vipPrice: 0,
+      couplePrice: 0,
     },
   });
 
@@ -161,7 +163,6 @@ export function RoomDialog({
         couplePrice: roomData.COUPLE || 0,
       });
     } catch (error: any) {
-      console.error("Error fetching room:", error);
       toast.error(error.response?.data?.message || "Failed to load room data");
     } finally {
       setLoading(false);
@@ -175,8 +176,8 @@ export function RoomDialog({
       form.reset({
         name: "",
         cinemaId: defaultCinemaId || "",
-        vipPrice: 1,
-        couplePrice: 1,
+        vipPrice: 0,
+        couplePrice: 0,
       });
       setRoom(null);
       setSeatLayout(null);
@@ -211,7 +212,7 @@ export function RoomDialog({
           couplePrice: data.couplePrice,
         };
         await updateRoom(roomId, updateData);
-        toast.success("Room updated successfully!");
+        toast.success(t("rooms.updateRoom.updateRoomSuccess"));
       } else {
         const layoutToUse =
           convertLayoutToBackendFormat(seatLayout) ??
@@ -236,12 +237,11 @@ export function RoomDialog({
           couplePrice: data.couplePrice,
         };
         await createRoom(createData);
-        toast.success("Room created successfully!");
+        toast.success(t("rooms.createRoom.createRoomSuccess"));
       }
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
-      console.error("Error creating room:", error);
       const message =
         error.response?.data?.message ||
         `Failed to ${isEditing ? "update" : "create"} room`;
@@ -262,12 +262,14 @@ export function RoomDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Room" : "Create New Room"}
+            {isEditing
+              ? t("rooms.updateRoom.title")
+              : t("rooms.createRoom.title")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the room information below."
-              : "Fill in the details to create a new room."}
+              ? t("rooms.updateRoom.description")
+              : t("rooms.createRoom.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -278,9 +280,12 @@ export function RoomDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Room Name</FormLabel>
+                  <FormLabel>{t("rooms.name")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter room name" {...field} />
+                    <Input
+                      placeholder={t("rooms.namePlaceholder")}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -292,14 +297,14 @@ export function RoomDialog({
               name="cinemaId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cinema</FormLabel>
+                  <FormLabel>{t("rooms.cinema")}</FormLabel>
                   <FormControl>
                     <CinemaSelector
                       value={field.value ? [field.value] : []}
                       onValueChange={(values) =>
                         field.onChange(values[0] || "")
                       }
-                      placeholder="Select a cinema"
+                      placeholder={t("rooms.cinemaPlaceholder")}
                       multiple={false}
                       disabled={isEditing || !!defaultCinemaId}
                     />
@@ -315,12 +320,12 @@ export function RoomDialog({
                 name="vipPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>VIP Seat Extra Price (VND)</FormLabel>
+                    <FormLabel>{t("rooms.vipPrice")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
-                        placeholder="1.00"
+                        placeholder="0.00"
                         value={field.value?.toString() ?? ""}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -340,12 +345,12 @@ export function RoomDialog({
                 name="couplePrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Couple Seat Extra Price (VND)</FormLabel>
+                    <FormLabel>{t("rooms.couplePrice")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
-                        placeholder="1.00"
+                        placeholder="0.00"
                         value={field.value?.toString() ?? ""}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -362,14 +367,16 @@ export function RoomDialog({
             </div>
 
             <div className="space-y-2">
-              <FormLabel>Seat Layout</FormLabel>
+              <FormLabel>{t("rooms.seatLayout")}</FormLabel>
               <Button
                 type="button"
                 variant="outline"
                 className="w-full"
                 onClick={() => setLayoutModalOpen(true)}
               >
-                {seatLayout ? "Edit room layout" : "Configure room layout"}
+                {seatLayout
+                  ? t("rooms.editRoomLayout")
+                  : t("rooms.configureRoomLayout")}
               </Button>
             </div>
 
@@ -380,13 +387,13 @@ export function RoomDialog({
                 onClick={handleClose}
                 disabled={loading}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && (
                   <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
                 )}
-                {isEditing ? "Update" : "Create"} Room
+                {isEditing ? t("common.update") : t("common.create")}{" "}
               </Button>
             </DialogFooter>
           </form>
@@ -399,7 +406,7 @@ export function RoomDialog({
         roomName={form.getValues("name") || "Room"}
         onSave={(layout) => {
           setSeatLayout(layout);
-          toast.success("Room layout saved!");
+          toast.success(t("rooms.roomLayoutSaved"));
         }}
         initialLayout={seatLayout ?? undefined}
       />

@@ -649,15 +649,6 @@ export function CreateCinemaDialog({
                     const isValid = await form.trigger();
                     if (isValid) {
                       setCurrentStep(2);
-                    } else {
-                      const errors = form.formState.errors;
-                      if (errors.name) {
-                        toast.error(errors.name.message as string);
-                      } else if (errors.address) {
-                        toast.error(errors.address.message as string);
-                      } else if (errors.city) {
-                        toast.error(errors.city.message as string);
-                      }
                     }
                   } else if (currentStep === 2) {
                     // Validate rooms

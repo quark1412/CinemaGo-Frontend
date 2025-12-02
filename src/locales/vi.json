@@ -9,6 +9,8 @@
     "add": "Thêm",
     "search": "Tìm kiếm",
     "filter": "Lọc",
+    "updatedAt": "Ngày cập nhật",
+    "createdAt": "Ngày tạo",
     "actions": {
       "edit": "Sửa",
       "copyId": "Sao chép ID",
@@ -258,6 +260,89 @@
       "addressPlaceholder": "Nhập địa chỉ chi tiết",
       "latitudeOptional": "Kinh độ (Tùy chọn)",
       "longitudeOptional": "Vĩ độ (Tùy chọn)"
+    }
+  },
+  "rooms": {
+    "name": "Tên phòng",
+    "cinema": "Rạp",
+    "cinemaPlaceholder": "Chọn rạp",
+    "namePlaceholder": "Nhập tên phòng",
+    "unknownCinema": "Không rõ rạp",
+    "totalSeats": "Tổng số ghế",
+    "status": "Trạng thái",
+    "createdAt": "Ngày tạo",
+    "searchRooms": "Tìm kiếm phòng",
+    "filterRooms": {
+      "cinema": "Lọc theo rạp",
+      "status": "Lọc theo trạng thái",
+      "allCinemas": "Tất cả rạp",
+      "allStatus": "Tất cả trạng thái",
+      "active": "Đang hoạt động",
+      "inactive": "Không hoạt động"
+    },
+    "seatLayout": "Bố cục",
+    "editRoomLayout": "Sửa bố cục",
+    "configureRoomLayout": "Cấu hình bố cục",
+    "roomLayoutSaved": "Bố cục đã được lưu!",
+    "vipPrice": "Giá ghế VIP thêm",
+    "couplePrice": "Giá ghế cặp thêm",
+    "createRoom": {
+      "title": "Thêm phòng",
+      "description": "Nhập thông tin phòng",
+      "namePlaceholder": "Nhập tên phòng",
+      "createRoomSuccess": "Thêm phòng thành công",
+      "createRoomError": "Thêm phòng thất bại"
+    },
+    "updateRoom": {
+      "title": "Cập nhật phòng",
+      "description": "Cập nhật thông tin phòng",
+      "updateRoomSuccess": "Cập nhật phòng thành công",
+      "updateRoomError": "Cập nhật phòng thất bại"
+    },
+    "archiveRoom": {
+      "title": "Lưu trữ phòng",
+      "description": "Lưu trữ thông tin phòng dưới đây",
+      "confirmText": "Bạn có chắc chắn muốn lưu trữ phòng này?"
+    },
+    "restoreRoom": {
+      "title": "Khôi phục phòng",
+      "description": "Khôi phục thông tin phòng dưới đây",
+      "confirmText": "Bạn có chắc chắn muốn khôi phục phòng này?"
+    },
+    "layout": {
+      "seatTypes": {
+        "title": "Loại ghế",
+        "NORMAL": "NORMAL",
+        "VIP": "VIP",
+        "COUPLE": "COUPLE",
+        "BLOCKED": "BLOCKED"
+      },
+      "gridSize": "Kích thước phòng",
+      "gridSizeValidation": "Kích thước phòng phải nằm trong khoảng 1x1 và 10x10",
+      "clearLayoutConfirmation": "Bạn có chắc chắn muốn xóa toàn bộ bố cục?",
+      "rows": "Hàng",
+      "columns": "Cột",
+      "resizeGrid": "Thay đổi kích thước phòng",
+      "editRoomLayout": "Sửa bố cục phòng",
+      "editRoomLayoutDescription": "Thiết kế bố cục phòng. Nhấp vào ghế để đặt hoặc kéo để vẽ nhiều ghế cùng một lúc.",
+      "actions": "Thao tác",
+      "manageLayout": "Quản lý bố cục",
+      "export": "Xuất",
+      "import": "Nhập",
+      "clearLayout": "Xóa bố cục",
+      "saveLayout": "Lưu bố cục",
+      "layoutExportedSuccessfully": "Xuất bố cục thành công!",
+      "layoutImportedSuccessfully": "Nhập bố cục thành công!",
+      "invalidLayoutFileFormat": "Định dạng file bố cục không hợp lệ",
+      "invalidLayoutFile": "File bố cục không hợp lệ",
+      "layoutClearedSuccessfully": "Xóa bố cục thành công!",
+      "singleClick": "Nhấp chuột trái",
+      "singleClickDescription": "Đặt loại ghế đã chọn",
+      "longPressDrag": "Giữ chuột + kéo",
+      "longPressDragDescription": "Vẽ nhiều ghế cùng một lúc",
+      "rightClick": "Nhấp chuột phải",
+      "rightClickDescription": "Xóa ghế",
+      "coupleSeatsRequireTwoAdjacentEmptySeatsInTheSameRow": "Ghế cặp cần hai ghế trống liền kề trong cùng một hàng."
     }
   },
   "reviews": {

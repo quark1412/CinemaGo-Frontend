@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useEffect, useRef } from "react";
 
 import {
   ColumnDef,
@@ -39,10 +40,17 @@ import {
   ChevronsRight,
   CirclePlus,
 } from "lucide-react";
+import { useI18n } from "@/contexts/I18nContext";
+
+interface CinemaOption {
+  id: string;
+  name: string;
+}
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  cinemas?: CinemaOption[];
   onCreateClick: () => void;
   pagination?: {
     totalItems: number;
@@ -54,23 +62,34 @@ interface DataTableProps<TData, TValue> {
   };
   onPaginationChange?: (page: number, pageSize: number) => void;
   onSearchChange?: (search: string) => void;
+  onStatusChange?: (status: "all" | "active" | "inactive") => void;
+  onCinemaChange?: (cinemaId: string | "all") => void;
   loading?: boolean;
 }
 
 export function RoomDataTable<TData, TValue>({
   columns,
   data,
+  cinemas = [],
   onCreateClick,
   pagination,
   onPaginationChange,
   onSearchChange,
+  onStatusChange,
+  onCinemaChange,
   loading = false,
 }: DataTableProps<TData, TValue>) {
+  const { t } = useI18n();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
   const [searchValue, setSearchValue] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<
+    "all" | "active" | "inactive"
+  >("all");
+  const [cinemaFilter, setCinemaFilter] = React.useState<string | "all">("all");
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const table = useReactTable({
     data,
@@ -87,10 +106,13 @@ export function RoomDataTable<TData, TValue>({
     },
   });
 
-  const handleSearchChange = (value: string) => {
-    setSearchValue(value);
-    onSearchChange?.(value);
-  };
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handlePageChange = (page: number) => {
     onPaginationChange?.(page, pagination?.pageSize || 10);
@@ -100,62 +122,130 @@ export function RoomDataTable<TData, TValue>({
     onPaginationChange?.(1, parseInt(pageSize));
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
-          <div className="h-10 max-w-sm w-80 bg-gray-200 animate-pulse rounded"></div>
-          <div className="h-10 w-32 bg-gray-200 animate-pulse rounded"></div>
-        </div>
+  // if (loading) {
+  //   return (
+  //     <div className="flex flex-col h-full">
+  //       <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
+  //         <div className="h-10 max-w-sm w-80 bg-gray-200 animate-pulse rounded"></div>
+  //         <div className="h-10 w-32 bg-gray-200 animate-pulse rounded"></div>
+  //       </div>
 
-        <div className="overflow-hidden rounded-md border flex-1 min-h-0">
-          <div className="h-full overflow-auto">
-            <Table>
-              <TableHeader className="sticky top-0 bg-background z-10">
-                <TableRow>
-                  {Array.from({ length: 6 }).map((_, index) => (
-                    <TableHead key={index}>
-                      <div className="h-4 bg-gray-200 animate-pulse rounded"></div>
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Array.from({ length: 10 }).map((_, index) => (
-                  <TableRow key={index}>
-                    {Array.from({ length: 6 }).map((_, cellIndex) => (
-                      <TableCell key={cellIndex}>
-                        <div className="h-4 bg-gray-200 animate-pulse rounded"></div>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+  //       <div className="overflow-hidden rounded-md border flex-1 min-h-0">
+  //         <div className="h-full overflow-auto">
+  //           <Table>
+  //             <TableHeader className="sticky top-0 bg-background z-10">
+  //               <TableRow>
+  //                 {Array.from({ length: 6 }).map((_, index) => (
+  //                   <TableHead key={index}>
+  //                     <div className="h-4 bg-gray-200 animate-pulse rounded"></div>
+  //                   </TableHead>
+  //                 ))}
+  //               </TableRow>
+  //             </TableHeader>
+  //             <TableBody>
+  //               {Array.from({ length: 10 }).map((_, index) => (
+  //                 <TableRow key={index}>
+  //                   {Array.from({ length: 6 }).map((_, cellIndex) => (
+  //                     <TableCell key={cellIndex}>
+  //                       <div className="h-4 bg-gray-200 animate-pulse rounded"></div>
+  //                     </TableCell>
+  //                   ))}
+  //                 </TableRow>
+  //               ))}
+  //             </TableBody>
+  //           </Table>
+  //         </div>
+  //       </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-end space-x-2 py-4 flex-shrink-0">
-          <div className="h-8 w-20 bg-gray-200 animate-pulse rounded"></div>
-          <div className="h-8 w-16 bg-gray-200 animate-pulse rounded"></div>
-        </div>
-      </div>
-    );
-  }
+  //       {/* Pagination */}
+  //       <div className="flex items-center justify-end space-x-2 py-4 flex-shrink-0">
+  //         <div className="h-8 w-20 bg-gray-200 animate-pulse rounded"></div>
+  //         <div className="h-8 w-16 bg-gray-200 animate-pulse rounded"></div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
-        <Input
-          placeholder="Search rooms..."
-          value={searchValue}
-          onChange={(event) => handleSearchChange(event.target.value)}
-          className="max-w-sm"
-        />
-        <Button onClick={onCreateClick} className="gap-2">
+      <div className="flex flex-col gap-3 py-4 flex-shrink-0 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+          <Input
+            placeholder={t("rooms.searchRooms") + "..."}
+            value={searchValue}
+            onChange={(event) => {
+              const value = event.target.value;
+              setSearchValue(value);
+
+              if (pagination && onSearchChange) {
+                if (searchTimeoutRef.current) {
+                  clearTimeout(searchTimeoutRef.current);
+                }
+
+                searchTimeoutRef.current = setTimeout(() => {
+                  onSearchChange(value);
+                }, 500);
+              }
+            }}
+            className="max-w-sm"
+          />
+
+          {/* Cinema filter */}
+          <Select
+            value={cinemaFilter}
+            onValueChange={(value) => {
+              const typedValue = value as string | "all";
+              setCinemaFilter(typedValue);
+              onCinemaChange?.(typedValue);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder={t("rooms.filterRooms.cinema")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {t("rooms.filterRooms.allCinemas")}
+              </SelectItem>
+              {cinemas.map((cinema) => (
+                <SelectItem key={cinema.id} value={cinema.id}>
+                  {cinema.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Status filter */}
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => {
+              const typedValue = value as "all" | "active" | "inactive";
+              setStatusFilter(typedValue);
+              onStatusChange?.(typedValue);
+            }}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder={t("rooms.filterRooms.status")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {t("rooms.filterRooms.allStatus")}
+              </SelectItem>
+              <SelectItem value="active">
+                {t("common.status.active")}
+              </SelectItem>
+              <SelectItem value="inactive">
+                {t("common.status.inactive")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button
+          onClick={onCreateClick}
+          className="gap-2 self-start sm:self-auto"
+        >
           <CirclePlus className="h-4 w-4" />
-          Add Room
+          {t("rooms.createRoom.title")}
         </Button>
       </div>
 
@@ -203,7 +293,7 @@ export function RoomDataTable<TData, TValue>({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No results.
+                    {t("common.noData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -216,7 +306,7 @@ export function RoomDataTable<TData, TValue>({
       {pagination && (
         <div className="flex items-center justify-between space-x-2 py-4 flex-shrink-0">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium">{t("common.rowsPerPage")}</p>
             <Select
               value={pagination.pageSize.toString()}
               onValueChange={handlePageSizeChange}
@@ -235,7 +325,8 @@ export function RoomDataTable<TData, TValue>({
           </div>
           <div className="flex items-center space-x-6 lg:space-x-8">
             <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Page {pagination.currentPage} of {pagination.totalPages}
+              {t("common.page")} {pagination.currentPage} {t("common.of")}{" "}
+              {pagination.totalPages}
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -244,7 +335,7 @@ export function RoomDataTable<TData, TValue>({
                 onClick={() => handlePageChange(1)}
                 disabled={!pagination.hasPrevPage}
               >
-                <span className="sr-only">Go to first page</span>
+                <span className="sr-only">{t("common.goToFirstPage")}</span>
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
               <Button
@@ -253,7 +344,7 @@ export function RoomDataTable<TData, TValue>({
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={!pagination.hasPrevPage}
               >
-                <span className="sr-only">Go to previous page</span>
+                <span className="sr-only">{t("common.goToPreviousPage")}</span>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
@@ -262,7 +353,7 @@ export function RoomDataTable<TData, TValue>({
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={!pagination.hasNextPage}
               >
-                <span className="sr-only">Go to next page</span>
+                <span className="sr-only">{t("common.goToNextPage")}</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <Button
@@ -271,7 +362,7 @@ export function RoomDataTable<TData, TValue>({
                 onClick={() => handlePageChange(pagination.totalPages)}
                 disabled={!pagination.hasNextPage}
               >
-                <span className="sr-only">Go to last page</span>
+                <span className="sr-only">{t("common.goToLastPage")}</span>
                 <ChevronsRight className="h-4 w-4" />
               </Button>
             </div>

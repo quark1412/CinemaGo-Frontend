@@ -5,6 +5,7 @@ import { SeatCell } from "@/components/seat-layout/seat-cell";
 import { SeatType, SeatPosition, SeatLayout } from "@/types/seat";
 import { cn } from "@/lib/utils";
 import { Sofa } from "lucide-react";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface SeatGridProps {
   layout: SeatLayout;
@@ -24,7 +25,7 @@ export function SeatGrid({
   const [dragMode, setDragMode] = useState<"paint" | "erase" | null>(null);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const longPressStarted = useRef(false);
-
+  const { t } = useI18n();
   const getSeatKey = (row: number, col: number) => `${row}-${col}`;
 
   const updateSeat = useCallback(
@@ -142,7 +143,9 @@ export function SeatGrid({
             createCoupleSeat(seat.row, seat.col, rightCol);
           } else {
             alert(
-              "Couple seats require two adjacent empty seats in the same row."
+              t(
+                "rooms.layout.coupleSeatsRequireTwoAdjacentEmptySeatsInTheSameRow"
+              )
             );
           }
         }
@@ -371,13 +374,16 @@ export function SeatGrid({
       {/* Instructions */}
       <div className="mt-4 text-xs text-gray-600 text-center space-y-1">
         <p>
-          <strong>Single click:</strong> Place selected seat type
+          <strong>{t("rooms.layout.singleClick")}:</strong>{" "}
+          {t("rooms.layout.singleClickDescription")}
         </p>
         <p>
-          <strong>Long press + drag:</strong> Paint multiple seats
+          <strong>{t("rooms.layout.longPressDrag")}:</strong>{" "}
+          {t("rooms.layout.longPressDragDescription")}
         </p>
         <p>
-          <strong>Right click:</strong> Remove seat
+          <strong>{t("rooms.layout.rightClick")}:</strong>{" "}
+          {t("rooms.layout.rightClickDescription")}
         </p>
       </div>
     </div>

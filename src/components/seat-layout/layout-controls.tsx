@@ -16,6 +16,7 @@ import {
   Eye,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface LayoutControlsProps {
   layout: SeatLayout;
@@ -30,6 +31,7 @@ export function LayoutControls({
   onSave,
   onPreview,
 }: LayoutControlsProps) {
+  const { t } = useI18n();
   const [rows, setRows] = useState(layout.rows);
   const [cols, setCols] = useState(layout.cols);
 
@@ -47,7 +49,7 @@ export function LayoutControls({
 
   const handleResizeGrid = () => {
     if (rows < 1 || cols < 1 || rows > 10 || cols > 10) {
-      toast.error("Grid size must be between 1x1 and 10x10");
+      toast.error(t("rooms.layout.gridSizeValidation"));
       return;
     }
 
@@ -70,7 +72,7 @@ export function LayoutControls({
   };
 
   const handleClearLayout = () => {
-    if (confirm("Are you sure you want to clear the entire layout?")) {
+    if (confirm(t("rooms.layout.clearLayoutConfirmation"))) {
       const emptyLayout = createEmptyLayout(layout.rows, layout.cols);
       onLayoutChange(emptyLayout);
     }
@@ -104,10 +106,10 @@ export function LayoutControls({
           setRows(importedLayout.rows);
           setCols(importedLayout.cols);
         } else {
-          alert("Invalid layout file format");
+          toast.error(t("rooms.layout.invalidLayoutFileFormat"));
         }
       } catch (error) {
-        alert("Error reading layout file");
+        toast.error(t("rooms.layout.invalidLayoutFile"));
       }
     };
     reader.readAsText(file);
@@ -162,13 +164,13 @@ export function LayoutControls({
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Grid3X3 size={20} />
-          Grid Size
+          {t("rooms.layout.gridSize")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="rows">Rows</Label>
+            <Label htmlFor="rows">{t("rooms.layout.rows")}</Label>
             <Input
               id="rows"
               type="number"
@@ -180,7 +182,7 @@ export function LayoutControls({
             />
           </div>
           <div>
-            <Label htmlFor="cols">Columns</Label>
+            <Label htmlFor="cols">{t("rooms.layout.columns")}</Label>
             <Input
               id="cols"
               type="number"
@@ -194,7 +196,7 @@ export function LayoutControls({
         </div>
         <Button onClick={handleResizeGrid} className="w-full h-11">
           <Grid3X3 size={16} />
-          Resize Grid ({rows}×{cols})
+          {t("rooms.layout.resizeGrid")} ({rows}×{cols})
         </Button>
       </CardContent>
     </Card>

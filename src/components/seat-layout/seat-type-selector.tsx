@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeatType, SEAT_LABELS } from "@/types/seat";
 import { Armchair, Crown, Sofa, X } from "lucide-react";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface SeatTypeSelectorProps {
   selectedType: SeatType;
@@ -14,6 +15,7 @@ export function SeatTypeSelector({
   selectedType,
   onTypeSelect,
 }: SeatTypeSelectorProps) {
+  const { t } = useI18n();
   const seatTypes = [
     SeatType.NORMAL,
     SeatType.VIP,
@@ -73,7 +75,9 @@ export function SeatTypeSelector({
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle className="text-lg">Seat Types</CardTitle>
+        <CardTitle className="text-lg">
+          {t("rooms.layout.seatTypes.title")}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 grid grid-cols-2 gap-3">
         {seatTypes.map((type) => {
@@ -86,7 +90,9 @@ export function SeatTypeSelector({
               onClick={() => onTypeSelect(type)}
             >
               {getSeatIcon(type)}
-              <span className="font-semibold text-sm">{SEAT_LABELS[type]}</span>
+              <span className="font-semibold text-sm">
+                {t(`rooms.layout.seatTypes.${SEAT_LABELS[type]}`)}
+              </span>
             </Button>
           );
         })}
