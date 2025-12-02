@@ -39,7 +39,6 @@
     "previous": "Previous"
   },
   "sidebar": {
-    "dashboard": "Dashboard",
     "movies": "Movies",
     "genres": "Genres",
     "cinemas": "Cinemas",
@@ -51,7 +50,7 @@
     "report": "Report"
   },
   "auth": {
-    "welcomeBack": "Welcome back !",
+    "welcomeBack": "Welcome back!",
     "email": "Email",
     "password": "Password",
     "enterEmail": "Enter your mail address",
@@ -76,17 +75,6 @@
     "description": "You need to be logged in to access this page",
     "pleaseSignIn": "Please sign in to your",
     "accountToContinue": "account to continue"
-  },
-  "dashboard": {
-    "title": "Dashboard",
-    "totalMovies": "Total Movies",
-    "totalMoviesDesc": "Total movies in the database",
-    "totalCinemas": "Total Cinemas",
-    "totalCinemasDesc": "Total cinemas available",
-    "totalUsers": "Total Users",
-    "totalUsersDesc": "Total registered users",
-    "totalBookings": "Total Bookings",
-    "totalBookingsDesc": "Total bookings made"
   },
   "movies": {
     "genres": "Genres",
@@ -218,15 +206,55 @@
     }
   },
   "cinemas": {
-    "title": "Cinemas",
-    "createCinema": "Create Cinema",
-    "updateCinema": "Update Cinema",
-    "deleteCinema": "Delete Cinema",
-    "rooms": "Rooms",
-    "saveLayout": "Save Layout",
-    "updateLayout": "Update Layout",
-    "clearLayout": "Clear Layout",
-    "seatLayout": "Seat Layout"
+    "searchCinemas": "Search cinemas",
+    "name": "Name",
+    "city": "City",
+    "address": "Address",
+    "status": "Status",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "filterCinemas": {
+      "allCities": "All cities",
+      "allStatus": "All status",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "archiveCinema": {
+      "title": "Archive cinema",
+      "description": "Archive the cinema information below",
+      "archiveCinemaSuccess": "Cinema archived successfully",
+      "archiveCinemaError": "Failed to archive cinema",
+      "confirmText": "Are you sure you want to archive this cinema?"
+    },
+    "restoreCinema": {
+      "title": "Restore cinema",
+      "description": "Restore the cinema information below",
+      "restoreCinemaSuccess": "Cinema restored successfully",
+      "restoreCinemaError": "Failed to restore cinema",
+      "confirmText": "Are you sure you want to restore this cinema?"
+    },
+    "createCinema": {
+      "title": "Create cinema",
+      "namePlaceholder": "Enter cinema name",
+      "cityPlaceholder": "Enter city",
+      "addressPlaceholder": "Enter full address",
+      "latitudeOptional": "Latitude (Optional)",
+      "longitudeOptional": "Longitude (Optional)",
+      "description": "Create a new cinema",
+      "createCinemaSuccess": "Cinema created successfully",
+      "createCinemaError": "Failed to create cinema"
+    },
+    "updateCinema": {
+      "title": "Update cinema",
+      "description": "Update the cinema information below",
+      "updateCinemaSuccess": "Cinema updated successfully",
+      "updateCinemaError": "Failed to update cinema",
+      "namePlaceholder": "Enter cinema name",
+      "cityPlaceholder": "Enter city",
+      "addressPlaceholder": "Enter full address",
+      "latitudeOptional": "Latitude (Optional)",
+      "longitudeOptional": "Longitude (Optional)"
+    }
   },
   "reviews": {
     "title": "Reviews",

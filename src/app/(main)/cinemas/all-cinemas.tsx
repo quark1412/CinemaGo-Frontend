@@ -15,8 +15,10 @@ import {
   useArchiveCinema,
   useRestoreCinema,
 } from "@/hooks/use-cinemas";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function AllCinemas() {
+  const { t } = useI18n();
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCinema, setEditingCinema] = useState<Cinema | null>(null);
@@ -169,16 +171,18 @@ export default function AllCinemas() {
         }
         title={
           confirmationDialog.action === "archive"
-            ? "Archive Cinema"
-            : "Restore Cinema"
+            ? t("cinemas.archiveCinema.title")
+            : t("cinemas.restoreCinema.title")
         }
         description={
           confirmationDialog.action === "archive"
-            ? `Are you sure you want to archive "${confirmationDialog.cinema?.name}"? This will make it unavailable for new showtimes.`
-            : `Are you sure you want to restore "${confirmationDialog.cinema?.name}"? This will make it available for new showtimes again.`
+            ? t("cinemas.archiveCinema.confirmText")
+            : t("cinemas.restoreCinema.confirmText")
         }
         confirmText={
-          confirmationDialog.action === "archive" ? "Archive" : "Restore"
+          confirmationDialog.action === "archive"
+            ? t("common.actions.archive")
+            : t("common.actions.restore")
         }
         variant={confirmationDialog.action}
         onConfirm={handleConfirmAction}

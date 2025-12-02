@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
 
 import { Cinema, CreateCinemaData, UpdateCinemaData } from "@/types/cinema";
 import { useCreateCinema, useUpdateCinema } from "@/hooks/use-cinemas";
@@ -27,16 +28,23 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useI18n } from "@/contexts/I18nContext";
 
-const formSchema = z.object({
-  name: z.string().min(1, "Cinema name is required"),
-  address: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
-  longitude: z.number().optional(),
-  latitude: z.number().optional(),
-});
-
-type FormData = z.infer<typeof formSchema>;
+export const createCinemaSchema = (t: (key: string) => string) =>
+  z.object({
+    name: z.string().min(1, t("cinemas.name.required")),
+    address: z.string().min(1, t("cinemas.address.required")),
+    city: z.string().min(1, t("cinemas.city.required")),
+    longitude: z.number().optional(),
+    latitude: z.number().optional(),
+  });
 
 interface CinemaDialogProps {
   open: boolean;
@@ -54,8 +62,11 @@ export function CinemaDialog({
   const isEditing = !!cinema;
   const createMutation = useCreateCinema();
   const updateMutation = useUpdateCinema();
+  const { t } = useI18n();
+  const formSchema = useMemo(() => createCinemaSchema(t), [t]);
+  const [cities, setCities] = useState<{ id: string; name: string }[]>([]);
 
-  const form = useForm<FormData>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -65,6 +76,22 @@ export function CinemaDialog({
       latitude: undefined,
     },
   });
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      const response = await axios.get(
+        "https://open.oapi.vn/location/provinces?page=0&size=100"
+      );
+      setCities(
+        response.data.data.map((city: any) => ({
+          id: city.id,
+          name: city.name,
+        }))
+      );
+    };
+
+    fetchCities();
+  }, []);
 
   useEffect(() => {
     if (cinema) {
@@ -86,7 +113,7 @@ export function CinemaDialog({
     }
   }, [cinema, form]);
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
       if (isEditing && cinema) {
         const updateData: UpdateCinemaData = {
@@ -122,12 +149,14 @@ export function CinemaDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Cinema" : "Create New Cinema"}
+            {isEditing
+              ? t("cinemas.updateCinema.title")
+              : t("cinemas.createCinema.title")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the cinema information below."
-              : "Fill in the details to create a new cinema."}
+              ? t("cinemas.updateCinema.description")
+              : t("cinemas.createCinema.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -138,9 +167,12 @@ export function CinemaDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cinema Name</FormLabel>
+                  <FormLabel>{t("cinemas.name")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter cinema name" {...field} />
+                    <Input
+                      placeholder={t("cinemas.updateCinema.namePlaceholder")}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -152,9 +184,24 @@ export function CinemaDialog({
               name="city"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>City</FormLabel>
+                  <FormLabel>{t("cinemas.city")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter city" {...field} />
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue
+                          placeholder={t(
+                            "cinemas.updateCinema.cityPlaceholder"
+                          )}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cities.map((city) => (
+                          <SelectItem key={city.id} value={city.name}>
+                            {city.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -166,10 +213,10 @@ export function CinemaDialog({
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>{t("cinemas.address")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter full address"
+                      placeholder={t("cinemas.updateCinema.addressPlaceholder")}
                       className="resize-none"
                       {...field}
                     />
@@ -185,7 +232,9 @@ export function CinemaDialog({
                 name="latitude"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Latitude (Optional)</FormLabel>
+                    <FormLabel>
+                      {t("cinemas.updateCinema.latitudeOptional")}
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -212,7 +261,9 @@ export function CinemaDialog({
                 name="longitude"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Longitude (Optional)</FormLabel>
+                    <FormLabel>
+                      {t("cinemas.updateCinema.longitudeOptional")}
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -242,13 +293,13 @@ export function CinemaDialog({
                 onClick={handleClose}
                 disabled={loading}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && (
                   <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
                 )}
-                {isEditing ? "Update" : "Create"} Cinema
+                {isEditing ? t("common.update") : t("common.create")}{" "}
               </Button>
             </DialogFooter>
           </form>

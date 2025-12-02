@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   ColumnDef,
@@ -39,6 +39,7 @@ import {
   ChevronsRight,
   CirclePlus,
 } from "lucide-react";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -72,11 +73,13 @@ export function DataTable<TData, TValue>({
   onStatusChange,
   loading = false,
 }: DataTableProps<TData, TValue>) {
+  const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [searchValue, setSearchValue] = useState("");
   const [selectedCity, setSelectedCity] = useState<string>("");
   const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const cities = useMemo(() => {
     if (allCities.length > 0) {
@@ -111,12 +114,12 @@ export function DataTable<TData, TValue>({
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onSearchChange?.(searchValue);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchValue, onSearchChange]);
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handlePageChange = (page: number) => {
     onPaginationChange?.(page, pagination?.pageSize || 10);
@@ -133,9 +136,24 @@ export function DataTable<TData, TValue>({
         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
           {/* Search */}
           <Input
-            placeholder="Search cinemas..."
+            placeholder={t("cinemas.searchCinemas") + "..."}
             value={searchValue}
-            onChange={(event) => handleSearchChange(event.target.value)}
+            onChange={(event) => {
+              const value = event.target.value;
+              setSearchValue(value);
+
+              table.getColumn("name")?.setFilterValue(value);
+
+              if (pagination && onSearchChange) {
+                if (searchTimeoutRef.current) {
+                  clearTimeout(searchTimeoutRef.current);
+                }
+
+                searchTimeoutRef.current = setTimeout(() => {
+                  onSearchChange(value);
+                }, 500);
+              }
+            }}
             className="max-w-sm"
           />
 
@@ -152,7 +170,9 @@ export function DataTable<TData, TValue>({
               <SelectValue placeholder="Filter by city" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All cities</SelectItem>
+              <SelectItem value="all">
+                {t("cinemas.filterCinemas.allCities")}
+              </SelectItem>
               {cities.map((city) => (
                 <SelectItem key={city} value={city}>
                   {city}
@@ -174,9 +194,15 @@ export function DataTable<TData, TValue>({
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="all">
+                {t("cinemas.filterCinemas.allStatus")}
+              </SelectItem>
+              <SelectItem value="active">
+                {t("common.status.active")}
+              </SelectItem>
+              <SelectItem value="inactive">
+                {t("common.status.inactive")}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -187,7 +213,7 @@ export function DataTable<TData, TValue>({
           className="gap-2 self-start sm:self-auto"
         >
           <CirclePlus className="h-4 w-4" />
-          Add Cinema
+          {t("cinemas.createCinema.title")}
         </Button>
       </div>
 
@@ -236,7 +262,7 @@ export function DataTable<TData, TValue>({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No results.
+                    {t("common.noData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -249,7 +275,7 @@ export function DataTable<TData, TValue>({
       {pagination && (
         <div className="flex items-center justify-between space-x-2 py-4 flex-shrink-0">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium">{t("common.rowsPerPage")}</p>
             <Select
               value={pagination.pageSize.toString()}
               onValueChange={handlePageSizeChange}
@@ -268,7 +294,8 @@ export function DataTable<TData, TValue>({
           </div>
           <div className="flex items-center space-x-6 lg:space-x-8">
             <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Page {pagination.currentPage} of {pagination.totalPages}
+              {t("common.page")} {pagination.currentPage} {t("common.of")}{" "}
+              {pagination.totalPages}
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -277,7 +304,7 @@ export function DataTable<TData, TValue>({
                 onClick={() => handlePageChange(1)}
                 disabled={!pagination.hasPrevPage}
               >
-                <span className="sr-only">Go to first page</span>
+                <span className="sr-only">{t("common.goToFirstPage")}</span>
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
               <Button
@@ -286,7 +313,7 @@ export function DataTable<TData, TValue>({
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={!pagination.hasPrevPage}
               >
-                <span className="sr-only">Go to previous page</span>
+                <span className="sr-only">{t("common.goToPreviousPage")}</span>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
@@ -295,7 +322,7 @@ export function DataTable<TData, TValue>({
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={!pagination.hasNextPage}
               >
-                <span className="sr-only">Go to next page</span>
+                <span className="sr-only">{t("common.goToNextPage")}</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <Button
@@ -304,7 +331,7 @@ export function DataTable<TData, TValue>({
                 onClick={() => handlePageChange(pagination.totalPages)}
                 disabled={!pagination.hasNextPage}
               >
-                <span className="sr-only">Go to last page</span>
+                <span className="sr-only">{t("common.goToLastPage")}</span>
                 <ChevronsRight className="h-4 w-4" />
               </Button>
             </div>

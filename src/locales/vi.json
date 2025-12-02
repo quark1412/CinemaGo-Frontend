@@ -210,15 +210,55 @@
     }
   },
   "cinemas": {
-    "title": "Rạp chiếu phim",
-    "createCinema": "Tạo rạp chiếu phim",
-    "updateCinema": "Cập nhật rạp chiếu phim",
-    "deleteCinema": "Xóa rạp chiếu phim",
-    "rooms": "Phòng chiếu",
-    "saveLayout": "Lưu bố cục",
-    "updateLayout": "Cập nhật bố cục",
-    "clearLayout": "Xóa bố cục",
-    "seatLayout": "Bố cục ghế ngồi"
+    "searchCinemas": "Tìm kiếm rạp chiếu phim",
+    "name": "Tên",
+    "city": "Thành phố",
+    "address": "Địa chỉ",
+    "status": "Trạng thái",
+    "createdAt": "Ngày tạo",
+    "updatedAt": "Ngày cập nhật",
+    "filterCinemas": {
+      "allCities": "Tất cả thành phố",
+      "allStatus": "Tất cả trạng thái",
+      "active": "Hoạt động",
+      "inactive": "Không hoạt động"
+    },
+    "archiveCinema": {
+      "title": "Lưu trữ rạp",
+      "description": "Lưu trữ thông tin rạp dưới đây",
+      "archiveCinemaSuccess": "Lưu trữ rạp thành công",
+      "archiveCinemaError": "Lưu trữ rạp thất bại",
+      "confirmText": "Bạn có chắc chắn muốn lưu trữ rạp này?"
+    },
+    "restoreCinema": {
+      "title": "Khôi phục rạp",
+      "description": "Khôi phục thông tin rạp dưới đây",
+      "restoreCinemaSuccess": "Khôi phục rạp thành công",
+      "restoreCinemaError": "Khôi phục rạp thất bại",
+      "confirmText": "Bạn có chắc chắn muốn khôi phục rạp này?"
+    },
+    "createCinema": {
+      "title": "Thêm mới rạp",
+      "namePlaceholder": "Nhập tên rạp",
+      "cityPlaceholder": "Chọn thành phố",
+      "addressPlaceholder": "Nhập địa chỉ chi tiết",
+      "latitudeOptional": "Kinh độ (Tùy chọn)",
+      "longitudeOptional": "Vĩ độ (Tùy chọn)",
+      "description": "Thêm mới thông tin rạp",
+      "createCinemaSuccess": "Thêm mới rạp thành công",
+      "createCinemaError": "Thêm mới rạp thất bại"
+    },
+    "updateCinema": {
+      "title": "Cập nhật rạp",
+      "description": "Cập nhật thông tin rạp dưới đây",
+      "updateCinemaSuccess": "Cập nhật rạp thành công",
+      "updateCinemaError": "Cập nhật rạp thất bại",
+      "namePlaceholder": "Nhập tên rạp",
+      "cityPlaceholder": "Chọn thành phố",
+      "addressPlaceholder": "Nhập địa chỉ chi tiết",
+      "latitudeOptional": "Kinh độ (Tùy chọn)",
+      "longitudeOptional": "Vĩ độ (Tùy chọn)"
+    }
   },
   "reviews": {
     "title": "Đánh giá",
