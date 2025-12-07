@@ -51,10 +51,9 @@ export default function BookingCompletedPage() {
         const payment: any = await paymentService.checkMoMoStatus(
           usedPaymentId
         );
-
-        console.log(payment);
-
-        if (payment && payment.status === "Đã thanh toán") {
+      } catch (error: any) {
+        if (error.response && error.response.status === 400) {
+          const payment = await paymentService.getPaymentById(usedPaymentId);
           setStatus("success");
           setMessage(
             "Thanh toán MoMo thành công. Đặt vé của bạn đã được xác nhận."
@@ -72,11 +71,6 @@ export default function BookingCompletedPage() {
           setStatus("failed");
           setMessage("Thanh toán không thành công hoặc đã bị hủy.");
         }
-      } catch (error: any) {
-        setStatus("failed");
-        setMessage(
-          error?.message || "Không thể kiểm tra trạng thái thanh toán."
-        );
       }
     };
 

@@ -47,9 +47,7 @@ export const paymentService = {
       );
       return response.data.data;
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || "Failed to check payment status"
-      );
+      throw error;
     }
   },
 
