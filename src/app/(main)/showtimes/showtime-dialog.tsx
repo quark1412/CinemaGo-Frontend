@@ -57,22 +57,26 @@ import { Movie } from "@/types/movie";
 import { LANGUAGES, FORMATS } from "@/lib/constants";
 import { Plus, X } from "lucide-react";
 import { MovieSelector } from "@/components/movie-selector";
+import { useI18n } from "@/contexts/I18nContext";
 
-const showtimeSchema = z.object({
-  movieId: z.string().min(1, "Movie is required"),
-  cinemaId: z.string().min(1, "Cinema is required"),
-  roomId: z.string().min(1, "Room is required"),
-  startDate: z.date({
-    message: "Start date is required",
-  }),
-  startTimes: z.array(z.string()).min(1, "At least one start time is required"),
-  price: z.number().min(0, "Price must be positive"),
-  language: z.string().min(1, "Language is required"),
-  subtitle: z.boolean(),
-  format: z.string().min(1, "Format is required"),
-});
+const getShowtimeSchema = (t: (key: string) => string) =>
+  z.object({
+    movieId: z.string().min(1, t("showtimes.validation.movieRequired")),
+    cinemaId: z.string().min(1, t("showtimes.validation.cinemaRequired")),
+    roomId: z.string().min(1, t("showtimes.validation.roomRequired")),
+    startDate: z.date({
+      message: t("showtimes.validation.startDateRequired"),
+    }),
+    startTimes: z
+      .array(z.string())
+      .min(1, t("showtimes.validation.startTimeRequired")),
+    price: z.number().min(0, t("showtimes.validation.pricePositive")),
+    language: z.string().min(1, t("showtimes.validation.languageRequired")),
+    subtitle: z.boolean(),
+    format: z.string().min(1, t("showtimes.validation.formatRequired")),
+  });
 
-type ShowtimeFormData = z.infer<typeof showtimeSchema>;
+type ShowtimeFormData = z.infer<ReturnType<typeof getShowtimeSchema>>;
 
 interface ShowtimeDialogProps {
   open: boolean;
@@ -91,6 +95,7 @@ export function ShowtimeDialog({
   showtime,
   onSuccess,
 }: ShowtimeDialogProps) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [cinemasLoading, setCinemasLoading] = useState(false);
   const [roomsLoading, setRoomsLoading] = useState(false);
@@ -103,6 +108,8 @@ export function ShowtimeDialog({
   const [startTimes, setStartTimes] = useState<string[]>(["09:00"]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const isEditing = !!showtime;
+
+  const showtimeSchema = getShowtimeSchema(t);
 
   const form = useForm<ShowtimeFormData>({
     resolver: zodResolver(showtimeSchema),
@@ -140,59 +147,83 @@ export function ShowtimeDialog({
 
       setCinemas(allCinemas);
     } catch (error: any) {
-      toast.error("Failed to fetch cinemas");
+      toast.error(
+        t(
+          isEditing
+            ? "showtimes.updateShowtime.fetchCinemasError"
+            : "showtimes.createShowtime.fetchCinemasError"
+        )
+      );
       console.error("Error fetching cinemas:", error);
     } finally {
       setCinemasLoading(false);
     }
-  }, []);
+  }, [t, isEditing]);
 
-  const fetchRooms = useCallback(async (cinemaId: string) => {
-    if (!cinemaId) {
-      setRooms([]);
-      return;
-    }
-
-    try {
-      setRoomsLoading(true);
-      let allRooms: Room[] = [];
-      let currentPage = 1;
-      let hasMore = true;
-
-      while (hasMore) {
-        const response = await getAllRooms({
-          page: currentPage,
-          cinemaId: cinemaId,
-          isActive: true,
-        });
-
-        allRooms = [...allRooms, ...response.data];
-
-        hasMore = response.pagination.hasNextPage;
-        currentPage++;
+  const fetchRooms = useCallback(
+    async (cinemaId: string) => {
+      if (!cinemaId) {
+        setRooms([]);
+        return;
       }
 
-      setRooms(allRooms);
-    } catch (error: any) {
-      toast.error("Failed to fetch rooms");
-      console.error("Error fetching rooms:", error);
-    } finally {
-      setRoomsLoading(false);
-    }
-  }, []);
+      try {
+        setRoomsLoading(true);
+        let allRooms: Room[] = [];
+        let currentPage = 1;
+        let hasMore = true;
 
-  const fetchMovie = useCallback(async (movieId: string) => {
-    try {
-      setMoviesLoading(true);
-      const response = await getMovieById(movieId);
-      setSelectedMovie(response.data);
-    } catch (error: any) {
-      toast.error("Failed to fetch movie");
-      console.error("Error fetching movie:", error);
-    } finally {
-      setMoviesLoading(false);
-    }
-  }, []);
+        while (hasMore) {
+          const response = await getAllRooms({
+            page: currentPage,
+            cinemaId: cinemaId,
+            isActive: true,
+          });
+
+          allRooms = [...allRooms, ...response.data];
+
+          hasMore = response.pagination.hasNextPage;
+          currentPage++;
+        }
+
+        setRooms(allRooms);
+      } catch (error: any) {
+        toast.error(
+          t(
+            isEditing
+              ? "showtimes.updateShowtime.fetchRoomsError"
+              : "showtimes.createShowtime.fetchRoomsError"
+          )
+        );
+        console.error("Error fetching rooms:", error);
+      } finally {
+        setRoomsLoading(false);
+      }
+    },
+    [t, isEditing]
+  );
+
+  const fetchMovie = useCallback(
+    async (movieId: string) => {
+      try {
+        setMoviesLoading(true);
+        const response = await getMovieById(movieId);
+        setSelectedMovie(response.data);
+      } catch (error: any) {
+        toast.error(
+          t(
+            isEditing
+              ? "showtimes.updateShowtime.fetchMovieError"
+              : "showtimes.createShowtime.fetchMovieError"
+          )
+        );
+        console.error("Error fetching movie:", error);
+      } finally {
+        setMoviesLoading(false);
+      }
+    },
+    [t, isEditing]
+  );
 
   useEffect(() => {
     if (open) {
@@ -392,9 +423,14 @@ export function ShowtimeDialog({
             endTime2Result.time
           )
         ) {
-          errors.push(
-            `Showtime at ${startTime1} overlaps with showtime at ${startTime2}`
-          );
+          const errorMsg = t(
+            isEditing
+              ? "showtimes.updateShowtime.overlapError"
+              : "showtimes.createShowtime.overlapError"
+          )
+            .replace("{startTime1}", startTime1)
+            .replace("{startTime2}", startTime2);
+          errors.push(errorMsg);
         }
       }
     }
@@ -424,19 +460,32 @@ export function ShowtimeDialog({
             endDateTime.setDate(endDateTime.getDate() + 1);
           }
 
-          const busyRooms = await getBusyRoomIds(
-            startDateTime.toISOString(),
-            endDateTime.toISOString(),
-            data.cinemaId
-          );
+          if (!isEditing) {
+            const busyRooms = await getBusyRoomIds(
+              startDateTime.toISOString(),
+              endDateTime.toISOString(),
+              data.cinemaId
+            );
 
-          if (busyRooms.data.includes(data.roomId)) {
-            errors.push(`Room is already booked for showtime at ${startTime}`);
+            if (busyRooms.data.includes(data.roomId)) {
+              const errorMsg = t(
+                isEditing
+                  ? "showtimes.updateShowtime.roomBookedError"
+                  : "showtimes.createShowtime.roomBookedError"
+              ).replace("{startTime}", startTime);
+              errors.push(errorMsg);
+            }
           }
         }
       } catch (error) {
         console.error("Error checking busy rooms:", error);
-        errors.push("Failed to validate room availability");
+        errors.push(
+          t(
+            isEditing
+              ? "showtimes.updateShowtime.validateAvailabilityError"
+              : "showtimes.createShowtime.validateAvailabilityError"
+          )
+        );
       }
     }
 
@@ -452,7 +501,13 @@ export function ShowtimeDialog({
       const validationErrors = await validateShowtimes(data);
       if (validationErrors.length > 0) {
         setValidationErrors(validationErrors);
-        toast.error("Validation failed. Please check the errors below.");
+        toast.error(
+          t(
+            isEditing
+              ? "showtimes.updateShowtime.validationFailed"
+              : "showtimes.createShowtime.validationFailed"
+          )
+        );
         return;
       }
 
@@ -465,7 +520,13 @@ export function ShowtimeDialog({
         startDateTime.setHours(startHours, startMinutes, 0, 0);
 
         if (!selectedMovie) {
-          toast.error("Please select a movie");
+          toast.error(
+            t(
+              isEditing
+                ? "showtimes.updateShowtime.selectMovieError"
+                : "showtimes.createShowtime.selectMovieError"
+            )
+          );
           return;
         }
         const endTimeResult = calculateEndTime(
@@ -494,7 +555,7 @@ export function ShowtimeDialog({
         };
 
         await updateShowtime(showtime.id, requestData);
-        toast.success("Showtime updated successfully!");
+        toast.success(t("showtimes.updateShowtime.updateSuccess"));
       } else {
         // For creating, handle multiple start times
         const promises = data.startTimes.map(async (startTime) => {
@@ -536,7 +597,9 @@ export function ShowtimeDialog({
 
         await Promise.all(promises);
         toast.success(
-          `${data.startTimes.length} showtime(s) created successfully!`
+          `${data.startTimes.length} ${t(
+            "showtimes.createShowtime.createSuccess"
+          )}`
         );
       }
 
@@ -545,7 +608,11 @@ export function ShowtimeDialog({
     } catch (error: any) {
       const message =
         error.response?.data?.message ||
-        `Failed to ${isEditing ? "update" : "create"} showtime`;
+        t(
+          isEditing
+            ? "showtimes.updateShowtime.updateError"
+            : "showtimes.createShowtime.createError"
+        );
       toast.error(message);
     } finally {
       setLoading(false);
@@ -557,12 +624,18 @@ export function ShowtimeDialog({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Showtime" : "Add New Showtime"}
+            {t(
+              isEditing
+                ? "showtimes.updateShowtime.title"
+                : "showtimes.createShowtime.title"
+            )}
           </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? "Update the showtime details below."
-              : "Fill in the details to create a new showtime."}
+            {t(
+              isEditing
+                ? "showtimes.updateShowtime.description"
+                : "showtimes.createShowtime.description"
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -574,12 +647,22 @@ export function ShowtimeDialog({
               name="movieId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Movie</FormLabel>
+                  <FormLabel>
+                    {t(
+                      isEditing
+                        ? "showtimes.updateShowtime.movieLabel"
+                        : "showtimes.createShowtime.movieLabel"
+                    )}
+                  </FormLabel>
                   <FormControl>
                     <MovieSelector
                       value={field.value ? [field.value] : []}
                       onValueChange={handleMovieChange}
-                      placeholder="Select a movie"
+                      placeholder={t(
+                        isEditing
+                          ? "showtimes.updateShowtime.moviePlaceholder"
+                          : "showtimes.createShowtime.moviePlaceholder"
+                      )}
                       disabled={isEditing || !!movieId}
                     />
                   </FormControl>
@@ -594,7 +677,13 @@ export function ShowtimeDialog({
               name="cinemaId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cinema</FormLabel>
+                  <FormLabel>
+                    {t(
+                      isEditing
+                        ? "showtimes.updateShowtime.cinemaLabel"
+                        : "showtimes.createShowtime.cinemaLabel"
+                    )}
+                  </FormLabel>
                   <Select
                     onValueChange={handleCinemaChange}
                     value={field.value}
@@ -604,8 +693,16 @@ export function ShowtimeDialog({
                         <SelectValue
                           placeholder={
                             cinemasLoading
-                              ? "Loading cinemas..."
-                              : "Select a cinema"
+                              ? t(
+                                  isEditing
+                                    ? "showtimes.updateShowtime.cinemaLoading"
+                                    : "showtimes.createShowtime.cinemaLoading"
+                                )
+                              : t(
+                                  isEditing
+                                    ? "showtimes.updateShowtime.cinemaPlaceholder"
+                                    : "showtimes.createShowtime.cinemaPlaceholder"
+                                )
                           }
                         />
                       </SelectTrigger>
@@ -614,11 +711,19 @@ export function ShowtimeDialog({
                       {cinemasLoading ? (
                         <div className="px-2 py-3 text-sm text-muted-foreground flex items-center">
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Loading cinemas...
+                          {t(
+                            isEditing
+                              ? "showtimes.updateShowtime.cinemaLoading"
+                              : "showtimes.createShowtime.cinemaLoading"
+                          )}
                         </div>
                       ) : cinemas.length === 0 ? (
                         <div className="px-2 py-3 text-sm text-muted-foreground">
-                          No cinemas available
+                          {t(
+                            isEditing
+                              ? "showtimes.updateShowtime.noCinemas"
+                              : "showtimes.createShowtime.noCinemas"
+                          )}
                         </div>
                       ) : (
                         cinemas.map((cinema) => (
@@ -648,7 +753,13 @@ export function ShowtimeDialog({
                 name="roomId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Room</FormLabel>
+                    <FormLabel>
+                      {t(
+                        isEditing
+                          ? "showtimes.updateShowtime.roomLabel"
+                          : "showtimes.createShowtime.roomLabel"
+                      )}
+                    </FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value}
@@ -659,10 +770,22 @@ export function ShowtimeDialog({
                           <SelectValue
                             placeholder={
                               !selectedCinemaId
-                                ? "Select a cinema first"
+                                ? t(
+                                    isEditing
+                                      ? "showtimes.updateShowtime.roomPlaceholderNoCinema"
+                                      : "showtimes.createShowtime.roomPlaceholderNoCinema"
+                                  )
                                 : roomsLoading
-                                ? "Loading rooms..."
-                                : "Select a room"
+                                ? t(
+                                    isEditing
+                                      ? "showtimes.updateShowtime.roomLoading"
+                                      : "showtimes.createShowtime.roomLoading"
+                                  )
+                                : t(
+                                    isEditing
+                                      ? "showtimes.updateShowtime.roomPlaceholder"
+                                      : "showtimes.createShowtime.roomPlaceholder"
+                                  )
                             }
                           />
                         </SelectTrigger>
@@ -670,16 +793,28 @@ export function ShowtimeDialog({
                       <SelectContent className="max-h-60">
                         {!selectedCinemaId ? (
                           <div className="px-2 py-3 text-sm text-muted-foreground">
-                            Please select a cinema first
+                            {t(
+                              isEditing
+                                ? "showtimes.updateShowtime.selectCinemaFirst"
+                                : "showtimes.createShowtime.selectCinemaFirst"
+                            )}
                           </div>
                         ) : roomsLoading ? (
                           <div className="px-2 py-3 text-sm text-muted-foreground flex items-center">
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            Loading rooms...
+                            {t(
+                              isEditing
+                                ? "showtimes.updateShowtime.roomLoading"
+                                : "showtimes.createShowtime.roomLoading"
+                            )}
                           </div>
                         ) : rooms.length === 0 ? (
                           <div className="px-2 py-3 text-sm text-muted-foreground">
-                            No rooms available for this cinema
+                            {t(
+                              isEditing
+                                ? "showtimes.updateShowtime.noRooms"
+                                : "showtimes.createShowtime.noRooms"
+                            )}
                           </div>
                         ) : (
                           rooms.map((room) => (
@@ -692,7 +827,7 @@ export function ShowtimeDialog({
                                 <span>
                                   {room.name}{" "}
                                   <span className="text-xs text-muted-foreground">
-                                    [{room.totalSeats} seats]
+                                    [{room.totalSeats} {t("rooms.seats")}]
                                   </span>
                                 </span>
                               </div>
@@ -712,13 +847,23 @@ export function ShowtimeDialog({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price (VND)</FormLabel>
+                    <FormLabel>
+                      {t(
+                        isEditing
+                          ? "showtimes.updateShowtime.priceLabel"
+                          : "showtimes.createShowtime.priceLabel"
+                      )}
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
                         min="0"
-                        placeholder="0.00"
+                        placeholder={t(
+                          isEditing
+                            ? "showtimes.updateShowtime.pricePlaceholder"
+                            : "showtimes.createShowtime.pricePlaceholder"
+                        )}
                         {...field}
                         onChange={(e) =>
                           field.onChange(parseFloat(e.target.value) || 0)
@@ -737,7 +882,13 @@ export function ShowtimeDialog({
               name="startDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Start Date</FormLabel>
+                  <FormLabel>
+                    {t(
+                      isEditing
+                        ? "showtimes.updateShowtime.startDateLabel"
+                        : "showtimes.createShowtime.startDateLabel"
+                    )}
+                  </FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -751,7 +902,13 @@ export function ShowtimeDialog({
                           {field.value ? (
                             format(field.value, "PPP")
                           ) : (
-                            <span>Pick a date</span>
+                            <span>
+                              {t(
+                                isEditing
+                                  ? "showtimes.updateShowtime.pickDate"
+                                  : "showtimes.createShowtime.pickDate"
+                              )}
+                            </span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -777,7 +934,13 @@ export function ShowtimeDialog({
             {/* Start Times */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <FormLabel>Start Times</FormLabel>
+                <FormLabel>
+                  {t(
+                    isEditing
+                      ? "showtimes.updateShowtime.startTimesLabel"
+                      : "showtimes.createShowtime.startTimesLabel"
+                  )}
+                </FormLabel>
                 <Button
                   type="button"
                   variant="outline"
@@ -786,16 +949,25 @@ export function ShowtimeDialog({
                   disabled={isEditing}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Time
+                  {t(
+                    isEditing
+                      ? "showtimes.updateShowtime.addTime"
+                      : "showtimes.createShowtime.addTime"
+                  )}
                 </Button>
               </div>
               {startTimes.map((time, index) => {
                 const endTimeResult = selectedMovie
                   ? calculateEndTime(time, selectedMovie.duration)
                   : null;
+                const nextDayText = t(
+                  isEditing
+                    ? "showtimes.updateShowtime.nextDay"
+                    : "showtimes.createShowtime.nextDay"
+                );
                 const endTimeDisplay = endTimeResult
                   ? endTimeResult.isNextDay
-                    ? `${endTimeResult.time} (next day)`
+                    ? `${endTimeResult.time} ${nextDayText}`
                     : endTimeResult.time
                   : "";
                 return (
@@ -821,8 +993,18 @@ export function ShowtimeDialog({
                     </div>
                     {selectedMovie && (
                       <div className="text-xs text-muted-foreground ml-2">
-                        Duration: {selectedMovie.duration} min • Ends at:{" "}
-                        {endTimeDisplay}
+                        {t(
+                          isEditing
+                            ? "showtimes.updateShowtime.duration"
+                            : "showtimes.createShowtime.duration"
+                        )}
+                        : {selectedMovie.duration} min •{" "}
+                        {t(
+                          isEditing
+                            ? "showtimes.updateShowtime.endsAt"
+                            : "showtimes.createShowtime.endsAt"
+                        )}
+                        : {endTimeDisplay}
                       </div>
                     )}
                   </div>
@@ -849,14 +1031,26 @@ export function ShowtimeDialog({
                 name="language"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Language</FormLabel>
+                    <FormLabel>
+                      {t(
+                        isEditing
+                          ? "showtimes.updateShowtime.languageLabel"
+                          : "showtimes.createShowtime.languageLabel"
+                      )}
+                    </FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select language" />
+                          <SelectValue
+                            placeholder={t(
+                              isEditing
+                                ? "showtimes.updateShowtime.languagePlaceholder"
+                                : "showtimes.createShowtime.languagePlaceholder"
+                            )}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -881,14 +1075,26 @@ export function ShowtimeDialog({
                 name="format"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Format</FormLabel>
+                    <FormLabel>
+                      {t(
+                        isEditing
+                          ? "showtimes.updateShowtime.formatLabel"
+                          : "showtimes.createShowtime.formatLabel"
+                      )}
+                    </FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select format" />
+                          <SelectValue
+                            placeholder={t(
+                              isEditing
+                                ? "showtimes.updateShowtime.formatPlaceholder"
+                                : "showtimes.createShowtime.formatPlaceholder"
+                            )}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -912,9 +1118,19 @@ export function ShowtimeDialog({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Subtitles</FormLabel>
+                    <FormLabel className="text-base">
+                      {t(
+                        isEditing
+                          ? "showtimes.updateShowtime.subtitlesLabel"
+                          : "showtimes.createShowtime.subtitlesLabel"
+                      )}
+                    </FormLabel>
                     <FormDescription className="text-sm text-muted-foreground">
-                      Enable subtitles for this showtime
+                      {t(
+                        isEditing
+                          ? "showtimes.updateShowtime.subtitlesDescription"
+                          : "showtimes.createShowtime.subtitlesDescription"
+                      )}
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -931,7 +1147,11 @@ export function ShowtimeDialog({
             {validationErrors.length > 0 && (
               <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
                 <h4 className="text-sm font-medium text-destructive mb-2">
-                  Validation Errors:
+                  {t(
+                    isEditing
+                      ? "showtimes.updateShowtime.validationErrors"
+                      : "showtimes.createShowtime.validationErrors"
+                  )}
                 </h4>
                 <ul className="text-sm text-destructive space-y-1">
                   {validationErrors.map((error, index) => (
@@ -951,11 +1171,17 @@ export function ShowtimeDialog({
                 onClick={() => onOpenChange(false)}
                 disabled={loading}
               >
-                Cancel
+                {t(
+                  isEditing
+                    ? "showtimes.updateShowtime.cancel"
+                    : "showtimes.createShowtime.cancel"
+                )}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEditing ? "Update" : "Create"} Showtime
+                {isEditing
+                  ? t("showtimes.updateShowtime.update")
+                  : t("showtimes.createShowtime.create")}
               </Button>
             </DialogFooter>
           </form>
