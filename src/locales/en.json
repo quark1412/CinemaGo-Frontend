@@ -340,6 +340,46 @@
       "coupleSeatsRequireTwoAdjacentEmptySeatsInTheSameRow": "Couple seats require two adjacent empty seats in the same row."
     }
   },
+  "showtimes": {
+    "searchShowtimes": "Search showtimes",
+    "movie": "Movie",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "price": "Price",
+    "language": "Language",
+    "subtitle": "Subtitle",
+    "format": "Format",
+    "room": "Room",
+    "status": "Status",
+    "unknownMovie": "Unknown movie",
+    "unknownRoom": "Unknown room",
+    "filterShowtimes": {
+      "allMovies": "All movies",
+      "allCinemas": "All cinemas",
+      "allStatus": "All status",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "cinema": "Cinema",
+    "createShowtime": {
+      "title": "Create showtime"
+    },
+    "updateShowtime": {
+      "title": "Update showtime"
+    },
+    "archiveShowtime": {
+      "title": "Archive showtime",
+      "confirmText": "Are you sure you want to archive this showtime?",
+      "success": "Showtime archived successfully!",
+      "error": "Failed to archive showtime"
+    },
+    "restoreShowtime": {
+      "title": "Restore showtime",
+      "confirmText": "Are you sure you want to restore this showtime?",
+      "success": "Showtime restored successfully!",
+      "error": "Failed to restore showtime"
+    }
+  },
   "reviews": {
     "title": "Reviews",
     "reply": "Reply",

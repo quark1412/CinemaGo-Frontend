@@ -345,6 +345,46 @@
       "coupleSeatsRequireTwoAdjacentEmptySeatsInTheSameRow": "Ghế cặp cần hai ghế trống liền kề trong cùng một hàng."
     }
   },
+  "showtimes": {
+    "searchShowtimes": "Tìm kiếm lịch chiếu",
+    "movie": "Phim",
+    "startTime": "Thời gian bắt đầu",
+    "endTime": "Thời gian kết thúc",
+    "price": "Giá",
+    "language": "Ngôn ngữ",
+    "subtitle": "Phụ đề",
+    "format": "Định dạng",
+    "room": "Phòng",
+    "status": "Trạng thái",
+    "unknownMovie": "Phim không xác định",
+    "unknownRoom": "Phòng không xác định",
+    "filterShowtimes": {
+      "allMovies": "Tất cả phim",
+      "allCinemas": "Tất cả rạp",
+      "allStatus": "Tất cả trạng thái",
+      "yes": "Có",
+      "no": "Không"
+    },
+    "cinema": "Rạp",
+    "createShowtime": {
+      "title": "Tạo lịch chiếu"
+    },
+    "updateShowtime": {
+      "title": "Cập nhật lịch chiếu"
+    },
+    "archiveShowtime": {
+      "title": "Lưu trữ lịch chiếu",
+      "confirmText": "Bạn có chắc chắn muốn lưu trữ lịch chiếu này?",
+      "success": "Lưu trữ lịch chiếu thành công!",
+      "error": "Lưu trữ lịch chiếu thất bại"
+    },
+    "restoreShowtime": {
+      "title": "Khôi phục lịch chiếu",
+      "confirmText": "Bạn có chắc chắn muốn khôi phục lịch chiếu này?",
+      "success": "Khôi phục lịch chiếu thành công!",
+      "error": "Khôi phục lịch chiếu thất bại"
+    }
+  },
   "reviews": {
     "title": "Đánh giá",
     "reply": "Trả lời",

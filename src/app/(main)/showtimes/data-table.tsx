@@ -21,7 +21,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -37,10 +36,23 @@ import {
   CirclePlus,
 } from "lucide-react";
 import { Showtime } from "@/types/showtime";
+import { useI18n } from "@/contexts/I18nContext";
+
+interface MovieOption {
+  id: string;
+  title: string;
+}
+
+interface CinemaOption {
+  id: string;
+  name: string;
+}
 
 interface ShowtimesDataTableProps {
   columns: ColumnDef<Showtime>[];
   data: Showtime[];
+  movies?: MovieOption[];
+  cinemas?: CinemaOption[];
   onCreateClick?: () => void;
   pagination?: {
     totalItems: number;
@@ -51,22 +63,34 @@ interface ShowtimesDataTableProps {
     hasPrevPage: boolean;
   };
   onPaginationChange?: (page: number, pageSize: number) => void;
-  onSearchChange?: (search: string) => void;
+  onMovieChange?: (movieId: string | "all") => void;
+  onCinemaChange?: (cinemaId: string | "all") => void;
+  onActiveStatusChange?: (status: string | "all") => void;
   loading?: boolean;
 }
 
 export function ShowtimesDataTable({
   columns,
   data,
+  movies = [],
+  cinemas = [],
   onCreateClick,
   pagination,
   onPaginationChange,
-  onSearchChange,
+  onMovieChange,
+  onCinemaChange,
+  onActiveStatusChange,
   loading = false,
 }: ShowtimesDataTableProps) {
+  const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [searchValue, setSearchValue] = useState("");
+  const [movieFilter, setMovieFilter] = useState<string | "all">("all");
+  const [cinemaFilter, setCinemaFilter] = useState<string | "all">("all");
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | "all">(
+    "all"
+  );
+  const [hoveredRowIndex, setHoveredRowIndex] = useState<number | null>(null);
 
   const table = useReactTable({
     data,
@@ -91,11 +115,6 @@ export function ShowtimesDataTable({
         : undefined,
     },
   });
-
-  const handleSearchChange = (value: string) => {
-    setSearchValue(value);
-    onSearchChange?.(value);
-  };
 
   const handlePageChange = (page: number) => {
     onPaginationChange?.(page, pagination?.pageSize || 10);
@@ -156,19 +175,88 @@ export function ShowtimesDataTable({
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
-        {/* Search */}
-        <Input
-          placeholder="Search showtimes..."
-          value={searchValue}
-          onChange={(event) => handleSearchChange(event.target.value)}
-          className="max-w-sm"
-        />
+      <div className="flex flex-col gap-3 py-4 flex-shrink-0 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+          {/* Movie filter */}
+          <Select
+            value={movieFilter}
+            onValueChange={(value) => {
+              const typedValue = value as string | "all";
+              setMovieFilter(typedValue);
+              onMovieChange?.(typedValue);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder={t("showtimes.movie")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {t("showtimes.filterShowtimes.allMovies") || "All Movies"}
+              </SelectItem>
+              {movies.map((movie) => (
+                <SelectItem key={movie.id} value={movie.id}>
+                  {movie.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Cinema filter */}
+          <Select
+            value={cinemaFilter}
+            onValueChange={(value) => {
+              const typedValue = value as string | "all";
+              setCinemaFilter(typedValue);
+              onCinemaChange?.(typedValue);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder={t("showtimes.cinema") || "Cinema"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {t("showtimes.filterShowtimes.allCinemas") || "All Cinemas"}
+              </SelectItem>
+              {cinemas.map((cinema) => (
+                <SelectItem key={cinema.id} value={cinema.id}>
+                  {cinema.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Active Status filter */}
+          <Select
+            value={activeStatusFilter}
+            onValueChange={(value) => {
+              const typedValue = value as string | "all";
+              setActiveStatusFilter(typedValue);
+              onActiveStatusChange?.(typedValue);
+            }}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder={t("showtimes.status")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {t("showtimes.filterShowtimes.allStatus")}
+              </SelectItem>
+              <SelectItem value="true">{t("common.status.active")}</SelectItem>
+              <SelectItem value="false">
+                {t("common.status.inactive")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Add Showtime */}
         {onCreateClick && (
-          <Button onClick={onCreateClick} className="gap-2">
+          <Button
+            onClick={onCreateClick}
+            className="gap-2 self-start sm:self-auto"
+          >
             <CirclePlus className="h-4 w-4" />
-            Add Showtime
+            {t("showtimes.createShowtime.title")}
           </Button>
         )}
       </div>
@@ -181,8 +269,18 @@ export function ShowtimesDataTable({
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
+                    const columnId = header.column.id;
+                    // Add separator after movie, room, and startTime columns
+                    const hasSeparator =
+                      columnId === "movieName" ||
+                      columnId === "roomCinema" ||
+                      columnId === "startTime";
+
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead
+                        key={header.id}
+                        className={hasSeparator ? "border-r border-border" : ""}
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
@@ -197,28 +295,128 @@ export function ShowtimesDataTable({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                table.getRowModel().rows.map((row, rowIndex) => {
+                  const originalData = row.original as any;
+                  const movieRowSpan = originalData._movieRowSpan || 0;
+                  const cinemaRowSpan = originalData._cinemaRowSpan || 0;
+
+                  // Check if this is the first row in movie group
+                  const isFirstMovieRow = movieRowSpan > 0;
+
+                  // Check if this is the first row in cinema grou
+                  const isFirstCinemaRow = cinemaRowSpan > 0;
+
+                  // Check if this row is hovered
+                  const isRowHovered = hoveredRowIndex === rowIndex;
+
+                  // Check if the hovered row belongs to this movie group
+                  const isMovieCellHighlighted =
+                    hoveredRowIndex !== null &&
+                    isFirstMovieRow &&
+                    hoveredRowIndex >= rowIndex &&
+                    hoveredRowIndex < rowIndex + movieRowSpan;
+
+                  // Check if the hovered row belongs to this cinema group
+                  const isCinemaCellHighlighted =
+                    hoveredRowIndex !== null &&
+                    isFirstCinemaRow &&
+                    hoveredRowIndex >= rowIndex &&
+                    hoveredRowIndex < rowIndex + cinemaRowSpan;
+
+                  return (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      className={isRowHovered ? "bg-muted/50" : ""}
+                      onMouseEnter={() => setHoveredRowIndex(rowIndex)}
+                      onMouseLeave={() => setHoveredRowIndex(null)}
+                    >
+                      {row
+                        .getVisibleCells()
+                        .map((cell) => {
+                          const columnId = cell.column.id;
+
+                          // Apply rowSpan for movie column
+                          if (columnId === "movieName") {
+                            if (!isFirstMovieRow) {
+                              return null;
+                            }
+                            const cellContent = flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            );
+                            return (
+                              <TableCell
+                                key={cell.id}
+                                rowSpan={
+                                  movieRowSpan > 1 ? movieRowSpan : undefined
+                                }
+                                className={`text-center border-r border-border align-middle ${
+                                  isMovieCellHighlighted ? "bg-muted/50" : ""
+                                }`}
+                              >
+                                {cellContent}
+                              </TableCell>
+                            );
+                          }
+
+                          // Apply rowSpan for cinema column (roomCinema)
+                          if (columnId === "roomCinema") {
+                            if (!isFirstCinemaRow) {
+                              return null;
+                            }
+                            const cellContent = flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            );
+                            return (
+                              <TableCell
+                                key={cell.id}
+                                rowSpan={
+                                  cinemaRowSpan > 1 ? cinemaRowSpan : undefined
+                                }
+                                className={`text-center border-r border-border align-middle ${
+                                  isCinemaCellHighlighted ? "bg-muted/50" : ""
+                                }`}
+                              >
+                                {cellContent}
+                              </TableCell>
+                            );
+                          }
+
+                          // Regular cells
+                          const cellContent = flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          );
+
+                          // Add separator after startTime column
+                          if (columnId === "startTime") {
+                            return (
+                              <TableCell
+                                key={cell.id}
+                                className="border-r border-border"
+                              >
+                                {cellContent}
+                              </TableCell>
+                            );
+                          }
+
+                          return (
+                            <TableCell key={cell.id}>{cellContent}</TableCell>
+                          );
+                        })
+                        .filter((cell) => cell !== null)}
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No results.
+                    {t("common.noData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -231,7 +429,7 @@ export function ShowtimesDataTable({
       {pagination && (
         <div className="flex items-center justify-between space-x-2 py-4 flex-shrink-0">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium">{t("common.rowsPerPage")}</p>
             <Select
               value={pagination.pageSize.toString()}
               onValueChange={handlePageSizeChange}
@@ -250,7 +448,8 @@ export function ShowtimesDataTable({
           </div>
           <div className="flex items-center space-x-6 lg:space-x-8">
             <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Page {pagination.currentPage} of {pagination.totalPages}
+              {t("common.page")} {pagination.currentPage} {t("common.of")}{" "}
+              {pagination.totalPages}
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -259,7 +458,7 @@ export function ShowtimesDataTable({
                 onClick={() => handlePageChange(1)}
                 disabled={!pagination.hasPrevPage}
               >
-                <span className="sr-only">Go to first page</span>
+                <span className="sr-only">{t("common.goToFirstPage")}</span>
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
               <Button
@@ -268,7 +467,7 @@ export function ShowtimesDataTable({
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={!pagination.hasPrevPage}
               >
-                <span className="sr-only">Go to previous page</span>
+                <span className="sr-only">{t("common.goToPreviousPage")}</span>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
@@ -277,7 +476,7 @@ export function ShowtimesDataTable({
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={!pagination.hasNextPage}
               >
-                <span className="sr-only">Go to next page</span>
+                <span className="sr-only">{t("common.goToNextPage")}</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <Button
@@ -286,7 +485,7 @@ export function ShowtimesDataTable({
                 onClick={() => handlePageChange(pagination.totalPages)}
                 disabled={!pagination.hasNextPage}
               >
-                <span className="sr-only">Go to last page</span>
+                <span className="sr-only">{t("common.goToLastPage")}</span>
                 <ChevronsRight className="h-4 w-4" />
               </Button>
             </div>

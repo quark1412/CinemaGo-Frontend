@@ -6,9 +6,14 @@ export interface GetShowtimesParams {
   limit?: number;
   movieId?: string;
   cinemaId?: string;
+  roomId?: string;
+  language?: string;
+  subtitle?: boolean;
+  format?: string;
   isActive?: boolean;
   startTime?: string;
   endTime?: string;
+  search?: string;
 }
 
 export interface ShowtimesResponse {
@@ -54,10 +59,16 @@ export const getAllShowtimes = async (
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.movieId) queryParams.append("movieId", params.movieId);
     if (params?.cinemaId) queryParams.append("cinemaId", params.cinemaId);
+    if (params?.roomId) queryParams.append("roomId", params.roomId);
+    if (params?.language) queryParams.append("language", params.language);
+    if (params?.subtitle !== undefined)
+      queryParams.append("subtitle", params.subtitle.toString());
+    if (params?.format) queryParams.append("format", params.format);
     if (params?.isActive !== undefined)
       queryParams.append("isActive", params.isActive.toString());
     if (params?.startTime) queryParams.append("startTime", params.startTime);
     if (params?.endTime) queryParams.append("endTime", params.endTime);
+    if (params?.search) queryParams.append("search", params.search);
 
     const response = await instance.get(
       `/v1/showtimes/public?${queryParams.toString()}`

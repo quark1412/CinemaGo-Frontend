@@ -84,6 +84,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { paymentService } from "@/services/payment";
+import type { Booking } from "@/services/booking";
 
 interface SelectedFoodDrink {
   foodDrink: FoodDrink;
@@ -123,6 +125,11 @@ export default function POSPage() {
   const [trailerUrl, setTrailerUrl] = useState<string>("");
   const [userSelectOpen, setUserSelectOpen] = useState(false);
   const [foodDrinkSelectOpen, setFoodDrinkSelectOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "MOMO">("COD");
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [successBooking, setSuccessBooking] = useState<Booking | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string>("");
+  const [checkingPayment, setCheckingPayment] = useState(false);
 
   // Fetch users
   const { data: usersData, isLoading: usersLoading } = useQuery({
@@ -403,6 +410,21 @@ export default function POSPage() {
   // Reset when sheet closes
   useEffect(() => {
     if (!sheetOpen) {
+      if (selectedShowtime && selectedSeats.length > 0) {
+        (async () => {
+          try {
+            await Promise.all(
+              selectedSeats.map((seat) =>
+                releaseSeat({
+                  showtimeId: selectedShowtime.id,
+                  seatId: seat.id,
+                }).catch(() => {})
+              )
+            );
+          } catch {}
+        })();
+      }
+
       setSelectedMovieForBooking(null);
       setSelectedShowtime(null);
       setSelectedSeats([]);
@@ -707,7 +729,7 @@ export default function POSPage() {
 
     setCreatingBooking(true);
     try {
-      await createBooking({
+      const bookingResponse = await createBooking({
         type: "offline",
         showtimeId: selectedShowtime.id,
         seatIds: selectedSeats.map((s) => s.id),
@@ -717,7 +739,39 @@ export default function POSPage() {
         })),
       });
 
-      toast.success("Booking created successfully!");
+      const booking = bookingResponse.data;
+
+      if (paymentMethod === "MOMO") {
+        try {
+          const momoResponse = await paymentService.checkoutWithMoMo(
+            totalPrice,
+            booking.id
+          );
+
+          if (momoResponse.URL) {
+            if (typeof window !== "undefined") {
+              if (momoResponse.paymentId) {
+                window.localStorage.setItem(
+                  "paymentId",
+                  momoResponse.paymentId
+                );
+              }
+              window.localStorage.setItem("bookingId", booking.id);
+
+              window.open(momoResponse.URL, "_self");
+            }
+          }
+        } catch (error: any) {
+          toast.error(
+            error.message ||
+              "Không thể khởi tạo thanh toán MoMo cho đơn đặt vé này"
+          );
+        }
+      } else {
+        setSuccessBooking(booking as Booking);
+        setSuccessMessage("Đặt vé thành công. Thanh toán tại quầy (COD).");
+        setSuccessDialogOpen(true);
+      }
 
       // Reset form
       setSelectedUser(null);
@@ -1436,7 +1490,32 @@ export default function POSPage() {
               <Separator />
 
               <div className="flex justify-between items-center">
-                <Label className="text-xl font-semibold">Tổng</Label>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-xl font-semibold">Tổng</Label>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground">
+                      Phương thức thanh toán:
+                    </span>
+                    <Select
+                      value={paymentMethod}
+                      onValueChange={(value) =>
+                        setPaymentMethod(value as "COD" | "MOMO")
+                      }
+                    >
+                      <SelectTrigger className="w-[220px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="COD">
+                          Thanh toán khi nhận (COD)
+                        </SelectItem>
+                        <SelectItem value="MOMO">
+                          Thanh toán với MoMo
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 <div className="text-2xl font-bold">
                   {formatPrice(totalPrice)}
                 </div>
@@ -1450,13 +1529,19 @@ export default function POSPage() {
                   (!selectedUser && !adminUser) ||
                   !selectedShowtime ||
                   selectedSeats.length === 0 ||
-                  creatingBooking
+                  creatingBooking ||
+                  checkingPayment
                 }
               >
                 {creatingBooking ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Đang tạo...
+                  </>
+                ) : checkingPayment ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang kiểm tra thanh toán...
                   </>
                 ) : (
                   <>
@@ -1487,6 +1572,39 @@ export default function POSPage() {
                 />
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Booking Success Dialog */}
+      <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Thông báo đặt vé</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-base font-medium">{successMessage}</p>
+            {successBooking && (
+              <div className="text-sm space-y-1">
+                <div>
+                  <span className="font-semibold">Mã đơn hàng:</span>{" "}
+                  {successBooking.id}
+                </div>
+                <div>
+                  <span className="font-semibold">Tổng tiền:</span>{" "}
+                  {formatPrice(successBooking.totalPrice)}
+                </div>
+              </div>
+            )}
+            <div className="pt-2 flex justify-end">
+              <Button
+                variant="outline"
+                className="cursor-pointer"
+                onClick={() => setSuccessDialogOpen(false)}
+              >
+                Đóng
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

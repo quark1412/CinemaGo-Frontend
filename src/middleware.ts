@@ -4,7 +4,12 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const publicRoutes = ["/login", "/unauthorized", "/not-found"];
+  const publicRoutes = [
+    "/login",
+    "/unauthorized",
+    "/not-found",
+    "/booking-completed",
+  ];
 
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)
