@@ -50,7 +50,7 @@ export const createShowtimeColumns = ({
         return "";
       },
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("showtimes.movie")} />
+        <div className="font-bold text-xs">{t("showtimes.movie")}</div>
       ),
       cell: ({ row }) => {
         const movieRowSpan = (row.original as any)._movieRowSpan || 0;
@@ -123,10 +123,7 @@ export const createShowtimeColumns = ({
     {
       accessorKey: "startTime",
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t("showtimes.startTime")}
-        />
+        <div className="font-bold text-xs">{t("showtimes.startTime")}</div>
       ),
       cell: ({ row }) => {
         const startTime = row.original.startTime;
@@ -143,7 +140,7 @@ export const createShowtimeColumns = ({
     {
       accessorKey: "endTime",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("showtimes.endTime")} />
+        <div className="font-bold text-xs">{t("showtimes.endTime")}</div>
       ),
       cell: ({ row }) => {
         const endTime = row.original.endTime;
@@ -160,7 +157,7 @@ export const createShowtimeColumns = ({
     {
       accessorKey: "price",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("showtimes.price")} />
+        <div className="font-bold text-xs">{t("showtimes.price")}</div>
       ),
       cell: ({ row }) => {
         const price = row.original.price;
@@ -170,10 +167,7 @@ export const createShowtimeColumns = ({
     {
       accessorKey: "language",
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t("showtimes.language")}
-        />
+        <div className="font-bold text-xs">{t("showtimes.language")}</div>
       ),
       cell: ({ row }) => {
         return <div className="text-xs">{row.original.language}</div>;

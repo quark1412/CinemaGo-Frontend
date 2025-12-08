@@ -125,6 +125,51 @@ export function AllRooms() {
     });
   };
 
+  // Group and sort rooms by cinema
+  const groupedData = useMemo(() => {
+    const rooms = data?.data || [];
+    if (rooms.length === 0) return [];
+
+    // Sort by cinemaId
+    const sorted = [...rooms].sort((a, b) => {
+      const cinemaA = a.cinemaId || "";
+      const cinemaB = b.cinemaId || "";
+      return cinemaA.localeCompare(cinemaB);
+    });
+
+    // Calculate rowSpan for cinema column
+    const result = sorted.map((room, index) => {
+      // Calculate cinema rowSpan
+      let cinemaRowSpan = 0; // 0: don't show, > 0: show with rowSpan
+      const isFirstCinemaRow =
+        index === 0 || sorted[index - 1].cinemaId !== room.cinemaId;
+
+      if (isFirstCinemaRow) {
+        // Count how many rows have the same cinemaId
+        let count = 1;
+        for (let i = index + 1; i < sorted.length; i++) {
+          if (sorted[i].cinemaId === room.cinemaId) {
+            count++;
+          } else {
+            break;
+          }
+        }
+        cinemaRowSpan = count;
+      }
+
+      // Create a group identifier
+      const groupId = room.cinemaId || "";
+
+      return {
+        ...room,
+        _cinemaRowSpan: cinemaRowSpan,
+        _groupId: groupId,
+      };
+    });
+
+    return result;
+  }, [data?.data]);
+
   const columns = createColumns({
     onEdit: handleEditClick,
     onArchive: handleArchiveClick,
@@ -136,7 +181,7 @@ export function AllRooms() {
     <div className="h-full">
       <RoomDataTable
         columns={columns}
-        data={data?.data || []}
+        data={groupedData}
         cinemas={cinemaData?.data?.map((cinema) => ({
           id: cinema.id,
           name: cinema.name,

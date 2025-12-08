@@ -19,7 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DataTableColumnHeader } from "@/components/shared/data-table-column-header";
 import { formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/contexts/I18nContext";
@@ -41,15 +40,6 @@ export const createColumns = ({
 
   return [
     {
-      accessorKey: "name",
-      header: ({ column }) => (
-        <div className="font-bold text-xs">{t("rooms.name")}</div>
-      ),
-      cell: ({ row }) => {
-        return <div className="text-xs font-medium">{row.original.name}</div>;
-      },
-    },
-    {
       id: "cinemaName",
       accessorFn: (row) => {
         if (row.cinema?.name) {
@@ -64,6 +54,13 @@ export const createColumns = ({
         <div className="font-bold text-xs">{t("rooms.cinema")}</div>
       ),
       cell: ({ row }) => {
+        const cinemaRowSpan = (row.original as any)._cinemaRowSpan || 0;
+        const isFirstInGroup = cinemaRowSpan > 0;
+
+        if (!isFirstInGroup) {
+          return null;
+        }
+
         const cinemaName =
           row.original.cinema?.name ||
           (row.original.cinemaId && cinemaMap
@@ -71,7 +68,18 @@ export const createColumns = ({
             : null) ||
           t("rooms.unknownCinema");
 
-        return <div className="text-xs">{cinemaName}</div>;
+        return (
+          <div className="text-xs text-center font-medium">{cinemaName}</div>
+        );
+      },
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => (
+        <div className="font-bold text-xs">{t("rooms.name")}</div>
+      ),
+      cell: ({ row }) => {
+        return <div className="text-xs font-medium">{row.original.name}</div>;
       },
     },
     {
@@ -105,7 +113,7 @@ export const createColumns = ({
     {
       accessorKey: "createdAt",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("common.createdAt")} />
+        <div className="font-bold text-xs">{t("common.createdAt")}</div>
       ),
       cell: ({ row }) => {
         return (
@@ -116,7 +124,7 @@ export const createColumns = ({
     {
       accessorKey: "updatedAt",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("common.updatedAt")} />
+        <div className="font-bold text-xs">{t("common.updatedAt")}</div>
       ),
       cell: ({ row }) => {
         return (
