@@ -50,6 +50,7 @@
     "showtimes": "Quản lý lịch chiếu",
     "users": "Quản lý người dùng",
     "foodDrinks": "Quản lý đồ ăn & đồ uống",
+    "bookings": "Quản lý đơn vé",
     "report": "Báo cáo"
   },
   "auth": {

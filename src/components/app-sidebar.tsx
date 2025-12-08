@@ -12,6 +12,7 @@ import {
   UtensilsCrossed,
   Clock,
   ShoppingCart,
+  Ticket,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -99,6 +100,11 @@ export const AppSidebar = React.memo(function AppSidebar({
       title: t("sidebar.foodDrinks"),
       url: "/food-drinks",
       icon: UtensilsCrossed,
+    },
+    {
+      title: t("sidebar.bookings"),
+      url: "/booking",
+      icon: Ticket,
     },
     {
       title: t("sidebar.report"),

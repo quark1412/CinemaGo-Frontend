@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User, Role } from "@/types/user";
+import { User, Role } from "@/types/User";
 import { useCreateUser, useUpdateUser } from "@/hooks/use-users";
 
 const userSchema = z.object({

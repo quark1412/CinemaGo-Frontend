@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Role } from "@/types/user";
+import { User, Role } from "@/types/User";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   Archive,
