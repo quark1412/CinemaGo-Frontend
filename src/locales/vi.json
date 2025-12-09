@@ -111,6 +111,8 @@
       "uploadTrailerVideoDesc": "MP4, AVI, MOV tối đa 100MB",
       "enterTrailerUrlPlaceholder": "Nhập URL trailer (ví dụ: URL embed YouTube, URL embed Vimeo, etc.)",
       "thumbnail": "Thumbnail",
+      "createMovie": "Thêm phim",
+      "minutesPlaceholder": "Phút",
       "uploadThumbnail": "Tải lên thumbnail",
       "uploadThumbnailDesc": "Ảnh tối đa 100MB",
       "clickToChange": "Nhấp để thay đổi",
@@ -149,9 +151,8 @@
     "allMovies": "Tất cả phim",
     "searchMovies": "Tìm kiếm phim",
     "filterMovies": {
-      "movieStatus": "Trạng thái phim",
-      "activeStatus": "Trạng thái hoạt động",
-      "all": "Tất cả",
+      "allMovieStatus": "Tất cả trạng thái phim",
+      "allActiveStatus": "Tất cả trạng thái hoạt động",
       "NOW_SHOWING": "Đang chiếu",
       "COMING_SOON": "Sắp chiếu",
       "ENDED": "Đã kết thúc",
@@ -178,6 +179,9 @@
     "description": "Mô tả",
     "status": "Trạng thái",
     "searchGenres": "Tìm kiếm thể loại",
+    "filterGenres": {
+      "allStatus": "Tất cả trạng thái"
+    },
     "enterGenreNamePlaceholder": "Nhập tên thể loại",
     "enterGenreDescriptionPlaceholder": "Nhập mô tả thể loại",
     "createGenre": {

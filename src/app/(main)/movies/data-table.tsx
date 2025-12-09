@@ -41,7 +41,6 @@ import {
   CirclePlus,
 } from "lucide-react";
 import { useI18n } from "@/contexts/I18nContext";
-import { Label } from "@/components/ui/label";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -135,9 +134,6 @@ export function DataTable<TData, TValue>({
             className="max-w-sm text-xs placeholder:text-[13px] placeholder:font-medium"
           />
           <div className="flex items-center gap-2 whitespace-nowrap">
-            <Label className="text-xs font-medium">
-              {t("movies.filterMovies.movieStatus")}:
-            </Label>
             <Select
               value={
                 (table.getColumn("status")?.getFilterValue() as string) ?? "all"
@@ -158,7 +154,7 @@ export function DataTable<TData, TValue>({
               </SelectTrigger>
               <SelectContent className="text-xs">
                 <SelectItem value="all" className="text-xs">
-                  {t("movies.filterMovies.all")}
+                  {t("movies.filterMovies.allMovieStatus")}
                 </SelectItem>
                 <SelectItem value="NOW_SHOWING" className="text-xs">
                   {t("movies.filterMovies.NOW_SHOWING")}
@@ -173,9 +169,6 @@ export function DataTable<TData, TValue>({
             </Select>
           </div>
           <div className="flex items-center gap-2 whitespace-nowrap">
-            <Label className="text-xs font-medium">
-              {t("movies.filterMovies.activeStatus")}:
-            </Label>
             <Select
               value={
                 (table.getColumn("isActive")?.getFilterValue() as string) ??
@@ -196,7 +189,7 @@ export function DataTable<TData, TValue>({
               </SelectTrigger>
               <SelectContent className="text-xs">
                 <SelectItem value="all" className="text-xs">
-                  {t("movies.filterMovies.all")}
+                  {t("movies.filterMovies.allActiveStatus")}
                 </SelectItem>
                 <SelectItem value="true" className="text-xs">
                   {t("movies.filterMovies.active")}

@@ -439,7 +439,9 @@ export default function CreateMovie({
                             <FormControl>
                               <Input
                                 type="number"
-                                placeholder="Minutes"
+                                placeholder={t(
+                                  "movies.createMovie.minutesPlaceholder"
+                                )}
                                 {...field}
                                 value={field.value?.toString() ?? ""}
                                 onChange={(e) => {

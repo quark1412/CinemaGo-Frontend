@@ -116,7 +116,8 @@
       "createMovieSuccess": "Movie created successfully",
       "createMovieError": "Failed to create movie",
       "pleaseUploadTrailerFileOrSwitchToUrlMode": "Please upload a trailer file or switch to URL mode",
-      "pleaseEnterTrailerUrlOrSwitchToFileUploadMode": "Please enter a trailer URL or switch to file upload mode"
+      "pleaseEnterTrailerUrlOrSwitchToFileUploadMode": "Please enter a trailer URL or switch to file upload mode",
+      "minutesPlaceholder": "Minutes"
     },
     "updateMovie": {
       "title": "Update movie",
@@ -145,9 +146,8 @@
     "allMovies": "All movies",
     "searchMovies": "Search movies",
     "filterMovies": {
-      "movieStatus": "Movie Status",
-      "activeStatus": "Active Status",
-      "all": "All",
+      "allMovieStatus": "All movie status",
+      "allActiveStatus": "All active status",
       "NOW_SHOWING": "Now Showing",
       "COMING_SOON": "Coming Soon",
       "ENDED": "Ended",
@@ -174,6 +174,9 @@
     "description": "Description",
     "status": "Status",
     "searchGenres": "Search genres",
+    "filterGenres": {
+      "allStatus": "All status"
+    },
     "enterGenreNamePlaceholder": "Enter genre name",
     "enterGenreDescriptionPlaceholder": "Enter genre description",
     "header": {
