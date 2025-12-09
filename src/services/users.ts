@@ -1,5 +1,5 @@
 import instance from "@/configs/axiosConfig";
-import { User } from "@/types/User";
+import { User } from "@/types/user";
 
 export interface GetUsersParams {
   page?: number;
