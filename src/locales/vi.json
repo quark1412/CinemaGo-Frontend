@@ -229,6 +229,9 @@
       "active": "Hoạt động",
       "inactive": "Không hoạt động"
     },
+    "actions": {
+      "viewOnMap": "Xem trên bản đồ"
+    },
     "archiveCinema": {
       "title": "Lưu trữ rạp",
       "description": "Lưu trữ thông tin rạp dưới đây",
