@@ -31,33 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User, Role } from "@/types/user";
+import { User, Role } from "@/types/User";
 import { useCreateUser, useUpdateUser } from "@/hooks/use-users";
-
-const userSchema = z.object({
-  fullname: z
-    .string()
-    .min(1, "Full name is required")
-    .min(2, "Full name must be at least 2 characters")
-    .max(100, "Full name must be less than 100 characters"),
-  email: z
-    .string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
-  gender: z.enum(["MALE", "FEMALE", "OTHER"], {
-    message: "Please select a gender",
-  }),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .optional()
-    .or(z.literal("")),
-  role: z.nativeEnum(Role, {
-    message: "Please select a role",
-  }),
-});
-
-type UserFormData = z.infer<typeof userSchema>;
+import { useI18n } from "@/contexts/I18nContext";
 
 interface UserDialogProps {
   open: boolean;
@@ -72,6 +48,30 @@ export function UserDialog({
   user,
   onSuccess,
 }: UserDialogProps) {
+  const { t } = useI18n();
+
+  const userSchema = z.object({
+    fullname: z
+      .string()
+      .min(1, t("users.fullname.min1"))
+      .min(2, t("users.fullname.min2"))
+      .max(100, t("users.fullname.max100")),
+    email: z.string().min(1, t("users.email.min1")).email(t("users.email.max")),
+    gender: z.enum(["MALE", "FEMALE", "OTHER"], {
+      message: t("users.email.genderselect"),
+    }),
+    password: z
+      .string()
+      .min(8, t("users.password.min8"))
+      .optional()
+      .or(z.literal("")),
+    role: z.nativeEnum(Role, {
+      message: t("users.email.roleselect"),
+    }),
+  });
+
+  type UserFormData = z.infer<typeof userSchema>;
+
   const [isLoading, setIsLoading] = useState(false);
   const isCreateMode = !user;
 
@@ -154,12 +154,14 @@ export function UserDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {isCreateMode ? "Create New User" : "Edit User"}
+            {isCreateMode
+              ? t("users.createUser.title")
+              : t("users.editUser.title")}
           </DialogTitle>
           <DialogDescription>
             {isCreateMode
-              ? "Create a new user account with the information below."
-              : "Update the user information and role below."}
+              ? t("users.createUser.description")
+              : t("users.editUser.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -170,10 +172,10 @@ export function UserDialog({
               name="fullname"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>{t("users.modal.full_name")}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter full name"
+                      placeholder={t("users.modal.enter_name")}
                       {...field}
                       disabled={isLoading}
                     />
@@ -192,7 +194,7 @@ export function UserDialog({
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="Enter email"
+                      placeholder={t("users.modal.enter_email")}
                       {...field}
                       disabled={isLoading || !isCreateMode}
                       className={!isCreateMode ? "bg-muted" : ""}
@@ -209,11 +211,11 @@ export function UserDialog({
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{t("users.modal.pass")}</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Enter password"
+                        placeholder={t("users.modal.enter_pass")}
                         {...field}
                         disabled={isLoading}
                       />
@@ -230,7 +232,7 @@ export function UserDialog({
                 name="gender"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Gender</FormLabel>
+                    <FormLabel>{t("users.gender")}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value}
@@ -242,9 +244,13 @@ export function UserDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="MALE">Male</SelectItem>
-                        <SelectItem value="FEMALE">Female</SelectItem>
-                        <SelectItem value="OTHER">Other</SelectItem>
+                        <SelectItem value="MALE">{t("users.male")}</SelectItem>
+                        <SelectItem value="FEMALE">
+                          {t("users.female")}
+                        </SelectItem>
+                        <SelectItem value="OTHER">
+                          {t("users.other")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -257,7 +263,7 @@ export function UserDialog({
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role</FormLabel>
+                    <FormLabel>{t("users.role")}</FormLabel>
                     <Select
                       onValueChange={(value) =>
                         field.onChange(
@@ -273,8 +279,10 @@ export function UserDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="USER">User</SelectItem>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
+                        <SelectItem value="USER">{t("users.user")}</SelectItem>
+                        <SelectItem value="ADMIN">
+                          {t("users.admin")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -290,16 +298,16 @@ export function UserDialog({
                 onClick={handleClose}
                 disabled={isLoading}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading
                   ? isCreateMode
-                    ? "Creating..."
-                    : "Updating..."
+                    ? t("common.creating")
+                    : t("common.updating")
                   : isCreateMode
-                  ? "Create User"
-                  : "Update User"}
+                  ? t("users.createUser.title")
+                  : t("users.updateUser.title")}
               </Button>
             </DialogFooter>
           </form>

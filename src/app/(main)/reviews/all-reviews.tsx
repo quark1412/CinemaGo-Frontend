@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 import { Review } from "@/types/review";
 import { DataTable } from "./data-table";
@@ -13,8 +13,11 @@ import {
   useHideReview,
   useUnhideReview,
 } from "@/hooks/use-reviews";
+import { useReviewTable } from "./use-review-table";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function AllReviews() {
+  const { t } = useI18n();
   const [replyDialogOpen, setReplyDialogOpen] = useState(false);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [confirmationDialog, setConfirmationDialog] = useState<{
@@ -31,7 +34,31 @@ export default function AllReviews() {
     limit: 10,
   });
 
-  const { data, isLoading } = useReviews(currentParams);
+  const {
+    reviews,
+    pagination,
+    isLoading,
+    maps, // Chứa userMap và movieMap
+    onPaginationChange,
+
+    setMovieFilter,
+    setStatusFilter,
+    setVisibilityFilter,
+
+    refresh, // Hàm reload lại list sau khi action
+  } = useReviewTable({
+    page: 1,
+    limit: 10,
+  });
+
+  const movieOptions = useMemo(() => {
+    // Chuyển Map { id: Movie } thành mảng Option { value, label }
+    return Object.values(maps.movieMap).map((m) => ({
+      value: m.id,
+      label: m.title,
+    }));
+  }, [maps.movieMap]);
+
   const hideMutation = useHideReview();
   const unhideMutation = useUnhideReview();
 
@@ -65,15 +92,14 @@ export default function AllReviews() {
       } else {
         await unhideMutation.mutateAsync(confirmationDialog.review.id);
       }
-      setConfirmationDialog({
-        open: false,
-        review: null,
-        action: "hide",
-      });
+      refresh(); // Reload list
+      setConfirmationDialog({ open: false, review: null, action: "hide" });
     } catch (error) {}
   };
 
-  const handleReplySuccess = () => {};
+  const handleReplySuccess = () => {
+    refresh(); // Reload list sau khi reply
+  };
 
   const handlePaginationChange = (page: number, pageSize: number) => {
     setCurrentParams({ ...currentParams, page, limit: pageSize });
@@ -87,26 +113,37 @@ export default function AllReviews() {
     onReply: handleReplyClick,
     onHide: handleHideClick,
     onUnhide: handleUnhideClick,
+    userMap: maps.userMap, // Truyền Map
+    movieMap: maps.movieMap, // Truyền Map
   });
 
   return (
     <div className="h-full">
       <DataTable
+        // columns={columns}
+        // data={data?.data || []}
+        // pagination={
+        //   data?.pagination || {
+        //     totalItems: 0,
+        //     totalPages: 0,
+        //     currentPage: 1,
+        //     pageSize: 10,
+        //     hasNextPage: false,
+        //     hasPrevPage: false,
+        //   }
+        // }
+        // onPaginationChange={handlePaginationChange}
+        // onSearchChange={handleSearchChange}
+        // loading={isLoading}
+        movieOptions={movieOptions}
         columns={columns}
-        data={data?.data || []}
-        pagination={
-          data?.pagination || {
-            totalItems: 0,
-            totalPages: 0,
-            currentPage: 1,
-            pageSize: 10,
-            hasNextPage: false,
-            hasPrevPage: false,
-          }
-        }
-        onPaginationChange={handlePaginationChange}
-        onSearchChange={handleSearchChange}
+        data={reviews}
         loading={isLoading}
+        pagination={pagination}
+        onPaginationChange={onPaginationChange}
+        onMovieChange={setMovieFilter}
+        onStatusChange={setStatusFilter}
+        onVisibilityChange={setVisibilityFilter}
       />
 
       <ReplyDialog
@@ -122,14 +159,21 @@ export default function AllReviews() {
           setConfirmationDialog((prev) => ({ ...prev, open }))
         }
         title={
-          confirmationDialog.action === "hide" ? "Hide Review" : "Unhide Review"
+          confirmationDialog.action === "hide"
+            ? t("reviews.archiveReview.title")
+            : t("reviews.restoreReview.title")
         }
         description={
           confirmationDialog.action === "hide"
-            ? `Are you sure you want to hide this review? It will not be visible to users.`
-            : `Are you sure you want to unhide this review? It will be visible to users again.`
+            ? t("reviews.archiveReview.confirmText")
+            : t("reviews.restoreReview.confirmText")
         }
-        confirmText={confirmationDialog.action === "hide" ? "Hide" : "Unhide"}
+        confirmText={
+          confirmationDialog.action === "hide"
+            ? t("reviews.hide")
+            : t("reviews.unhide")
+        }
+        cancelText={t("common.cancel")}
         variant={confirmationDialog.action === "hide" ? "archive" : "restore"}
         onConfirm={handleConfirmAction}
         loading={hideMutation.isPending || unhideMutation.isPending}

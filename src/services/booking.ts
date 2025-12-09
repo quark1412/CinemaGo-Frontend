@@ -1,4 +1,5 @@
 import instance from "@/configs/axiosConfig";
+import { BookingResponse, MyBookingParams } from "@/types/booking";
 
 export interface CreateBookingRequest {
   type: string;
@@ -49,6 +50,54 @@ export interface BookedSeat {
   createdAt: string;
   updatedAt: string;
 }
+
+export const getAllBookings = async (
+  params?: MyBookingParams
+): Promise<BookingResponse> => {
+  try {
+    const response = await instance.get<BookingResponse>(
+      "/v1/bookings/dashboard/get-all",
+      {
+        params,
+        requiresAuth: true,
+      } as any
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 2. Sửa lại getMyBookings
+export const getMyBookings = async (
+  params?: MyBookingParams
+): Promise<BookingResponse> => {
+  try {
+    const response = await instance.get<BookingResponse>("/v1/bookings", {
+      params,
+      requiresAuth: true,
+    } as any);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 3. Sửa lại getBookingById
+export const getBookingById = async (id: string): Promise<Booking> => {
+  try {
+    // Lưu ý: Giả định API trả về { data: Booking } giống logic cũ bạn viết
+    const response = await instance.get<{ data: Booking }>(
+      `/v1/bookings/${id}`,
+      {
+        requiresAuth: true,
+      } as any
+    );
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const getBookedSeats = async (
   showtimeId: string

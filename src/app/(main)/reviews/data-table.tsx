@@ -1,16 +1,10 @@
 "use client";
 
 import * as React from "react";
-
 import {
   ColumnDef,
-  ColumnFiltersState,
-  SortingState,
   flexRender,
   getCoreRowModel,
-  getPaginationRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 
@@ -24,7 +18,6 @@ import {
 } from "@/components/ui/table";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -37,8 +30,16 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  X, // Import icon X
 } from "lucide-react";
 import { GenresSkeleton } from "@/components/genres-skeleton";
+import { useI18n } from "@/contexts/I18nContext";
+
+// Định nghĩa Option cho Movie dropdown
+export type Option = {
+  label: string;
+  value: string;
+};
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -52,7 +53,13 @@ interface DataTableProps<TData, TValue> {
     hasPrevPage: boolean;
   };
   onPaginationChange?: (page: number, pageSize: number) => void;
-  onSearchChange?: (search: string) => void;
+
+  // --- CÁC HÀM FILTER MỚI ---
+  onMovieChange?: (movieId: string) => void;
+  onStatusChange?: (status: string) => void;
+  onVisibilityChange?: (visibility: string) => void;
+
+  movieOptions?: Option[]; // Danh sách phim để chọn
   loading?: boolean;
 }
 
@@ -61,58 +68,119 @@ export function DataTable<TData, TValue>({
   data,
   pagination,
   onPaginationChange,
-  onSearchChange,
+
+  // Destructuring các hàm filter mới
+  onMovieChange,
+  onStatusChange,
+  onVisibilityChange,
+  movieOptions = [],
+
   loading = false,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
+  const { t } = useI18n();
+  // Local state để hiển thị giá trị đang chọn trên UI
+  const [selectedMovie, setSelectedMovie] = React.useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = React.useState<string>("all");
+  const [selectedVisibility, setSelectedVisibility] =
+    React.useState<string>("all");
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: pagination ? undefined : getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: pagination ? undefined : getFilteredRowModel(),
-    manualPagination: !!pagination,
-    manualFiltering: !!pagination,
+    manualPagination: true,
     pageCount: pagination?.totalPages ?? -1,
-    state: {
-      sorting,
-      columnFilters,
-      pagination: pagination
-        ? {
-            pageIndex: (pagination.currentPage || 1) - 1,
-            pageSize: pagination.pageSize || 10,
-          }
-        : undefined,
-    },
   });
 
-  if (loading) {
-    return <GenresSkeleton />;
-  }
+  // Hàm reset filter
+  const handleClearFilters = () => {
+    setSelectedMovie("all");
+    setSelectedStatus("all");
+    setSelectedVisibility("all");
+    onMovieChange?.("");
+    onStatusChange?.("");
+    onVisibilityChange?.("");
+  };
+
+  const hasActiveFilters =
+    selectedMovie !== "all" ||
+    selectedStatus !== "all" ||
+    selectedVisibility !== "all";
+
+  if (loading) return <GenresSkeleton />;
 
   return (
     <div className="flex flex-col">
-      <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
-        <Input
-          placeholder="Filter by user or movie ID..."
-          value={(table.getColumn("userId")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => {
-            const value = event.target.value;
-            if (pagination && onSearchChange) {
-              onSearchChange(value);
-            } else {
-              table.getColumn("userId")?.setFilterValue(value);
-            }
+      <div className="flex items-center py-4 flex-shrink-0 gap-2">
+        {/* 1. Filter Movie */}
+        <Select
+          value={selectedMovie}
+          onValueChange={(val) => {
+            setSelectedMovie(val);
+            onMovieChange?.(val === "all" ? "" : val);
           }}
-          className="max-w-sm text-xs placeholder:text-[13px] placeholder:font-medium"
-        />
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder={t("movies.searchMovies") + "..."} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("reviews.searchallfilms")}</SelectItem>
+            {movieOptions.map((movie) => (
+              <SelectItem key={movie.value} value={movie.value}>
+                {movie.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* 2. Filter Status (Replied/Unreplied) */}
+        <Select
+          value={selectedStatus}
+          onValueChange={(val) => {
+            setSelectedStatus(val);
+            onStatusChange?.(val === "all" ? "" : val);
+          }}
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Trạng thái" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">
+              {t("reviews.filterReviews.allStatus")}
+            </SelectItem>
+            <SelectItem value="Đã trả lời">
+              {t("reviews.filterReviews.replied")}
+            </SelectItem>
+            <SelectItem value="Chưa trả lời">
+              {t("reviews.filterReviews.Unreplied")}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* 3. Filter Visibility (Visible/Hidden) */}
+        <Select
+          value={selectedVisibility}
+          onValueChange={(val) => {
+            setSelectedVisibility(val);
+            onVisibilityChange?.(val === "all" ? "" : val);
+          }}
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Hiển thị" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">
+              {t("reviews.filterReviews.allVisible")}
+            </SelectItem>
+            <SelectItem value="visible">
+              {t("reviews.filterReviews.active")}
+            </SelectItem>
+            <SelectItem value="hidden">
+              {" "}
+              {t("reviews.filterReviews.inactive")}
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div className="overflow-hidden rounded-md border flex-1 min-h-0">
         <div className="overflow-auto h-full">
@@ -159,7 +227,7 @@ export function DataTable<TData, TValue>({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No results.
+                    {t("common.noData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -170,7 +238,7 @@ export function DataTable<TData, TValue>({
 
       <div className="flex items-center justify-between space-x-6 lg:space-x-8 mt-4">
         <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Rows per page</p>
+          <p className="text-sm font-medium">{t("common.rowsPerPage")}</p>
           <Select
             value={`${
               pagination?.pageSize || table.getState().pagination.pageSize
@@ -202,10 +270,8 @@ export function DataTable<TData, TValue>({
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page{" "}
-            {pagination?.currentPage ||
-              table.getState().pagination.pageIndex + 1}{" "}
-            of {pagination?.totalPages || table.getPageCount()}
+            {t("common.page")} {pagination?.currentPage} {t("common.of")}{" "}
+            {pagination?.totalPages}
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -224,7 +290,7 @@ export function DataTable<TData, TValue>({
                   : !table.getCanPreviousPage()
               }
             >
-              <span className="sr-only">Go to first page</span>
+              <span className="sr-only">{t("common.goToFirstPage")}</span>
               <ChevronsLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -246,7 +312,7 @@ export function DataTable<TData, TValue>({
                   : !table.getCanPreviousPage()
               }
             >
-              <span className="sr-only">Go to previous page</span>
+              <span className="sr-only">{t("common.goToPreviousPage")}</span>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -266,7 +332,7 @@ export function DataTable<TData, TValue>({
                 pagination ? !pagination.hasNextPage : !table.getCanNextPage()
               }
             >
-              <span className="sr-only">Go to next page</span>
+              <span className="sr-only">{t("common.goToNextPage")}</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
@@ -286,7 +352,7 @@ export function DataTable<TData, TValue>({
                 pagination ? !pagination.hasNextPage : !table.getCanNextPage()
               }
             >
-              <span className="sr-only">Go to last page</span>
+              <span className="sr-only">{t("common.goToLastPage")}</span>
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>
