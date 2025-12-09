@@ -40,6 +40,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { GenresSkeleton } from "@/components/genres-skeleton";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -67,6 +68,7 @@ export function DataTable<TData, TValue>({
   onSearchChange,
   loading = false,
 }: DataTableProps<TData, TValue>) {
+  const { t } = useI18n();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -104,7 +106,7 @@ export function DataTable<TData, TValue>({
     <div className="flex flex-col">
       <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
         <Input
-          placeholder="Search users by name or email..."
+          placeholder={t("users.search")}
           value={
             (table.getColumn("fullname")?.getFilterValue() as string) ?? ""
           }
@@ -120,7 +122,10 @@ export function DataTable<TData, TValue>({
         />
         <Button variant="default" size="default" onClick={onCreateClick}>
           <UserPlus />
-          <span className="text-sm font-medium">Create User</span>
+          <span className="text-sm font-medium">
+            {" "}
+            {t("users.createUser.title")}
+          </span>
         </Button>
       </div>
       <div className="overflow-hidden rounded-md border flex-1 min-h-0">
@@ -179,7 +184,7 @@ export function DataTable<TData, TValue>({
 
       <div className="flex items-center justify-between space-x-6 lg:space-x-8 mt-4">
         <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Rows per page</p>
+          <p className="text-sm font-medium">{t("common.rowsPerPage")}</p>
           <Select
             value={`${
               pagination?.pageSize || table.getState().pagination.pageSize
@@ -211,10 +216,8 @@ export function DataTable<TData, TValue>({
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page{" "}
-            {pagination?.currentPage ||
-              table.getState().pagination.pageIndex + 1}{" "}
-            of {pagination?.totalPages || table.getPageCount()}
+            {t("common.page")} {pagination?.currentPage} {t("common.of")}{" "}
+            {pagination?.totalPages}
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -233,7 +236,7 @@ export function DataTable<TData, TValue>({
                   : !table.getCanPreviousPage()
               }
             >
-              <span className="sr-only">Go to first page</span>
+              <span className="sr-only">{t("common.goToFirstPage")}</span>
               <ChevronsLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -255,7 +258,7 @@ export function DataTable<TData, TValue>({
                   : !table.getCanPreviousPage()
               }
             >
-              <span className="sr-only">Go to previous page</span>
+              <span className="sr-only">{t("common.goToPreviousPage")}</span>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -275,7 +278,7 @@ export function DataTable<TData, TValue>({
                 pagination ? !pagination.hasNextPage : !table.getCanNextPage()
               }
             >
-              <span className="sr-only">Go to next page</span>
+              <span className="sr-only">{t("common.goToNextPage")}</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
@@ -295,7 +298,7 @@ export function DataTable<TData, TValue>({
                 pagination ? !pagination.hasNextPage : !table.getCanNextPage()
               }
             >
-              <span className="sr-only">Go to last page</span>
+              <span className="sr-only">{t("common.goToLastPage")}</span>
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>

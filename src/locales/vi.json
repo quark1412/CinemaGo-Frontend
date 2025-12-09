@@ -534,9 +534,69 @@
   },
   "users": {
     "title": "Người dùng",
-    "createUser": "Tạo người dùng",
-    "updateUser": "Cập nhật người dùng",
-    "deleteUser": "Xóa người dùng"
+    "deleteUser": "Xóa người dùng",
+    "user": "Người dùng",
+    "role": "Vai trò",
+    "gender": "Giới tính",
+    "status": "Trạng thái",
+    "joined": "Khởi tạo",
+    "updated": "Cập nhật",
+    "search": "Tìm kiếm người dùng theo tên hoặc email....",
+    "copy": "Sao chép ID",
+    "admin": "Quản trị viên",
+    "male": "Nam",
+    "female": "Nữ",
+    "other": "Khác",
+
+    "createUser": {
+      "title": "Tạo người dùng",
+      "description": "Tạo mới thông tin tài khoản người dùng",
+      "createUserSuccess": "Tạo người dùng thành công!",
+      "createUserError": "Tạo người dùng thất bại"
+    },
+
+    "updateUser": {
+      "title": "Cập nhật người dùng",
+      "description": "Chỉnh sửa thông tin người dùng và vai trò bên dưới.",
+      "updateUserSuccess": "Cập nhật người dùng thành công!",
+      "updateUserError": "Cập nhật người dùng thất bại"
+    },
+
+    "archiveUser": {
+      "title": "Lưu trữ người dùng",
+      "description": "Bạn có chắc muốn lưu trữ người dùng tên",
+      "archiveUserSuccess": "Lưu trữ người dùng thành công",
+      "archiveUserError": "Lưu trữ người dùng thất bại",
+      "confirmText": "? Điều này sẽ ngăn họ truy cập hệ thống."
+    },
+    "restoreUser": {
+      "title": "Khôi phục người dùng",
+      "description": "Bạn có chắc muốn khôi phục người dùng tên",
+      "restoreUserSuccess": "Khôi phục người dùng thành công",
+      "restoreUserError": "Khôi phục người dùng thất bại",
+      "confirmText": "? Điều này sẽ khôi phục quyền truy cập hệ thống của họ."
+    },
+    "modal": {
+      "full_name": "Họ và tên",
+      "enter_name": "Nhập tên..",
+      "enter_email": "Nhập email..",
+      "pass": "Mật khẩu",
+      "enter_pass": "Nhập mật khẩu.."
+    },
+    "fullname": {
+      "min1": "Yêu cầu nhập họ và tên",
+      "min2": "Họ và tên tối thiếu 2 ký tự",
+      "max100": "Họ và tên không quá 100 ký tự"
+    },
+    "email": {
+      "min1": "Yêu cầu nhập email",
+      "max": "Vui lòng nhập địa chỉ email hợp lệ",
+      "genderselect": "Vui lòng chọn giới tính",
+      "roleselect": "Vui lòng chọn vai trò"
+    },
+    "password": {
+      "min8": "Mật khẩu tối thiếu 8 ký tự"
+    }
   },
   "foodDrinks": {
     "title": "Đồ ăn & Đồ uống",

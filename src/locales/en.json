@@ -528,9 +528,68 @@
   },
   "users": {
     "title": "Users",
-    "createUser": "Create User",
-    "updateUser": "Update User",
-    "deleteUser": "Delete User"
+    "deleteUser": "Delete User",
+    "user": "User",
+    "role": "Role",
+    "gender": "Gender",
+    "status": "Status",
+    "joined": "Joined",
+    "updated": "Updated",
+    "search": "Search user by name or email...",
+    "copy": "Copy User ID",
+    "admin": "Admin",
+    "male": "Male",
+    "female": "Female",
+
+    "createUser": {
+      "title": "Create User",
+      "description": "Create a new user account with the information below.",
+      "createUserSuccess": "User created successfully!",
+      "createUserError": "Failed to create user"
+    },
+
+    "updateUser": {
+      "title": "Update User",
+      "description": "Update the user information and role below.",
+      "updateUserSuccess": "User updated successfully!",
+      "updateUserError": "Failed to update user"
+    },
+
+    "archiveUser": {
+      "title": "Delete User",
+      "description": "Are you sure you want to archive",
+      "archiveUserSuccess": "User archived successfully!",
+      "archiveUserError": "Failed to archive user",
+      "confirmText": "? This will prevent them from accessing the system."
+    },
+    "restoreUser": {
+      "title": "Restore User",
+      "description": "Are you sure you want to restore",
+      "restoreUserSuccess": "User restored successfully!",
+      "restoreUserError": "Failed to restore user",
+      "confirmText": "? This will restore their access to the system."
+    },
+    "modal": {
+      "full_name": "Full name",
+      "enter_name": "Enter name..",
+      "enter_email": "Enter email..",
+      "pass": "Password",
+      "enter_pass": "Enter password.."
+    },
+    "fullname": {
+      "min1": "Full name is required",
+      "min2": "Full name must be at least 2 characters",
+      "max100": "Full name must be less than 100 characters"
+    },
+    "email": {
+      "min1": "Email is required",
+      "max": "Please enter a valid email address",
+      "genderselect": "Please select a gender",
+      "roleselect": "Please select a role"
+    },
+    "password": {
+      "min8": "Password must be at least 8 characters"
+    }
   },
   "foodDrinks": {
     "title": "Food & Drinks",

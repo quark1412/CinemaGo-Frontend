@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 
-import { User } from "@/types/user";
+import { User } from "@/types/User";
 import { DataTable } from "./data-table";
 import { createColumns } from "./columns";
 import { UserDialog } from "./user-dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { GetUsersParams } from "@/services/users";
 import { useUsers, useArchiveUser, useRestoreUser } from "@/hooks/use-users";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function AllUsers() {
+  const { t } = useI18n();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [confirmationDialog, setConfirmationDialog] = useState<{
@@ -138,20 +141,27 @@ export default function AllUsers() {
         }
         title={
           confirmationDialog.action === "archive"
-            ? "Archive User"
-            : "Restore User"
+            ? t("users.archiveUser.title")
+            : t("users.restoreUser.title")
         }
         description={
           confirmationDialog.action === "archive"
-            ? `Are you sure you want to archive "${confirmationDialog.user?.fullname}"? This will prevent them from accessing the system.`
-            : `Are you sure you want to restore "${confirmationDialog.user?.fullname}"? This will restore their access to the system.`
+            ? `${t("users.archiveUser.description")} ${
+                confirmationDialog.user?.fullname
+              } ${t("users.archiveUser.confirmText")}`
+            : `${t("users.restoreUser.description")} ${
+                confirmationDialog.user?.fullname
+              } ${t("users.restoreUser.confirmText")}`
         }
         confirmText={
-          confirmationDialog.action === "archive" ? "Archive" : "Restore"
+          confirmationDialog.action === "archive"
+            ? t("common.actions.archive")
+            : t("common.actions.restore")
         }
         variant={
           confirmationDialog.action === "archive" ? "archive" : "restore"
         }
+        cancelText={t("common.cancel")}
         onConfirm={handleConfirmAction}
         loading={confirmationDialog.loading}
       />
