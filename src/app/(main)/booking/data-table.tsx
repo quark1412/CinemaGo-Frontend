@@ -1,7 +1,5 @@
 "use client";
-
 import { useEffect, useRef, useState } from "react";
-import { ShowtimeSelect } from "@/components/showtime-select";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -13,7 +11,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-
 import {
   Table,
   TableBody,
@@ -22,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -39,6 +35,7 @@ import {
   ChevronsRight,
   X,
 } from "lucide-react";
+
 // import { useI18n } from "@/contexts/I18nContext";
 
 type SelectOption = {
@@ -90,8 +87,6 @@ export function DataTable<TData, TValue>({
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedShowtime, setSelectedShowtime] = useState<string>("all");
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
   const table = useReactTable({
     data,
     columns,
@@ -108,28 +103,6 @@ export function DataTable<TData, TValue>({
     manualPagination: true, // Quan trọng: Báo cho TanStack biết ta đang phân trang từ Server
     pageCount: pagination?.totalPages,
   });
-
-  // Xử lý Debounce cho Search
-  const handleSearchChange = (value: string) => {
-    setSearchValue(value);
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    searchTimeoutRef.current = setTimeout(() => {
-      onSearchChange?.(value);
-    }, 500);
-  };
-
-  // Xử lý Debounce cho Showtime ID (Vì là nhập text)
-  const handleShowtimeInput = (value: string) => {
-    setShowtimeId(value);
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    searchTimeoutRef.current = setTimeout(() => {
-      onShowtimeChange?.(value);
-    }, 500);
-  };
 
   // Xử lý Clear Filter
   const handleClearFilters = () => {
@@ -158,13 +131,6 @@ export function DataTable<TData, TValue>({
     <div className="flex flex-col h-full">
       <div className="flex flex-col gap-3 py-4 flex-shrink-0 sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-lg border mb-4 shadow-sm">
         <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center flex-wrap">
-          {/* <Input
-            placeholder="Tìm mã đơn, tên khách..."
-            value={searchValue}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full sm:max-w-[250px]"
-          /> */}
-
           <Select
             value={selectedShowtime}
             onValueChange={(value) => {

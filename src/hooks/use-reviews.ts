@@ -9,6 +9,7 @@ import {
   unhideReview,
   GetReviewsParams,
 } from "@/services/reviews";
+import { useI18n } from "@/contexts/I18nContext";
 
 export const reviewKeys = {
   all: ["reviews"] as const,
@@ -48,6 +49,7 @@ export function useReplyToReview() {
 
 export function useUpdateReview() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       updateReview(id, data),
@@ -63,28 +65,36 @@ export function useUpdateReview() {
 
 export function useHideReview() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
   return useMutation({
     mutationFn: hideReview,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: reviewKeys.lists() });
-      toast.success("Review hidden successfully!");
+      toast.success(t("reviews.archiveReview.archiveReviewSuccess"));
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to hide review");
+      toast.error(
+        error.response?.data?.message ||
+          t("reviews.archiveReview.archiveReviewError")
+      );
     },
   });
 }
 
 export function useUnhideReview() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
   return useMutation({
     mutationFn: unhideReview,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: reviewKeys.lists() });
-      toast.success("Review unhidden successfully!");
+      toast.success(t("reviews.restoreReview.restoreReviewSuccess"));
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to unhide review");
+      toast.error(
+        error.response?.data?.message ||
+          t("reviews.restoreReview.restoreReviewError")
+      );
     },
   });
 }

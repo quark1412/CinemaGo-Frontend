@@ -5,13 +5,17 @@ import { getUserById } from "@/services/users";
 import { getShowtimeById } from "@/services/showtimes";
 import { getMovieById } from "@/services/movies";
 import { getCinemaById, getRoomById } from "@/services/cinemas"; // Kiểm tra lại đường dẫn import này xem đúng file chứa getRoomById chưa
+import type { User } from "@/types/User";
+import type { Showtime } from "@/types/showtime";
+import type { Movie } from "@/types/movie";
+import type { Room, Cinema } from "@/types/cinema";
 
 // Định nghĩa lại các Map type
-export type UserMap = Record<string, any>;
-export type ShowTimeMap = Record<string, any>;
-export type MovieMap = Record<string, any>;
-export type RoomMap = Record<string, any>;
-export type CinemaMap = Record<string, any>;
+export type UserMap = Record<string, User>;
+export type ShowTimeMap = Record<string, Showtime>;
+export type MovieMap = Record<string, Movie>;
+export type RoomMap = Record<string, Room>;
+export type CinemaMap = Record<string, Cinema>;
 
 export function useBookingTable(initialParams: MyBookingParams) {
   const [params, setParams] = useState<MyBookingParams>(initialParams);
@@ -34,22 +38,18 @@ export function useBookingTable(initialParams: MyBookingParams) {
   useEffect(() => {
     const fetchRelatedData = async () => {
       if (!data?.data || data.data.length === 0) {
-        console.log("⚠️ No bookings found or data format wrong:", data);
+        console.log(" No bookings found or data format wrong:", data);
         return;
       }
 
-      console.log(
-        "🚀 Start fetching details for",
-        data.data.length,
-        "bookings"
-      );
+      console.log("Start fetching details for", data.data.length, "bookings");
       const bookingList = data.data;
 
       const missingUserIds = Array.from(
         new Set(
           bookingList
             .map((b) => b.userId)
-            .filter((id) => id && !cache.current.users[id])
+            .filter((id): id is string => !!id && !cache.current.users[id])
         )
       );
 
@@ -61,7 +61,7 @@ export function useBookingTable(initialParams: MyBookingParams) {
         )
       );
 
-      console.log("🔍 Missing IDs:", {
+      console.log(" Missing IDs:", {
         users: missingUserIds,
         showtimes: missingShowTimeIds,
       });
@@ -133,7 +133,7 @@ export function useBookingTable(initialParams: MyBookingParams) {
           missingCinemaIds.add(st.cinemaId);
       });
 
-      console.log("🔍 Missing 2nd Level:", {
+      console.log(" Missing 2nd Level:", {
         movies: Array.from(missingMovieIds),
         rooms: Array.from(missingRoomIds),
         cinemas: Array.from(missingCinemaIds),
@@ -162,8 +162,8 @@ export function useBookingTable(initialParams: MyBookingParams) {
           ),
         ]);
 
-        movieRes.forEach((res: any) => {
-          const item = res?.data || res;
+        movieRes.forEach((res: Movie) => {
+          const item = res;
           if (item?.id) cache.current.movies[item.id] = item;
         });
         roomRes.forEach((res: any) => {

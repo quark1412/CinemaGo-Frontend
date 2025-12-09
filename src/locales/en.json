@@ -478,7 +478,53 @@
   "reviews": {
     "title": "Reviews",
     "reply": "Reply",
-    "replyToReview": "Reply to Review"
+    "replyToReview": "Reply to Review",
+    "user": "User",
+    "movie": "Movie",
+    "rating": "Rating",
+    "review content": "Review Content",
+    "status": "Status",
+    "visibility": "Visibility",
+    "created": "Created",
+    "searchallfilms": "All Movies",
+    "copy": "Copy review ID",
+    "hide": "Hide",
+    "unhide": "Unhide",
+    "filterReviews": {
+      "allVisible": "All visibility",
+      "allStatus": "All status",
+      "replied": "Replied",
+      "Unreplied": "Unreplied",
+      "active": "Hide",
+      "inactive": "Unhide"
+    },
+    "archiveReview": {
+      "title": "Hide review",
+      "description": "Are you sure you want to hide this review? It will not be visible to users.",
+      "archiveReviewSuccess": "Review hidden successfully!",
+      "archiveReviewError": "Failed to hide review",
+      "confirmText": "Are you sure you want to hide this review? It will not be visible to users."
+    },
+    "restoreReview": {
+      "title": "Unhide review",
+      "description": "Are you sure you want to unhide this review? It will be visible to users again.",
+      "restoreReviewSuccess": "Review unhidden successfully!",
+      "restoreReviewError": "Failed to unhide review",
+      "confirmText": "Are you sure you want to unhide this review? It will be visible to users again."
+    },
+    "modal": {
+      "title": "Reply to Review",
+      "desc": " Add a reply to this review. The user will be notified.",
+      "previous_replies": "Previous Replies:",
+      "your_reply": "Your Reply",
+      "enter": "Enter your reply",
+      "send": "Send reply",
+      "sending": "Sending",
+      "no_content": "No content.",
+      "min1": "Reply content is required",
+      "min10": "Reply must be at least 10 characters",
+      "max1000": "Reply must be less than 1000 characters"
+    }
   },
   "users": {
     "title": "Users",

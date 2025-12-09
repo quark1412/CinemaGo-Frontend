@@ -5,6 +5,27 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function formatDateSafe(value?: string | number) {
+  if (!value) return "—";
+
+  let timestamp = Number(value);
+  if (isNaN(timestamp)) return "Không xác định";
+
+  if (timestamp < 100000000000) {
+    timestamp *= 1000;
+  }
+
+  const d = new Date(timestamp);
+
+  return d.toLocaleString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
 export function formatDate(date: Date) {
   return new Date(date).toLocaleDateString("vi-VN", {
     year: "numeric",

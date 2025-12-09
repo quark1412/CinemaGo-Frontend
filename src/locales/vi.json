@@ -484,7 +484,53 @@
   "reviews": {
     "title": "Đánh giá",
     "reply": "Trả lời",
-    "replyToReview": "Trả lời đánh giá"
+    "replyToReview": "Trả lời đánh giá",
+    "user": "Người dùng",
+    "movie": "Phim",
+    "rating": "Đánh giá",
+    "review content": "Nội dung đánh giá",
+    "status": "Trạng thái",
+    "visibility": "Hiển thị",
+    "created": "Ngày tạo",
+    "searchallfilms": "Tất cả phim",
+    "copy": "Sao chép ID",
+    "hide": "Ẩn",
+    "unhide": "Hiển thị",
+    "filterReviews": {
+      "allVisible": "Tất cả đánh giá",
+      "allStatus": "Tất cả trạng thái",
+      "replied": "Đã trả lời",
+      "Unreplied": "Chưa trả lời",
+      "active": "Hiển thị",
+      "inactive": "Ẩn"
+    },
+    "archiveReview": {
+      "title": "Ẩn đánh giá",
+      "description": "Ẩn thông tin đánh giá dưới đây",
+      "archiveReviewSuccess": "Ẩn đánh giá thành công",
+      "archiveReviewError": "Ẩn đánh giá thất bại",
+      "confirmText": "Bạn có chắc chắn muốn ẩn đánh giá này?"
+    },
+    "restoreReview": {
+      "title": "Hiển thị đánh giá",
+      "description": "Hiển thị thông tin đánh giá dưới đây",
+      "restoreReviewSuccess": "Hiển thị đánh giá thành công",
+      "restoreReviewError": "Hiển thị đánh giá thất bại",
+      "confirmText": "Bạn có chắc chắn muốn hiển thị này?"
+    },
+    "modal": {
+      "title": "Phản hồi đánh giá",
+      "desc": "Thêm phản hồi cho đánh giá này. Người dùng sẽ được thông báo.",
+      "previous_replies": "Các phản hồi trước đó:",
+      "your_reply": "Phản hồi của bạn",
+      "enter": "Nhập đánh giá",
+      "send": "Gửi đánh giá",
+      "sending": "Đang gửi",
+      "no_content": "Không có nội dung",
+      "min1": "Nội dung phản hồi không được để trống",
+      "min10": "Nội dung phản hồi phải có độ dài 10 ký tự trở lên",
+      "max1000": "Nội dung phản hồi không quá 1000 ký tự"
+    }
   },
   "users": {
     "title": "Người dùng",

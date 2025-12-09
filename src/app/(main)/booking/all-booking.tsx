@@ -9,7 +9,7 @@ import { DataTable } from "./data-table";
 import { createColumns } from "./columns";
 import { BookingDialog } from "./booking-dialog";
 
-import { useBookingTable } from "@/hooks/use-booking-table";
+import { useBookingTable } from "@/app/(main)/booking/use-booking-table";
 
 export default function AllBookings() {
   const router = useRouter();

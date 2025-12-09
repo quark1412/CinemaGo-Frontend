@@ -27,20 +27,17 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { User, Mail, Phone, MapPin, MonitorPlay, Calendar } from "lucide-react";
 
-// Import Services & Types
-import { getFoodDrinkById } from "@/services/fooddrinks"; // Đảm bảo bạn đã có service này
+import { getFoodDrinkById } from "@/services/fooddrinks";
 import { Booking } from "@/types/booking";
 
-// Import các Map Type từ hook
 import {
   UserMap,
   MovieMap,
   ShowTimeMap,
   RoomMap,
   CinemaMap,
-} from "@/hooks/use-booking-table";
+} from "@/app/(main)/booking/use-booking-table";
 
-// --- TYPES CHO LOGIC XỬ LÝ GHẾ ---
 interface SeatDef {
   id: string;
   seatNumber: string;
@@ -49,12 +46,12 @@ interface SeatDef {
 }
 
 interface DisplaySeat {
-  displayName: string; // "A1" hoặc "J10-J11"
-  type: string; // "NORMAL", "VIP", "COUPLE"
+  displayName: string;
+  type: string;
   price: number;
   isMerged?: boolean;
-  row?: string; // Dùng để sort
-  number?: number; // Dùng để sort
+  row?: string;
+  number?: number;
 }
 
 interface BookingDetails {
@@ -76,7 +73,6 @@ interface BookingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   booking: Booking | null;
-  // Maps nhận từ hook useBookingTable
   maps: {
     userMap: UserMap;
     showtimeMap: ShowTimeMap;
@@ -95,23 +91,19 @@ export function BookingDialog({
   const [details, setDetails] = useState<BookingDetails | null>(null);
   const [loadingFood, setLoadingFood] = useState(false);
 
-  // Helper format tiền
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
     }).format(val);
 
-  // --- LOGIC GỘP GHẾ (GIỮ NGUYÊN TỪ DỰ ÁN CŨ) ---
   const processSeats = (
     bookingSeats: { seatId: string }[],
-    allRoomSeats: SeatDef[], // Danh sách ghế gốc của phòng
+    allRoomSeats: SeatDef[],
     basePrice: number
   ): DisplaySeat[] => {
-    // 1. Map từ bookingSeat -> thông tin chi tiết
     const rawSeats = bookingSeats
       .map((bs) => {
-        // Tìm thông tin ghế trong danh sách ghế của phòng (từ map)
         const seatDef = allRoomSeats.find((s) => s.id === bs.seatId);
         if (!seatDef) return null;
 
@@ -125,11 +117,9 @@ export function BookingDialog({
       })
       .filter((s): s is NonNullable<typeof s> => !!s);
 
-    // 2. Tách ghế Couple và ghế thường
     const coupleSeats = rawSeats.filter((s) => s.type === "COUPLE");
     const otherSeats = rawSeats.filter((s) => s.type !== "COUPLE");
 
-    // 3. Xử lý gộp ghế Couple liền kề
     coupleSeats.sort((a, b) => {
       if (a.row === b.row) return a.number - b.number;
       return a.row.localeCompare(b.row);
@@ -177,7 +167,6 @@ export function BookingDialog({
     return [...formattedOthers, ...mergedCouples];
   };
 
-  // --- EFFECT XỬ LÝ DỮ LIỆU ---
   useEffect(() => {
     if (open && booking) {
       const { userMap, showtimeMap, movieMap, roomMap, cinemaMap } = maps || {};
@@ -188,16 +177,13 @@ export function BookingDialog({
         ? {
             name: user.fullname,
             email: user.email,
-            phone: user.phone, // Nếu có
+
             gender: user.gender,
           }
         : null;
 
-      // 2. Cinema & Room Info
       const showTime = showtimeMap[booking.showtimeId];
-      // Logic fallback: Đôi khi roomMap chưa có showTime.roomId nếu API chưa trả về
       const room = showTime ? roomMap[showTime.roomId] : null;
-      // Logic fallback: Lấy cinema từ showtime hoặc từ room
       const cinemaId = showTime?.cinemaId || room?.cinemaId;
       const cinema = cinemaId ? cinemaMap[cinemaId] : null;
 
@@ -205,15 +191,12 @@ export function BookingDialog({
       const cinemaName = cinema?.name || "Rạp ?";
 
       const movie = showTime ? movieMap[showTime.movieId] : null;
-      const movieTitle = movie?.title || movie?.name || "Phim ?";
+      const movieTitle = movie?.title || "Phim ?";
 
       const basePrice = showTime?.price || 0;
 
-      // 3. Xử lý ghế (Quan trọng: Cần room.seats)
       let displaySeats: DisplaySeat[] = [];
-      // Lưu ý: room object trong roomMap CẦN PHẢI chứa mảng `seats`.
-      // Nếu API getRoomById của bạn chưa trả về seats, logic này sẽ không chạy được chi tiết.
-      // Tạm thời fallback nếu không có seats:
+
       if (room && (room as any).seats) {
         displaySeats = processSeats(
           booking.bookingSeats || [],
@@ -221,20 +204,18 @@ export function BookingDialog({
           basePrice
         );
       } else {
-        // Fallback đơn giản nếu không có thông tin ghế chi tiết
         displaySeats = (booking.bookingSeats || []).map((bs: any) => ({
-          displayName: bs.seatNumber || "Ghế", // Nếu backend có trả về seatNumber sẵn
+          displayName: bs.seatNumber || "Ghế",
           type: "UNKNOWN",
           price: 0,
         }));
       }
 
-      // 4. Xử lý Food (Initial)
       const initialFoods = (booking.bookingFoodDrinks || []).map((f: any) => ({
         name: "Đang tải...",
         quantity: f.quantity,
         price: f.totalPrice,
-        id: f.foodDrinkId, // Lưu tạm ID để fetch
+        id: f.foodDrinkId,
       }));
 
       setDetails({
@@ -247,13 +228,11 @@ export function BookingDialog({
         foodItems: initialFoods,
       });
 
-      // 5. Fetch Food Names (Lazy)
       if (booking.bookingFoodDrinks?.length > 0) {
         setLoadingFood(true);
         Promise.all(
           booking.bookingFoodDrinks.map(async (item: any) => {
             try {
-              // Gọi service lấy tên món
               const food = await getFoodDrinkById(item.foodDrinkId);
               return {
                 name: food.name || food.title || "Tên món trống",
@@ -285,7 +264,6 @@ export function BookingDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] max-w-[95vw] max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
-        {/* Header */}
         <DialogHeader className="p-6 border-b bg-muted/40">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -305,9 +283,7 @@ export function BookingDialog({
 
         <ScrollArea className="flex-1">
           <div className="p-6 space-y-8">
-            {/* 1. Thông tin chung (Grid Card) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Card Khách hàng */}
               <div className="space-y-4 p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
                 <div className="flex items-center gap-2 text-primary font-semibold">
                   <User className="h-4 w-4" />
@@ -343,7 +319,6 @@ export function BookingDialog({
                 </div>
               </div>
 
-              {/* Card Rạp Phim */}
               <div className="space-y-4 p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
                 <div className="flex items-center gap-2 text-orange-600 font-semibold">
                   <MonitorPlay className="h-4 w-4" />
@@ -383,7 +358,6 @@ export function BookingDialog({
 
             <Separator />
 
-            {/* 2. Bảng Ghế */}
             <div className="space-y-3">
               <h4 className="font-semibold flex items-center gap-2">
                 Ghế đã đặt
@@ -442,7 +416,6 @@ export function BookingDialog({
               </div>
             </div>
 
-            {/* 3. Bảng Đồ ăn (Nếu có) */}
             {details?.foodItems && details.foodItems.length > 0 && (
               <div className="space-y-3">
                 <h4 className="font-semibold flex items-center gap-2">
@@ -490,7 +463,6 @@ export function BookingDialog({
           </div>
         </ScrollArea>
 
-        {/* Footer */}
         <DialogFooter className="p-6 border-t bg-gray-50 flex items-center justify-between sm:justify-between">
           <div className="flex flex-col items-start gap-1">
             <span className="text-xs text-muted-foreground uppercase font-bold">
