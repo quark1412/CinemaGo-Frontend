@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import {
   Select,
   SelectContent,
@@ -33,10 +33,9 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  X,
 } from "lucide-react";
 
-// import { useI18n } from "@/contexts/I18nContext";
+import { useI18n } from "@/contexts/I18nContext";
 
 type SelectOption = {
   value: string;
@@ -49,7 +48,6 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   loading?: boolean;
 
-  // Pagination Props
   pagination?: {
     totalItems: number;
     totalPages: number;
@@ -64,7 +62,11 @@ interface DataTableProps<TData, TValue> {
   onTypeChange?: (type: string) => void;
   onShowtimeChange?: (showtimeId: string) => void;
 
-  showtimeOptions?: SelectOption[];
+  movieOptions?: { value: string; label: string }[];
+  showtimeOptions?: { value: string; label: string; meta?: string }[];
+
+  selectedMovieId?: string;
+  onMovieChange?: (movieId: string) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -73,17 +75,18 @@ export function DataTable<TData, TValue>({
   loading = false,
   pagination,
   onPaginationChange,
-  onSearchChange,
+
   onTypeChange,
-  onShowtimeChange,
+  movieOptions = [],
   showtimeOptions = [],
+  selectedMovieId = "all",
+  onMovieChange,
+  onShowtimeChange,
 }: DataTableProps<TData, TValue>) {
-  // const { t } = useI18n(); // Mở lại nếu dùng i18n
+  const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  // Local state cho filters
-  const [searchValue, setSearchValue] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedShowtime, setSelectedShowtime] = useState<string>("all");
 
@@ -100,25 +103,10 @@ export function DataTable<TData, TValue>({
       sorting,
       columnFilters,
     },
-    manualPagination: true, // Quan trọng: Báo cho TanStack biết ta đang phân trang từ Server
+    manualPagination: true,
     pageCount: pagination?.totalPages,
   });
 
-  // Xử lý Clear Filter
-  const handleClearFilters = () => {
-    setSearchValue("");
-    setSelectedType("all");
-
-    // Gọi callback reset về undefined/empty
-    onSearchChange?.("");
-    onTypeChange?.("all"); // Hoặc undefined tùy logic cha
-    onShowtimeChange?.("");
-  };
-
-  const hasActiveFilters =
-    searchValue || selectedType !== "all" || selectedShowtime !== "all";
-
-  // Xử lý Pagination
   const handlePageChange = (page: number) => {
     onPaginationChange?.(page, pagination?.pageSize || 10);
   };
@@ -128,29 +116,65 @@ export function DataTable<TData, TValue>({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex flex-col gap-3 py-4 flex-shrink-0 sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-lg border mb-4 shadow-sm">
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-3 py-4 flex-shrink-0 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center flex-wrap">
+          <Select
+            value={selectedMovieId}
+            onValueChange={(val) => {
+              onMovieChange?.(val);
+              setSelectedShowtime("all");
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Chọn Phim trước" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {t("bookings.filterBooking.allfilm")}
+              </SelectItem>
+              {movieOptions.map((m) => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Select
             value={selectedShowtime}
             onValueChange={(value) => {
               setSelectedShowtime(value);
               onShowtimeChange?.(value === "all" ? "" : value);
             }}
+            //disabled={selectedMovieId === "all"}
           >
-            <SelectTrigger className="w-full sm:w-[280px]">
-              <SelectValue placeholder="Tất cả suất chiếu" />
+            <SelectTrigger className="w-full sm:w-[240px]">
+              <SelectValue placeholder="Chọn Suất chiếu" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tất cả suất chiếu</SelectItem>
-              {showtimeOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  <span className="font-medium">{opt.label}</span>
-                  <span className="text-gray-400 ml-2 text-xs">
-                    ({opt.meta})
-                  </span>
-                </SelectItem>
-              ))}
+              <SelectItem value="all">
+                {selectedMovieId === "all"
+                  ? t("bookings.filterBooking.allshowtime")
+                  : t("bookings.filterBooking.allshowtimeofmovie")}
+              </SelectItem>
+
+              {showtimeOptions.length === 0 ? (
+                <div className="p-2 text-sm text-gray-500 text-center">
+                  {t("bookings.filterBooking.noshowtime")}
+                </div>
+              ) : (
+                showtimeOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <span className="font-medium">{opt.label}</span>
+                    {opt.meta && (
+                      <span className="text-gray-400 ml-2 text-xs">
+                        ({opt.meta})
+                      </span>
+                    )}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
 
@@ -165,37 +189,25 @@ export function DataTable<TData, TValue>({
               <SelectValue placeholder="Loại vé" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tất cả loại vé</SelectItem>
-              <SelectItem value="online">Đặt Online</SelectItem>
-              <SelectItem value="offline">Tại quầy (Offline)</SelectItem>
+              <SelectItem value="all">
+                {t("bookings.filterBooking.allType")}
+              </SelectItem>
+              <SelectItem value="online"> {t("bookings.online")}</SelectItem>
+              <SelectItem value="offline"> {t("bookings.offline")}</SelectItem>
             </SelectContent>
           </Select>
-
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              onClick={handleClearFilters}
-              className="h-8 px-2 lg:px-3 text-red-500 hover:text-red-700 hover:bg-red-50"
-            >
-              <X className="mr-2 h-4 w-4" />
-              Xóa lọc
-            </Button>
-          )}
         </div>
       </div>
 
-      <div className="rounded-md border bg-white flex-1 overflow-hidden flex flex-col shadow-sm">
-        <div className="overflow-auto flex-1">
+      <div className="overflow-hidden rounded-md border flex-1 min-h-0">
+        <div className="overflow-auto h-full">
           <Table>
-            <TableHeader className="sticky top-0 bg-gray-50 z-10">
+            <TableHeader className="sticky top-0  bg-background z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
                     return (
-                      <TableHead
-                        key={header.id}
-                        className="font-bold text-gray-700"
-                      >
+                      <TableHead key={header.id} className="font-bold ">
                         {header.isPlaceholder
                           ? null
                           : flexRender(
@@ -217,7 +229,7 @@ export function DataTable<TData, TValue>({
                   >
                     <div className="flex items-center justify-center gap-2 text-muted-foreground">
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      Đang tải dữ liệu...
+                      {t("common.loading")}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -226,7 +238,6 @@ export function DataTable<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="hover:bg-gray-50 transition-colors"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="py-3">
@@ -242,9 +253,9 @@ export function DataTable<TData, TValue>({
                 <TableRow>
                   <TableCell
                     colSpan={columns.length}
-                    className="h-24 text-center text-muted-foreground"
+                    className="h-24 text-center"
                   >
-                    Không tìm thấy dữ liệu nào.
+                    {t("common.noData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -254,11 +265,9 @@ export function DataTable<TData, TValue>({
       </div>
 
       {pagination && (
-        <div className="flex items-center justify-between space-x-2 py-4 flex-shrink-0 bg-white border-t px-4 mt-auto">
+        <div className="flex items-center justify-between space-x-2 py-4 flex-shrink-0">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium text-muted-foreground hidden sm:block">
-              Số hàng mỗi trang
-            </p>
+            <p className="text-sm font-medium">{t("common.rowsPerPage")}</p>
             <Select
               value={pagination.pageSize.toString()}
               onValueChange={handlePageSizeChange}
@@ -267,7 +276,7 @@ export function DataTable<TData, TValue>({
                 <SelectValue placeholder={pagination.pageSize.toString()} />
               </SelectTrigger>
               <SelectContent side="top">
-                {[10, 20, 30, 50].map((pageSize) => (
+                {[10, 20, 30, 40, 50].map((pageSize) => (
                   <SelectItem key={pageSize} value={`${pageSize}`}>
                     {pageSize}
                   </SelectItem>
@@ -275,10 +284,10 @@ export function DataTable<TData, TValue>({
               </SelectContent>
             </Select>
           </div>
-
-          <div className="flex items-center space-x-4 lg:space-x-8">
-            <div className="flex w-[100px] items-center justify-center text-sm font-medium text-muted-foreground">
-              Trang {pagination.currentPage} / {pagination.totalPages}
+          <div className="flex items-center space-x-6 lg:space-x-8">
+            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+              {t("common.page")} {pagination.currentPage} {t("common.of")}{" "}
+              {pagination.totalPages}
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -287,6 +296,7 @@ export function DataTable<TData, TValue>({
                 onClick={() => handlePageChange(1)}
                 disabled={!pagination.hasPrevPage}
               >
+                <span className="sr-only">{t("common.goToFirstPage")}</span>
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
               <Button
@@ -295,6 +305,7 @@ export function DataTable<TData, TValue>({
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={!pagination.hasPrevPage}
               >
+                <span className="sr-only">{t("common.goToPreviousPage")}</span>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
@@ -303,6 +314,7 @@ export function DataTable<TData, TValue>({
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={!pagination.hasNextPage}
               >
+                <span className="sr-only">{t("common.goToNextPage")}</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <Button
@@ -311,6 +323,7 @@ export function DataTable<TData, TValue>({
                 onClick={() => handlePageChange(pagination.totalPages)}
                 disabled={!pagination.hasNextPage}
               >
+                <span className="sr-only">{t("common.goToLastPage")}</span>
                 <ChevronsRight className="h-4 w-4" />
               </Button>
             </div>

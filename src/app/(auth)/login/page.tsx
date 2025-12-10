@@ -51,9 +51,7 @@ export default function LoginPage() {
       toast.success(t("auth.loginSuccessful"));
     } catch (err: any) {
       console.log(err);
-      toast.error(
-        err.response?.data?.message || t("auth.loginFailed")
-      );
+      toast.error(err.response?.data?.message || t("auth.loginFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -68,21 +66,18 @@ export default function LoginPage() {
       <CardContent className="px-8 py-2">
         <div className="space-y-8">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-800 rounded-lg flex items-center justify-center">
               <div className="w-4 h-4 bg-white rounded-sm transform rotate-45"></div>
             </div>
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-gray-900">{t("auth.welcomeBack")}</h1>
+            <h1 className="text-3xl font-bold ">{t("auth.welcomeBack")}</h1>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <Label
-                htmlFor="email"
-                className="text-sm font-medium text-gray-700"
-              >
+              <Label htmlFor="email" className="text-sm font-medium">
                 {t("auth.email")} <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -104,10 +99,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label
-                htmlFor="password"
-                className="text-sm font-medium text-gray-700"
-              >
+              <Label htmlFor="password" className="text-sm font-medium ">
                 {t("auth.password")} <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -145,7 +137,7 @@ export default function LoginPage() {
               {isLoading ? t("auth.loggingIn") : t("auth.login")}
             </Button>
 
-            <div className="relative">
+            {/* <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
               </div>
@@ -154,9 +146,9 @@ export default function LoginPage() {
                   {t("auth.orLoginWith")}
                 </span>
               </div>
-            </div>
+            </div> */}
 
-            <Button
+            {/* <Button
               type="button"
               variant="outline"
               onClick={handleGoogleLogin}
@@ -181,7 +173,7 @@ export default function LoginPage() {
                 />
               </svg>
               <span>{t("auth.loginWithGoogle")}</span>
-            </Button>
+            </Button> */}
           </form>
         </div>
       </CardContent>

@@ -30,12 +30,10 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  X, // Import icon X
 } from "lucide-react";
 import { GenresSkeleton } from "@/components/genres-skeleton";
 import { useI18n } from "@/contexts/I18nContext";
 
-// Định nghĩa Option cho Movie dropdown
 export type Option = {
   label: string;
   value: string;
@@ -54,12 +52,11 @@ interface DataTableProps<TData, TValue> {
   };
   onPaginationChange?: (page: number, pageSize: number) => void;
 
-  // --- CÁC HÀM FILTER MỚI ---
   onMovieChange?: (movieId: string) => void;
   onStatusChange?: (status: string) => void;
   onVisibilityChange?: (visibility: string) => void;
 
-  movieOptions?: Option[]; // Danh sách phim để chọn
+  movieOptions?: Option[];
   loading?: boolean;
 }
 
@@ -69,7 +66,6 @@ export function DataTable<TData, TValue>({
   pagination,
   onPaginationChange,
 
-  // Destructuring các hàm filter mới
   onMovieChange,
   onStatusChange,
   onVisibilityChange,
@@ -78,7 +74,6 @@ export function DataTable<TData, TValue>({
   loading = false,
 }: DataTableProps<TData, TValue>) {
   const { t } = useI18n();
-  // Local state để hiển thị giá trị đang chọn trên UI
   const [selectedMovie, setSelectedMovie] = React.useState<string>("all");
   const [selectedStatus, setSelectedStatus] = React.useState<string>("all");
   const [selectedVisibility, setSelectedVisibility] =
@@ -92,27 +87,11 @@ export function DataTable<TData, TValue>({
     pageCount: pagination?.totalPages ?? -1,
   });
 
-  // Hàm reset filter
-  const handleClearFilters = () => {
-    setSelectedMovie("all");
-    setSelectedStatus("all");
-    setSelectedVisibility("all");
-    onMovieChange?.("");
-    onStatusChange?.("");
-    onVisibilityChange?.("");
-  };
-
-  const hasActiveFilters =
-    selectedMovie !== "all" ||
-    selectedStatus !== "all" ||
-    selectedVisibility !== "all";
-
   if (loading) return <GenresSkeleton />;
 
   return (
     <div className="flex flex-col">
       <div className="flex items-center py-4 flex-shrink-0 gap-2">
-        {/* 1. Filter Movie */}
         <Select
           value={selectedMovie}
           onValueChange={(val) => {
@@ -133,7 +112,6 @@ export function DataTable<TData, TValue>({
           </SelectContent>
         </Select>
 
-        {/* 2. Filter Status (Replied/Unreplied) */}
         <Select
           value={selectedStatus}
           onValueChange={(val) => {
@@ -157,7 +135,6 @@ export function DataTable<TData, TValue>({
           </SelectContent>
         </Select>
 
-        {/* 3. Filter Visibility (Visible/Hidden) */}
         <Select
           value={selectedVisibility}
           onValueChange={(val) => {

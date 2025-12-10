@@ -12,8 +12,11 @@ import {
   useFoodDrinks,
   useToggleFoodDrinkAvailability,
 } from "@/hooks/use-fooddrinks";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function AllFoodDrinks() {
+  const { t } = useI18n();
+
   const [confirmationDialog, setConfirmationDialog] = useState<{
     open: boolean;
     foodDrink: FoodDrink | null;
@@ -139,18 +142,22 @@ export default function AllFoodDrinks() {
         }
         title={
           confirmationDialog.foodDrink?.isAvailable
-            ? "Mark as Unavailable"
-            : "Mark as Available"
+            ? t("foodDrinks.archiveFoodDrink.title")
+            : t("foodDrinks.restoreFoodDrink.title")
         }
         description={
           confirmationDialog.foodDrink?.isAvailable
-            ? `Are you sure you want to mark "${confirmationDialog.foodDrink?.name}" as unavailable?`
-            : `Are you sure you want to mark "${confirmationDialog.foodDrink?.name}" as available?`
+            ? `${t("foodDrinks.archiveFoodDrink.description")} ${
+                confirmationDialog.foodDrink?.name
+              } ${t("foodDrinks.archiveFoodDrink.confirmText")}`
+            : `${t("foodDrinks.archiveFoodDrink.description")} ${
+                confirmationDialog.foodDrink?.name
+              } ${t("foodDrinks.restoreFoodDrink.confirmText")}`
         }
         confirmText={
           confirmationDialog.foodDrink?.isAvailable
-            ? "Mark Unavailable"
-            : "Mark Available"
+            ? t("foodDrinks.archiveFoodDrink.title")
+            : t("foodDrinks.restoreFoodDrink.title")
         }
         variant={
           confirmationDialog.foodDrink?.isAvailable ? "destructive" : "default"

@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/form";
 import { Review } from "@/types/review";
 import { useReplyToReview } from "@/hooks/use-reviews";
-import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/contexts/I18nContext";
 import { formatDateSafe } from "@/lib/utils";
 import { getUserById } from "@/services/users";

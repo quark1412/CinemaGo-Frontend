@@ -8,6 +8,7 @@ import {
   updateFoodDrink,
   GetFoodDrinksParams,
 } from "@/services/fooddrinks";
+import { useI18n } from "@/contexts/I18nContext";
 
 export const foodDrinkKeys = {
   all: ["foodDrinks"] as const,
@@ -29,49 +30,56 @@ export function useFoodDrinks(
 }
 
 export function useToggleFoodDrinkAvailability() {
+  const { t } = useI18n();
+
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: toggleFoodDrinkAvailability,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: foodDrinkKeys.lists() });
-      toast.success("Availability toggled successfully!");
+      toast.success(t("foodDrinks.archiveFoodDrink.archiveFoodDrinkSuccess"));
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || "Failed to toggle availability"
+        error.response?.data?.message ||
+          t("foodDrinks.archiveFoodDrink.archiveFoodDrinkError")
       );
     },
   });
 }
 
 export function useCreateFoodDrink() {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createFoodDrink,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: foodDrinkKeys.lists() });
-      toast.success("Food/Drink created successfully!");
+      toast.success(t("foodDrinks.createFoodDrink.createFoodDrinkSuccess"));
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || "Failed to create food/drink"
+        error.response?.data?.message ||
+          t("foodDrinks.createFoodDrink.createFoodDrinkError")
       );
     },
   });
 }
 
 export function useUpdateFoodDrink() {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       updateFoodDrink(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: foodDrinkKeys.lists() });
-      toast.success("Food/Drink updated successfully!");
+      toast.success(t("foodDrinks.updateFoodDrink.updateFoodDrinkSuccess"));
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || "Failed to update food/drink"
+        error.response?.data?.message ||
+          t("foodDrinks.updateFoodDrink.updateFoodDrinkError")
       );
     },
   });
