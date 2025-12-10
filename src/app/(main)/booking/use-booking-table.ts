@@ -160,8 +160,8 @@ export function useBookingTable(initialParams: MyBookingParams) {
           ),
         ]);
 
-        movieRes.forEach((res: Movie) => {
-          const item = res;
+        movieRes.forEach((res: any) => {
+          const item = res?.data || res;
           if (item?.id) cache.current.movies[item.id] = item;
         });
         roomRes.forEach((res: any) => {

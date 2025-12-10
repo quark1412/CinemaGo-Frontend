@@ -668,11 +668,23 @@
       "enter_price": "Nhập giá",
       "enter_desc": "Nhập mô tả",
 
-      "sending": "Đang gửi",
-      "no_content": "Không có nội dung",
-      "min1": "Nội dung phản hồi không được để trống",
-      "min10": "Nội dung phản hồi phải có độ dài 10 ký tự trở lên",
-      "max1000": "Nội dung phản hồi không quá 1000 ký tự"
+      "name": {
+        "min1": "Vui lòng nhập tên món",
+        "min2": "Tên món ít nhất 2 ký tự",
+        "max100": "Tên món không vượt quá 100 ký tự"
+      },
+      "desc": {
+        "min1": "Vui lòng nhập mô tả",
+        "max500": "Mô tả không vượt quá 500 ký tự"
+      },
+      "price": {
+        "number": "Vui lòng nhập đơn giá",
+        "min0": "Đơn giá phải lớn hơn hoặc bằng 0",
+        "int": "Đơn giá phải có dạng số"
+      },
+      "type": {
+        "error": "Yêu cầu chọn loại đồ ăn/ uống"
+      }
     }
   },
 
@@ -730,6 +742,53 @@
       "week": "Tuần",
       "total": "Tổng cộng",
       "fileName": "Bao_Cao_Doanh_Thu_"
+    }
+  },
+
+  "bookings": {
+    "id": "Mã đơn",
+    "customer": "Khách hàng",
+    "showtime": "Suất chiếu/ Phim",
+    "type": "Hình thức",
+    "total": "Tổng tiền",
+    "created": "Ngày đặt",
+    "online": "Đặt online",
+    "offline": "Tại quầy",
+    "loadingmovie": "Đang tải phim...",
+    "loadingroom": "Đang tải phòng...",
+    "loadingcinema": "Đang tải rạp...",
+    "loadingcus": "Đang tải khách hàng...",
+    "unknownCus": "Khách vãng lai",
+
+    "filterBooking": {
+      "allfilm": "Tất cả phim",
+      "allshowtime": "Tất cả suất chiếu",
+      "allshowtimeofmovie": "Tất cả suất chiếu của phim này",
+      "noshowtime": "Không có suất chiếu",
+      "allType": "Tất cả loại vé"
+    },
+
+    "modal": {
+      "title": "Chi tiết đơn hàng",
+      "cusinfo": "Thông tin khách hàng",
+      "name": "Tên: ",
+      "phone": "SĐT: ",
+      "showtimeinfo": "Thông tin suất chiếu",
+      "movie": "Phim: ",
+      "room/cinema": "Rạp/ Phòng:",
+      "time": "Thời gian: ",
+      "bookedseat": "Ghế đã đặt",
+      "seat": "Ghế",
+      "seatnumber": "Số ghế",
+      "seattype": "Loại ghế",
+      "ticketprice": "Giá vé",
+      "noseat": "Không có dữ liệu ghế",
+      "foodDrink": "Bắp & Nước",
+      "foodname": "Tên món",
+      "quantity": "Số lượng",
+      "foodprice": "Thành tiền",
+      "totalprice": "Tổng tiền",
+      "cancel": "Đóng"
     }
   }
 }

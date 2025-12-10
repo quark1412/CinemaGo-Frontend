@@ -49,6 +49,7 @@
     "showtimes": "Showtimes",
     "users": "Users",
     "foodDrinks": "Food & Drinks",
+    "bookings": "Bookings",
     "report": "Report"
   },
   "auth": {
@@ -658,14 +659,23 @@
       "enter_price": "Enter price",
       "enter_desc": "Enter description",
 
-      "your_reply": "Phản hồi của bạn",
-      "enter": "Nhập đánh giá",
-      "send": "Gửi đánh giá",
-      "sending": "Đang gửi",
-      "no_content": "Không có nội dung",
-      "min1": "Nội dung phản hồi không được để trống",
-      "min10": "Nội dung phản hồi phải có độ dài 10 ký tự trở lên",
-      "max1000": "Nội dung phản hồi không quá 1000 ký tự"
+      "name": {
+        "min1": "Name is required",
+        "min2": "Name must be at least 2 characters",
+        "max100": "Name must be less than 100 characters"
+      },
+      "desc": {
+        "min1": "Description is required",
+        "max500": "Description must be less than 500 characters"
+      },
+      "price": {
+        "number": "Price is required",
+        "min0": "Price must be greater than or equal to 0",
+        "int": "Price must be an integer"
+      },
+      "type": {
+        "error": "Type is required"
+      }
     }
   },
   "account": {
@@ -722,6 +732,56 @@
       "week": "Week",
       "total": "Total",
       "fileName": "Revenue_Report_"
+    }
+  },
+
+  "bookings": {
+    "title": "Đồ ăn & Đồ uống",
+    "deleteFoodDrink": "Xóa đồ ăn/đồ uống",
+
+    "id": "Ticket ID",
+    "customer": "Customer",
+    "showtime": "Showtime/ Movie",
+    "type": "Type",
+    "total": "TotalPrice",
+    "created": "CreatedAt",
+    "online": "Online",
+    "offline": "Offline",
+    "loadingmovie": "Loading movie...",
+    "loadingroom": "Loading room...",
+    "loadingcinema": "Loading cinema...",
+    "loadingcus": "Loading customer...",
+    "unknownCus": "Noname customer",
+
+    "filterBooking": {
+      "allfilm": "All Movie",
+      "allshowtime": "All Showtime",
+      "allshowtimeofmovie": "All Showtime of this movie",
+      "noshowtime": "No Showtime",
+      "allType": "All ticket type"
+    },
+
+    "modal": {
+      "title": "Ticket Detail",
+      "cusinfo": "Customer Information",
+      "name": "Name: ",
+      "phone": "Phone Number: ",
+      "showtimeinfo": "Showtime Information",
+      "movie": "Movie: ",
+      "room/cinema": "Cinema/ Room: ",
+      "time": "Time: ",
+      "bookedseat": "Booked Seat",
+      "seat": "Seat",
+      "seatnumber": "Seat Number",
+      "seattype": "Seat Type",
+      "ticketprice": "Ticket Price",
+      "noseat": "No seats data",
+      "foodDrink": "Food & Drink",
+      "foodname": "Name",
+      "quantity": "Quantity",
+      "foodprice": "Price",
+      "totalprice": "Total Price",
+      "cancel": "Close"
     }
   }
 }

@@ -56,19 +56,19 @@ export function FoodDrinkDialog({
   const foodDrinkSchema = z.object({
     name: z
       .string()
-      .min(1, "Name is required")
-      .min(2, "Name must be at least 2 characters")
-      .max(100, "Name must be less than 100 characters"),
+      .min(1, t("foodDrinks.modal.name.min1"))
+      .min(2, t("foodDrinks.modal.name.min2"))
+      .max(100, t("foodDrinks.modal.name.max100")),
     description: z
       .string()
-      .min(1, "Description is required")
-      .max(500, "Description must be less than 500 characters"),
+      .min(1, t("foodDrinks.modal.desc.min1"))
+      .max(500, t("foodDrinks.modal.desc.max500")),
     price: z
-      .number({ error: "Price is required" })
-      .min(0, "Price must be greater than or equal to 0")
-      .int("Price must be an integer"),
+      .number({ error: t("foodDrinks.modal.price.number") })
+      .min(0, t("foodDrinks.modal.price.min0"))
+      .int(t("foodDrinks.modal.price.int")),
     type: z.enum(["SNACK", "DRINK", "COMBO"], {
-      error: "Type is required",
+      error: t("foodDrinks.modal.type.error"),
     }),
     image: z.string().optional(),
   });

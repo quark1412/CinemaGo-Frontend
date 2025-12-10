@@ -32,6 +32,47 @@ export default function AllBookings() {
     showtimeId: undefined,
   });
 
+  const [filterMovieId, setFilterMovieId] = useState<string>("all");
+
+  const movieOptions = useMemo(() => {
+    return Object.values(maps.movieMap).map((movie) => ({
+      value: movie.id,
+      label: movie.title,
+    }));
+  }, [maps.movieMap]);
+
+  const showtimeOptions = useMemo(() => {
+    const allShowtimes = Object.values(maps.showTimeMap);
+
+    const filtered =
+      filterMovieId === "all"
+        ? allShowtimes
+        : allShowtimes.filter((st) => st.movieId === filterMovieId);
+
+    return filtered.map((st) => {
+      const movieTitle = maps.movieMap[st.movieId]?.title || "Unknown";
+
+      const timeLabel = new Date(st.startTime).toLocaleString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+      });
+
+      return {
+        value: st.id,
+        label:
+          filterMovieId !== "all" ? timeLabel : `${movieTitle} - ${timeLabel}`,
+        meta: filterMovieId !== "all" ? "" : movieTitle,
+      };
+    });
+  }, [maps.showTimeMap, maps.movieMap, filterMovieId]);
+
+  const handleMovieFilterChange = (movieId: string) => {
+    setFilterMovieId(movieId);
+    setShowtime("");
+  };
+
   const handleViewDetail = (booking: Booking) => {
     setViewBooking(booking);
     setDialogOpen(true);
@@ -46,35 +87,8 @@ export default function AllBookings() {
     showtimeMap: maps.showTimeMap,
   });
 
-  const showtimeOptions = useMemo(() => {
-    const ids = Array.from(new Set(bookings.map((b) => b.showtimeId)));
-
-    return ids
-      .map((id) => maps.showTimeMap[id])
-      .filter(Boolean)
-      .map((st) => {
-        const movie = maps.movieMap[st.movieId];
-        const timeLabel = new Date(st.startTime).toLocaleString("vi-VN", {
-          day: "2-digit",
-          month: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-
-        return {
-          value: st.id,
-          label: movie ? movie.title : "Phim ?",
-          meta: timeLabel,
-        };
-      });
-  }, [bookings, maps.showTimeMap, maps.movieMap]);
-
   return (
     <div className="h-full space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Quản lý Đặt vé</h2>
-      </div>
-
       <DataTable
         columns={columns}
         data={bookings}
@@ -82,8 +96,12 @@ export default function AllBookings() {
         pagination={pagination}
         onPaginationChange={onPaginationChange}
         onTypeChange={setType}
-        onShowtimeChange={setShowtime}
+        //
+        movieOptions={movieOptions}
         showtimeOptions={showtimeOptions}
+        selectedMovieId={filterMovieId}
+        onMovieChange={handleMovieFilterChange}
+        onShowtimeChange={setShowtime}
       />
 
       <BookingDialog

@@ -36,6 +36,7 @@ import {
   RoomMap,
   CinemaMap,
 } from "@/app/(main)/booking/use-booking-table";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface SeatDef {
   id: string;
@@ -87,6 +88,8 @@ export function BookingDialog({
   booking,
   maps,
 }: BookingDialogProps) {
+  const { t } = useI18n();
+
   const [details, setDetails] = useState<BookingDetails | null>(null);
   const [loadingFood, setLoadingFood] = useState(false);
 
@@ -264,7 +267,9 @@ export function BookingDialog({
         <DialogHeader className="p-6 border-b bg-muted/40">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <DialogTitle className="text-xl">Chi tiết đơn hàng</DialogTitle>
+              <DialogTitle className="text-xl">
+                {t("bookings.modal.title")}
+              </DialogTitle>
               <DialogDescription className="font-mono text-xs">
                 ID: {booking.id}
               </DialogDescription>
@@ -273,7 +278,9 @@ export function BookingDialog({
               variant={booking.type === "online" ? "default" : "secondary"}
               className="text-sm px-3 py-1"
             >
-              {booking.type === "online" ? "Online" : "Tại quầy"}
+              {booking.type === "online"
+                ? t("bookings.online")
+                : t("bookings.offline")}
             </Badge>
           </div>
         </DialogHeader>
@@ -284,12 +291,12 @@ export function BookingDialog({
               <div className="space-y-4 p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
                 <div className="flex items-center gap-2 text-primary font-semibold">
                   <User className="h-4 w-4" />
-                  <h4>Thông tin khách hàng</h4>
+                  <h4>{t("bookings.modal.cusinfo")}</h4>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground flex items-center gap-2">
-                      <User className="h-3 w-3" /> Tên:
+                      <User className="h-3 w-3" /> {t("bookings.modal.name")}
                     </span>
                     <span className="font-medium">
                       {details?.userObj?.name || "Khách vãng lai"}
@@ -306,7 +313,8 @@ export function BookingDialog({
                   {details?.userObj?.phone && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground flex items-center gap-2">
-                        <Phone className="h-3 w-3" /> SĐT:
+                        <Phone className="h-3 w-3" />{" "}
+                        {t("bookings.modal.phone")}
                       </span>
                       <span className="font-medium">
                         {details?.userObj?.phone}
@@ -319,11 +327,14 @@ export function BookingDialog({
               <div className="space-y-4 p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
                 <div className="flex items-center gap-2 text-orange-600 font-semibold">
                   <MonitorPlay className="h-4 w-4" />
-                  <h4>Thông tin suất chiếu</h4>
+                  <h4> {t("bookings.modal.showtimeinfo")}</h4>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Phim:</span>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      {t("bookings.modal.movie")}
+                    </span>
                     <span
                       className="font-bold text-right truncate max-w-[180px]"
                       title={details?.movieTitle}
@@ -332,13 +343,18 @@ export function BookingDialog({
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Rạp / Phòng:</span>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      {t("bookings.modal.room/cinema")}
+                    </span>
                     <span className="font-medium">
                       {details?.cinemaName} - {details?.roomName}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Thời gian:</span>
+                    <span className="text-muted-foreground">
+                      {t("bookings.modal.time")}
+                    </span>
                     <span className="font-medium flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {details?.showTimeRaw &&
@@ -357,9 +373,9 @@ export function BookingDialog({
 
             <div className="space-y-3">
               <h4 className="font-semibold flex items-center gap-2">
-                Ghế đã đặt
+                {t("bookings.modal.bookedseat")}
                 <Badge variant="outline">
-                  {details?.displaySeats.length || 0} ghế
+                  {details?.displaySeats.length || 0} {t("bookings.modal.seat")}
                 </Badge>
               </h4>
 
@@ -367,9 +383,11 @@ export function BookingDialog({
                 <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
-                      <TableHead>Số ghế</TableHead>
-                      <TableHead>Loại ghế</TableHead>
-                      <TableHead className="text-right">Giá vé</TableHead>
+                      <TableHead>{t("bookings.modal.seatnumber")}</TableHead>
+                      <TableHead>{t("bookings.modal.seattype")}</TableHead>
+                      <TableHead className="text-right">
+                        {t("bookings.modal.ticketprice")}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -384,7 +402,7 @@ export function BookingDialog({
                               seat.type === "VIP"
                                 ? "default"
                                 : seat.type === "COUPLE"
-                                ? "destructive"
+                                ? "pink"
                                 : "secondary"
                             }
                             className="text-[10px]"
@@ -404,7 +422,7 @@ export function BookingDialog({
                           colSpan={3}
                           className="text-center text-muted-foreground h-16"
                         >
-                          Không có dữ liệu ghế
+                          {t("bookings.modal.noseat")}
                         </TableCell>
                       </TableRow>
                     )}
@@ -416,10 +434,10 @@ export function BookingDialog({
             {details?.foodItems && details.foodItems.length > 0 && (
               <div className="space-y-3">
                 <h4 className="font-semibold flex items-center gap-2">
-                  Bắp & Nước
+                  {t("bookings.modal.foodDrink")}
                   {loadingFood && (
                     <span className="text-xs text-muted-foreground font-normal animate-pulse">
-                      (Đang tải...)
+                      {t("common.loading")}
                     </span>
                   )}
                 </h4>
@@ -427,9 +445,15 @@ export function BookingDialog({
                   <Table>
                     <TableHeader className="bg-muted/50">
                       <TableRow>
-                        <TableHead>Tên món</TableHead>
-                        <TableHead className="text-center">Số lượng</TableHead>
-                        <TableHead className="text-right">Thành tiền</TableHead>
+                        <TableHead> {t("bookings.modal.foodname")}</TableHead>
+                        <TableHead className="text-center">
+                          {" "}
+                          {t("bookings.modal.quantity")}
+                        </TableHead>
+                        <TableHead className="text-right">
+                          {" "}
+                          {t("bookings.modal.foodprice")}
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -460,17 +484,17 @@ export function BookingDialog({
           </div>
         </ScrollArea>
 
-        <DialogFooter className="p-6 border-t bg-gray-50 flex items-center justify-between sm:justify-between">
+        <DialogFooter className="p-6 border-t bg-background flex items-center justify-between sm:justify-between">
           <div className="flex flex-col items-start gap-1">
             <span className="text-xs text-muted-foreground uppercase font-bold">
-              Tổng thanh toán
+              {t("bookings.modal.totalprice")}
             </span>
             <span className="text-2xl font-bold text-primary">
               {formatCurrency(booking.totalPrice)}
             </span>
           </div>
           <Button onClick={() => onOpenChange(false)} size="lg">
-            Đóng
+            {t("bookings.modal.cancel")}
           </Button>
         </DialogFooter>
       </DialogContent>
