@@ -156,12 +156,12 @@ export function UserDialog({
           <DialogTitle>
             {isCreateMode
               ? t("users.createUser.title")
-              : t("users.editUser.title")}
+              : t("users.updateUser.title")}
           </DialogTitle>
           <DialogDescription>
             {isCreateMode
               ? t("users.createUser.description")
-              : t("users.editUser.description")}
+              : t("users.updateUser.description")}
           </DialogDescription>
         </DialogHeader>
 

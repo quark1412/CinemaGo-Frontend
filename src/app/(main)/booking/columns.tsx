@@ -97,7 +97,6 @@ export const createColumns = ({
             </span>
           );
 
-        // Từ showtime map ra movie, room
         const movie = movieMap[st.movieId];
         const room = roomMap[st.roomId];
         const cinema = st.cinemaId

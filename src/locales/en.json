@@ -599,9 +599,74 @@
   },
   "foodDrinks": {
     "title": "Food & Drinks",
-    "createFoodDrink": "Create Food/Drink",
-    "updateFoodDrink": "Update Food/Drink",
-    "deleteFoodDrink": "Delete Food/Drink"
+    "deleteFoodDrink": "Delete Food/Drink",
+    "create": "Create New Food/Drink",
+    "image": "Image",
+    "currentimage": "Current image",
+    "uploadimage": "Upload Image",
+    "size": "PNG, JPG, WEBP up to 10MB",
+    "name": "Name",
+    "type": "Type",
+    "price": "Price (VND)",
+    "desc": "Description",
+    "availability": "Availability",
+    "created": "CreatedAt",
+    "searchfood": "Filter food/drinks ....",
+    "copy": "Copy ID",
+    "edit": "Edit",
+    "delete": "Mark Unavailable",
+    "restore": "Mark Available",
+
+    "createFoodDrink": {
+      "title": "Add New Food/Drink",
+      "description": "Fill in the details to create a new food/drink item.",
+      "createFoodDrinkSuccess": "Food/Drink created successfully!",
+      "createFoodDrinkError": "Failed to create food/drink"
+    },
+
+    "updateFoodDrink": {
+      "title": "Update Food/Drink",
+      "description": "Update the food/drink information below.",
+      "updateFoodDrinkSuccess": "Food/Drink updated successfully!",
+      "updateFoodDrinkError": "Failed to update food/drink"
+    },
+
+    "filterFoodDrink": {
+      "all": "All item",
+      "available": "Available",
+      "unavailable": "Unavailable",
+      "SNACK": "Snack",
+      "DRINK": "Drink",
+      "COMBO": "Combo"
+    },
+    "archiveFoodDrink": {
+      "title": "Mark available",
+      "description": "Are you sure you want to mark ",
+      "archiveFoodDrinkSuccess": "Availability toggled successfully!",
+      "archiveFoodDrinkError": "Failed to toggle availability",
+      "confirmText": " as unavailable?"
+    },
+    "restoreFoodDrink": {
+      "title": "Mark unavailable",
+
+      "restoreFoodDrinkSuccess": "Hiển thị đánh giá thành công",
+      "restoreFoodDrinkError": "Hiển thị đánh giá thất bại",
+      "confirmText": " as available?"
+    },
+    "modal": {
+      "enter_name": "Enter name",
+      "enter_price": "Enter price",
+      "enter_desc": "Enter description",
+
+      "your_reply": "Phản hồi của bạn",
+      "enter": "Nhập đánh giá",
+      "send": "Gửi đánh giá",
+      "sending": "Đang gửi",
+      "no_content": "Không có nội dung",
+      "min1": "Nội dung phản hồi không được để trống",
+      "min10": "Nội dung phản hồi phải có độ dài 10 ký tự trở lên",
+      "max1000": "Nội dung phản hồi không quá 1000 ký tự"
+    }
   },
   "account": {
     "account": "Account",

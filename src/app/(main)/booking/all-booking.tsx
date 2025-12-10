@@ -47,12 +47,11 @@ export default function AllBookings() {
   });
 
   const showtimeOptions = useMemo(() => {
-    // Lấy tất cả ID suất chiếu từ danh sách booking hiện tại
     const ids = Array.from(new Set(bookings.map((b) => b.showtimeId)));
 
     return ids
-      .map((id) => maps.showTimeMap[id]) // Lấy object showtime từ Map
-      .filter(Boolean) // Loại bỏ undefined
+      .map((id) => maps.showTimeMap[id])
+      .filter(Boolean)
       .map((st) => {
         const movie = maps.movieMap[st.movieId];
         const timeLabel = new Date(st.startTime).toLocaleString("vi-VN", {
@@ -64,8 +63,8 @@ export default function AllBookings() {
 
         return {
           value: st.id,
-          label: movie ? movie.title : "Phim ?", // Hiển thị tên phim
-          meta: timeLabel, // Hiển thị giờ chiếu
+          label: movie ? movie.title : "Phim ?",
+          meta: timeLabel,
         };
       });
   }, [bookings, maps.showTimeMap, maps.movieMap]);

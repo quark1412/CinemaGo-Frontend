@@ -4,13 +4,12 @@ import { MyBookingParams } from "@/types/booking";
 import { getUserById } from "@/services/users";
 import { getShowtimeById } from "@/services/showtimes";
 import { getMovieById } from "@/services/movies";
-import { getCinemaById, getRoomById } from "@/services/cinemas"; // Kiểm tra lại đường dẫn import này xem đúng file chứa getRoomById chưa
-import type { User } from "@/types/User";
+import { getCinemaById, getRoomById } from "@/services/cinemas";
+import type { User } from "@/types/user";
 import type { Showtime } from "@/types/showtime";
 import type { Movie } from "@/types/movie";
 import type { Room, Cinema } from "@/types/cinema";
 
-// Định nghĩa lại các Map type
 export type UserMap = Record<string, User>;
 export type ShowTimeMap = Record<string, Showtime>;
 export type MovieMap = Record<string, Movie>;
@@ -112,7 +111,6 @@ export function useBookingTable(initialParams: MyBookingParams) {
         });
       }
 
-      // --- C. Từ Showtimes -> Fetch Movie/Room/Cinema ---
       const currentShowTimeIds = Array.from(
         new Set(bookingList.map((b) => b.showtimeId))
       );
@@ -178,7 +176,6 @@ export function useBookingTable(initialParams: MyBookingParams) {
 
       console.log("Final Cache:", cache.current);
 
-      // --- D. Trigger Re-render ---
       setUserMap({ ...cache.current.users });
       setShowTimeMap({ ...cache.current.showTimes });
       setMovieMap({ ...cache.current.movies });

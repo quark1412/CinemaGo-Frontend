@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
-// Import UI Components (Shadcn)
 import {
   Dialog,
   DialogContent,
@@ -134,7 +133,6 @@ export function BookingDialog({
       const current = coupleSeats[i];
       const nextIndex = i + 1;
 
-      // Logic kiểm tra ghế liền kề
       if (nextIndex < coupleSeats.length) {
         const next = coupleSeats[nextIndex];
         if (next.row === current.row && next.number === current.number + 1) {
@@ -171,7 +169,6 @@ export function BookingDialog({
     if (open && booking) {
       const { userMap, showtimeMap, movieMap, roomMap, cinemaMap } = maps || {};
 
-      // 1. User Info
       const user = booking.userId ? userMap[booking.userId] : null;
       const userObj = user
         ? {

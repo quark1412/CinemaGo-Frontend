@@ -605,12 +605,77 @@
       "min8": "Mật khẩu tối thiếu 8 ký tự"
     }
   },
+
   "foodDrinks": {
     "title": "Đồ ăn & Đồ uống",
-    "createFoodDrink": "Tạo đồ ăn/đồ uống",
-    "updateFoodDrink": "Cập nhật đồ ăn/đồ uống",
-    "deleteFoodDrink": "Xóa đồ ăn/đồ uống"
+    "deleteFoodDrink": "Xóa đồ ăn/đồ uống",
+
+    "image": "Ảnh",
+    "uploadimage": "Tải lên ảnh",
+    "currentimage": "Ảnh hiện tại",
+    "size": "PNG, JPG, WEBP lên đến 10MB",
+    "name": "Tên món",
+    "type": "Loại",
+    "price": "Đơn giá (VNĐ)",
+    "desc": "Mô tả",
+    "availability": "Khả dụng kho",
+    "created": "Ngày tạo",
+    "searchfood": "Tìm kiếm đồ ăn/đồ uống ....",
+    "copy": "Sao chép ID",
+    "edit": "Chỉnh sửa",
+    "delete": "Đánh dấu hết hàng",
+    "restore": "Đánh dấu có sẵn",
+
+    "filterFoodDrink": {
+      "all": "Tất cả",
+      "available": "Có sẵn",
+      "unavailable": "Hết hàng",
+      "SNACK": "Đồ ăn",
+      "DRINK": "Đồ uống",
+      "COMBO": "Combo"
+    },
+
+    "createFoodDrink": {
+      "title": "Thêm đồ ăn/uống",
+      "description": "Tạo mới thông tin đồ ăn/uống",
+      "createFoodDrinkSuccess": "Tạo đồ ăn/uống thành công!",
+      "createFoodDrinkError": "Tạo đồ ăn/uống thất bại"
+    },
+
+    "updateFoodDrink": {
+      "title": "Cập nhật đồ ăn/đồ uống",
+      "description": "Chỉnh sửa thông tin đồ ăn/uống bên dưới.",
+      "updateFoodDrinkSuccess": "Cập nhật đồ ăn/uống thành công!",
+      "updateFoodDrinkError": "Cập nhật đồ ăn/uống thất bại"
+    },
+
+    "archiveFoodDrink": {
+      "title": "Đánh dấu hết hàng",
+      "description": "Bạn có chắc muốn đánh dấu ",
+      "archiveFoodDrinkSuccess": "Chuyển trạng thái đồ ăn/uống thành công",
+      "archiveFoodDrinkError": "Chuyển trạng thái đồ ăn/uống thất bại",
+      "confirmText": " là hết hàng?"
+    },
+    "restoreFoodDrink": {
+      "title": "Đánh dấu còn hàng",
+
+      "restoreFoodDrinkSuccess": "Hiển thị đánh giá thành công",
+      "restoreFoodDrinkError": "Hiển thị đánh giá thất bại",
+      "confirmText": " là còn hàng?"
+    },
+    "modal": {
+      "enter_name": "Nhập tên món",
+      "enter_price": "Nhập giá",
+      "enter_desc": "Nhập mô tả",
+
+      "sending": "Đang gửi",
+      "no_content": "Không có nội dung",
+      "min1": "Nội dung phản hồi không được để trống",
+      "min10": "Nội dung phản hồi phải có độ dài 10 ký tự trở lên",
+      "max1000": "Nội dung phản hồi không quá 1000 ký tự"
+    }
   },
+
   "account": {
     "account": "Tài khoản",
     "logOut": "Đăng xuất",

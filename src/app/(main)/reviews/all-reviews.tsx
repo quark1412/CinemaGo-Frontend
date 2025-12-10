@@ -38,21 +38,20 @@ export default function AllReviews() {
     reviews,
     pagination,
     isLoading,
-    maps, // Chứa userMap và movieMap
+    maps,
     onPaginationChange,
 
     setMovieFilter,
     setStatusFilter,
     setVisibilityFilter,
 
-    refresh, // Hàm reload lại list sau khi action
+    refresh,
   } = useReviewTable({
     page: 1,
     limit: 10,
   });
 
   const movieOptions = useMemo(() => {
-    // Chuyển Map { id: Movie } thành mảng Option { value, label }
     return Object.values(maps.movieMap).map((m) => ({
       value: m.id,
       label: m.title,
@@ -92,29 +91,25 @@ export default function AllReviews() {
       } else {
         await unhideMutation.mutateAsync(confirmationDialog.review.id);
       }
-      refresh(); // Reload list
+      refresh();
       setConfirmationDialog({ open: false, review: null, action: "hide" });
     } catch (error) {}
   };
 
   const handleReplySuccess = () => {
-    refresh(); // Reload list sau khi reply
+    refresh();
   };
 
   const handlePaginationChange = (page: number, pageSize: number) => {
     setCurrentParams({ ...currentParams, page, limit: pageSize });
   };
 
-  const handleSearchChange = (search: string) => {
-    setCurrentParams({ ...currentParams, page: 1, userId: search });
-  };
-
   const columns = createColumns({
     onReply: handleReplyClick,
     onHide: handleHideClick,
     onUnhide: handleUnhideClick,
-    userMap: maps.userMap, // Truyền Map
-    movieMap: maps.movieMap, // Truyền Map
+    userMap: maps.userMap,
+    movieMap: maps.movieMap,
   });
 
   return (

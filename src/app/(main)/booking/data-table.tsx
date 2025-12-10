@@ -49,7 +49,6 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   loading?: boolean;
 
-  // Pagination Props
   pagination?: {
     totalItems: number;
     totalPages: number;
@@ -78,11 +77,10 @@ export function DataTable<TData, TValue>({
   onShowtimeChange,
   showtimeOptions = [],
 }: DataTableProps<TData, TValue>) {
-  // const { t } = useI18n(); // Mở lại nếu dùng i18n
+  // const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  // Local state cho filters
   const [searchValue, setSearchValue] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedShowtime, setSelectedShowtime] = useState<string>("all");
@@ -100,25 +98,22 @@ export function DataTable<TData, TValue>({
       sorting,
       columnFilters,
     },
-    manualPagination: true, // Quan trọng: Báo cho TanStack biết ta đang phân trang từ Server
+    manualPagination: true,
     pageCount: pagination?.totalPages,
   });
 
-  // Xử lý Clear Filter
   const handleClearFilters = () => {
     setSearchValue("");
     setSelectedType("all");
 
-    // Gọi callback reset về undefined/empty
     onSearchChange?.("");
-    onTypeChange?.("all"); // Hoặc undefined tùy logic cha
+    onTypeChange?.("all");
     onShowtimeChange?.("");
   };
 
   const hasActiveFilters =
     searchValue || selectedType !== "all" || selectedShowtime !== "all";
 
-  // Xử lý Pagination
   const handlePageChange = (page: number) => {
     onPaginationChange?.(page, pagination?.pageSize || 10);
   };
