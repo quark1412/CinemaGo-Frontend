@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { User } from "@/types/User";
+import { User } from "@/types/user";
 import { DataTable } from "./data-table";
 import { createColumns } from "./columns";
 import { UserDialog } from "./user-dialog";

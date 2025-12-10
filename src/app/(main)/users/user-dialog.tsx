@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User, Role } from "@/types/User";
+import { User, Role } from "@/types/user";
 import { useCreateUser, useUpdateUser } from "@/hooks/use-users";
 import { useI18n } from "@/contexts/I18nContext";
 

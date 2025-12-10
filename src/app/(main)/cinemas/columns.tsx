@@ -145,7 +145,7 @@ export const createColumns = ({
                 >
                   <MapPin className="text-primary" />
                   <span className="text-xs">
-                    {t("common.actions.viewOnMap")}
+                    {t("cinemas.actions.viewOnMap")}
                   </span>
                 </DropdownMenuItem>
               )}

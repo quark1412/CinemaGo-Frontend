@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Archive, ArchiveRestore } from "lucide-react";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface ConfirmationDialogProps {
   open: boolean;
@@ -34,6 +35,7 @@ export function ConfirmationDialog({
   onConfirm,
   loading = false,
 }: ConfirmationDialogProps) {
+  const { t } = useI18n();
   const handleConfirm = () => {
     onConfirm();
   };
@@ -93,7 +95,7 @@ export function ConfirmationDialog({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            {cancelText}
+            {t("common.cancel")}
           </Button>
           <Button
             variant={getConfirmButtonVariant()}

@@ -1,7 +1,6 @@
 "use client";
 
-import * as React from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   ColumnDef,
@@ -80,15 +79,14 @@ export function RoomDataTable<TData, TValue>({
   loading = false,
 }: DataTableProps<TData, TValue>) {
   const { t } = useI18n();
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [searchValue, setSearchValue] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [searchValue, setSearchValue] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
   >("all");
-  const [cinemaFilter, setCinemaFilter] = React.useState<string | "all">("all");
+  const [cinemaFilter, setCinemaFilter] = useState<string | "all">("all");
+  const [hoveredRowIndex, setHoveredRowIndex] = useState<number | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const table = useReactTable({
@@ -256,8 +254,16 @@ export function RoomDataTable<TData, TValue>({
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
+                    const columnId = header.column.id;
+                    // Add separator after cinema and name columns
+                    const hasSeparator =
+                      columnId === "cinemaName" || columnId === "name";
+
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead
+                        key={header.id}
+                        className={hasSeparator ? "border-r border-border" : ""}
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
@@ -272,21 +278,86 @@ export function RoomDataTable<TData, TValue>({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                table.getRowModel().rows.map((row, rowIndex) => {
+                  const originalData = row.original as any;
+                  const cinemaRowSpan = originalData._cinemaRowSpan || 0;
+
+                  // Check if this is the first row in cinema group (rowSpan > 0 means first row)
+                  const isFirstCinemaRow = cinemaRowSpan > 0;
+
+                  // Check if this row is hovered
+                  const isRowHovered = hoveredRowIndex === rowIndex;
+
+                  // Check if the hovered row belongs to this cinema group
+                  const isCinemaCellHighlighted =
+                    hoveredRowIndex !== null &&
+                    isFirstCinemaRow &&
+                    hoveredRowIndex >= rowIndex &&
+                    hoveredRowIndex < rowIndex + cinemaRowSpan;
+
+                  return (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      className={isRowHovered ? "bg-muted/50" : ""}
+                      onMouseEnter={() => setHoveredRowIndex(rowIndex)}
+                      onMouseLeave={() => setHoveredRowIndex(null)}
+                    >
+                      {row
+                        .getVisibleCells()
+                        .map((cell) => {
+                          const columnId = cell.column.id;
+
+                          // Apply rowSpan for cinema column - skip rendering if not first in group
+                          if (columnId === "cinemaName") {
+                            if (!isFirstCinemaRow) {
+                              return null; // Don't render cell if not first in group
+                            }
+                            const cellContent = flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            );
+                            return (
+                              <TableCell
+                                key={cell.id}
+                                rowSpan={
+                                  cinemaRowSpan > 1 ? cinemaRowSpan : undefined
+                                }
+                                className={`text-center border-r border-border align-middle ${
+                                  isCinemaCellHighlighted ? "bg-muted/50" : ""
+                                }`}
+                              >
+                                {cellContent}
+                              </TableCell>
+                            );
+                          }
+
+                          // Regular cells
+                          const cellContent = flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          );
+
+                          // Add separator after room name column
+                          if (columnId === "name") {
+                            return (
+                              <TableCell
+                                key={cell.id}
+                                className="border-r border-border"
+                              >
+                                {cellContent}
+                              </TableCell>
+                            );
+                          }
+
+                          return (
+                            <TableCell key={cell.id}>{cellContent}</TableCell>
+                          );
+                        })
+                        .filter((cell) => cell !== null)}
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell

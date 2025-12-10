@@ -170,26 +170,6 @@ export function MovieDetailsDialog({
               </p>
             </div>
 
-            {/* Additional Info */}
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-              <div className="space-y-1">
-                <p className="text-sm font-medium">
-                  {t("movies.details.created")}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {formatDate(movie.createdAt)}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm font-medium">
-                  {t("movies.details.lastUpdated")}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {formatDate(movie.updatedAt)}
-                </p>
-              </div>
-            </div>
-
             {/* Actions */}
             <div className="flex justify-end pt-4 border-t">
               <Button onClick={handleClose}>{t("common.close")}</Button>
