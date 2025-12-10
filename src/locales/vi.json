@@ -8,9 +8,11 @@
     "update": "Cập nhật",
     "add": "Thêm",
     "search": "Tìm kiếm",
+    "min": "phút",
     "filter": "Lọc",
     "updatedAt": "Ngày cập nhật",
     "createdAt": "Ngày tạo",
+    "selected": "đã chọn",
     "actions": {
       "edit": "Sửa",
       "copyId": "Sao chép ID",
@@ -356,6 +358,7 @@
   },
   "showtimes": {
     "searchShowtimes": "Tìm kiếm lịch chiếu",
+    "searchmovies": "Tìm kiếm phim...",
     "movie": "Phim",
     "startTime": "Thời gian bắt đầu",
     "endTime": "Thời gian kết thúc",

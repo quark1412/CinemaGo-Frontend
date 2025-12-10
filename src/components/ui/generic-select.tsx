@@ -12,6 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useI18n } from "@/contexts/I18nContext";
 
 export interface SelectOption {
   value: string;
@@ -60,6 +61,8 @@ export function GenericSelect<T>({
   onRemoveBadge,
   showSearch = true,
 }: GenericSelectProps<T>) {
+  const { t } = useI18n();
+
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
 
@@ -116,8 +119,8 @@ export function GenericSelect<T>({
               {selectedOptions.length === 0
                 ? placeholder
                 : multiple
-                ? `${selectedOptions.length} selected`
-                : selectedOptions[0]?.label}
+                ? `${selectedOptions.length} ${t("common.selected")} `
+                : selectedOptions[0]?.label}{" "}
             </span>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>

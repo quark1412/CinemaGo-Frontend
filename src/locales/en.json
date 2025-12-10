@@ -6,7 +6,9 @@
     "edit": "Edit",
     "create": "Create",
     "update": "Update",
+    "selected": "selected",
     "add": "Add",
+    "min": "min",
     "search": "Search",
     "filter": "Filter",
     "updatedAt": "Updated At",
@@ -350,6 +352,7 @@
   },
   "showtimes": {
     "searchShowtimes": "Search showtimes",
+    "searchmovies": "Search movies...",
     "movie": "Movie",
     "startTime": "Start Time",
     "endTime": "End Time",
