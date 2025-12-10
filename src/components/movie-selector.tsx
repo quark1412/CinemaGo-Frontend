@@ -6,6 +6,7 @@ import { getAllMovies } from "@/services/movies";
 import { Movie } from "@/types/movie";
 import { SelectHookReturn } from "@/components/ui/generic-select";
 import { useMemo, useState } from "react";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface MovieSelectorProps {
   value?: string[];
@@ -27,6 +28,8 @@ export function MovieSelector({
   genreFilter,
   ratingFilter,
 }: MovieSelectorProps) {
+  const { t } = useI18n();
+
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data, isLoading } = useQuery({
@@ -68,7 +71,7 @@ export function MovieSelector({
       value={value}
       onValueChange={onValueChange}
       placeholder={placeholder}
-      searchPlaceholder="Search movies..."
+      searchPlaceholder={t("showtimes.searchmovies")}
       multiple={true}
       disabled={disabled}
       className={className}
