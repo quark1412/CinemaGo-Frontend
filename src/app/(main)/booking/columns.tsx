@@ -14,6 +14,7 @@ import {
   RoomMap,
   CinemaMap,
 } from "@/types/booking";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface ColumnProps {
   onView: (booking: Booking) => void;
@@ -50,27 +51,27 @@ export const createColumns = ({
   roomMap,
   cinemaMap,
 }: ColumnProps): ColumnDef<Booking>[] => {
+  const { t } = useI18n();
+
   return [
     {
       accessorKey: "id",
-      header: "Mã đơn",
+      header: () => <div className="font-bold text-xs">{t("bookings.id")}</div>,
       cell: ({ row }) => (
-        <span className="font-mono text-xs text-gray-600">
-          {row.original.id.slice(0, 8)}...
-        </span>
+        <span className=" text-xs ">{row.original.id.slice(0, 8)}...</span>
       ),
     },
     {
       accessorKey: "userId",
-      header: "Khách hàng",
+      header: t("bookings.customer"),
       cell: ({ row }) => {
         const userId = row.original.userId;
         const user = userMap[userId];
 
         if (!user) {
           return (
-            <span className="text-gray-400 italic text-xs">
-              {userId ? "Đang tải..." : "Khách vãng lai"}
+            <span className=" italic text-xs">
+              {userId ? t("bookings.loadingcus") : t("bookings.unknownCus")}
             </span>
           );
         }
@@ -78,26 +79,23 @@ export const createColumns = ({
         return (
           <div className="flex flex-col">
             <span className="font-medium text-sm">{user.fullname}</span>
-            <span className="text-xs text-gray-500">{user.email}</span>
+            <span className="text-xs ">{user.email}</span>
           </div>
         );
       },
     },
     {
       accessorKey: "showtimeId",
-      header: "Suất chiếu / Phim",
+      header: t("bookings.showtime"),
       cell: ({ row }) => {
         const stId = row.original.showtimeId;
         const st = showtimeMap[stId];
 
         if (!st)
           return (
-            <span className="text-xs text-gray-400 animate-pulse">
-              Checking...
-            </span>
+            <span className="text-xs animate-pulse">{t("common.loading")}</span>
           );
 
-        // Từ showtime map ra movie, room
         const movie = movieMap[st.movieId];
         const room = roomMap[st.roomId];
         const cinema = st.cinemaId
@@ -106,9 +104,9 @@ export const createColumns = ({
           ? cinemaMap[room.cinemaId]
           : null;
 
-        const movieName = movie?.title || "Đang tải phim...";
-        const roomName = room?.name || "Phòng ?";
-        const cinemaName = cinema?.name || "";
+        const movieName = movie?.title || t("bookings.loadingmovie");
+        const roomName = room?.name || t("bookings.loadingroom");
+        const cinemaName = cinema?.name || t("bookings.loadingcinema");
         const time = formatDateTime(st.startTime);
 
         return (
@@ -119,10 +117,8 @@ export const createColumns = ({
             >
               {movieName}
             </div>
-            <div className="text-xs text-gray-600 mt-1 flex flex-col gap-0.5">
-              {cinemaName && (
-                <span className="font-medium text-gray-500">{cinemaName}</span>
-              )}
+            <div className="text-xs  mt-1 flex flex-col gap-0.5">
+              {cinemaName && <span className="font-medium ">{cinemaName}</span>}
               <span>
                 {roomName} • {time}
               </span>
@@ -133,12 +129,12 @@ export const createColumns = ({
     },
     {
       accessorKey: "type",
-      header: "Hình thức",
+      header: t("bookings.type"),
       cell: ({ row }) => {
         const type = row.original.type;
         return (
           <Badge variant={type === "online" ? "default" : "secondary"}>
-            {type === "online" ? "Đặt Online" : "Tại quầy"}
+            {type === "online" ? t("bookings.online") : t("bookings.offline")}
           </Badge>
         );
       },
@@ -146,7 +142,7 @@ export const createColumns = ({
     {
       accessorKey: "totalPrice",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Tổng tiền" />
+        <DataTableColumnHeader column={column} title={t("bookings.total")} />
       ),
       cell: ({ row }) => (
         <b className="text-green-600 text-sm">
@@ -156,9 +152,9 @@ export const createColumns = ({
     },
     {
       accessorKey: "createdAt",
-      header: "Ngày đặt",
+      header: t("bookings.created"),
       cell: ({ row }) => (
-        <span className="text-xs text-gray-500">
+        <span className="text-xs ">
           {formatDateTime(row.original.createdAt as any)}
         </span>
       ),
@@ -169,7 +165,7 @@ export const createColumns = ({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+          className="h-8 w-8 hover:bg-blue-50"
           onClick={() => onView(row.original)}
         >
           <Eye className="h-4 w-4" />

@@ -998,7 +998,7 @@ export function ShowtimeDialog({
                             ? "showtimes.updateShowtime.duration"
                             : "showtimes.createShowtime.duration"
                         )}
-                        : {selectedMovie.duration} min •{" "}
+                        : {selectedMovie.duration} {t("common.min")} •{" "}
                         {t(
                           isEditing
                             ? "showtimes.updateShowtime.endsAt"

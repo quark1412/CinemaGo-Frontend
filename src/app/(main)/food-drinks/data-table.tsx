@@ -39,6 +39,7 @@ import {
   ChevronsRight,
   CirclePlus,
 } from "lucide-react";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -68,6 +69,8 @@ export function DataTable<TData, TValue>({
   onCreateClick,
   loading = false,
 }: DataTableProps<TData, TValue>) {
+  const { t } = useI18n();
+
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -102,7 +105,7 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center justify-between py-4 flex-shrink-0 gap-2">
         <div className="flex items-center gap-2">
           <Input
-            placeholder="Filter food/drinks..."
+            placeholder={t("foodDrinks.searchfood")}
             value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) => {
               const value = event.target.value;
@@ -133,9 +136,17 @@ export function DataTable<TData, TValue>({
               <SelectValue placeholder="Filter by availability" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Items</SelectItem>
-              <SelectItem value="true">Available Only</SelectItem>
-              <SelectItem value="false">Unavailable Only</SelectItem>
+              <SelectItem value="all">
+                {t("foodDrinks.filterFoodDrink.all")}
+              </SelectItem>
+              <SelectItem value="true">
+                {" "}
+                {t("foodDrinks.filterFoodDrink.available")}
+              </SelectItem>
+              <SelectItem value="false">
+                {" "}
+                {t("foodDrinks.filterFoodDrink.unavailable")}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -146,7 +157,10 @@ export function DataTable<TData, TValue>({
           className="gap-2"
         >
           <CirclePlus />
-          <span className="text-sm font-medium">Add Food/Drink</span>
+          <span className="text-sm font-medium">
+            {" "}
+            {t("foodDrinks.createFoodDrink.title")}
+          </span>
         </Button>
       </div>
       <div className="overflow-hidden rounded-md border flex-1 min-h-0">
@@ -203,7 +217,7 @@ export function DataTable<TData, TValue>({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No results.
+                    {t("common.noData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -214,7 +228,7 @@ export function DataTable<TData, TValue>({
 
       <div className="flex items-center justify-between space-x-6 lg:space-x-8 mt-4">
         <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Rows per page</p>
+          <p className="text-sm font-medium">{t("common.rowsPerPage")}</p>
           <Select
             value={`${
               pagination?.pageSize || table.getState().pagination.pageSize
@@ -242,10 +256,8 @@ export function DataTable<TData, TValue>({
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page{" "}
-            {pagination?.currentPage ||
-              table.getState().pagination.pageIndex + 1}{" "}
-            of {pagination?.totalPages || table.getPageCount()}
+            {t("common.page")} {pagination?.currentPage} {t("common.of")}{" "}
+            {pagination?.totalPages}
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -264,7 +276,7 @@ export function DataTable<TData, TValue>({
                   : !table.getCanPreviousPage()
               }
             >
-              <span className="sr-only">Go to first page</span>
+              <span className="sr-only">{t("common.goToFirstPage")}</span>
               <ChevronsLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -286,7 +298,7 @@ export function DataTable<TData, TValue>({
                   : !table.getCanPreviousPage()
               }
             >
-              <span className="sr-only">Go to previous page</span>
+              <span className="sr-only">{t("common.goToPreviousPage")}</span>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -306,7 +318,7 @@ export function DataTable<TData, TValue>({
                 pagination ? !pagination.hasNextPage : !table.getCanNextPage()
               }
             >
-              <span className="sr-only">Go to next page</span>
+              <span className="sr-only">{t("common.goToNextPage")}</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
@@ -326,7 +338,7 @@ export function DataTable<TData, TValue>({
                 pagination ? !pagination.hasNextPage : !table.getCanNextPage()
               }
             >
-              <span className="sr-only">Go to last page</span>
+              <span className="sr-only">{t("common.goToLastPage")}</span>
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>

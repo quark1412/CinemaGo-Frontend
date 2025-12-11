@@ -1,16 +1,14 @@
-import { useState, useEffect, useCallback, useRef } from "react"; // Thêm useRef
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useReviews } from "@/hooks/use-reviews";
 import { GetReviewsParams } from "@/services/reviews";
 
-// Import Service Get All (cho lúc đầu)
 import { getAllUsers } from "@/services/users";
 import { getAllMovies } from "@/services/movies";
 
-// Import Service Get Detail (để vá lỗi khi thiếu)
 import { getUserById } from "@/services/users";
 import { getMovieById } from "@/services/movies";
 
-import { User } from "@/types/User";
+import { User } from "@/types/user";
 import { Movie } from "@/types/movie";
 
 export type UserMap = Record<string, User>;
@@ -148,13 +146,10 @@ export function useReviewTable(initialParams: GetReviewsParams) {
   }, []);
 
   const setStatusFilter = useCallback((status?: string) => {
-    // Logic map status string từ dropdown sang value backend cần
-    // Ví dụ: 'replied' -> 'REPLIED', 'unreplied' -> 'PENDING'
     setParams((prev) => ({ ...prev, page: 1, status }));
   }, []);
 
   const setVisibilityFilter = useCallback((visibility?: string) => {
-    // Map 'visible' -> true, 'hidden' -> false
     const isActive =
       visibility === "visible"
         ? true

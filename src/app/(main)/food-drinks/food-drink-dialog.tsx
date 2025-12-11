@@ -36,28 +36,7 @@ import {
 } from "@/components/ui/select";
 import { FoodDrink, FoodDrinkType } from "@/types/fooddrink";
 import { useCreateFoodDrink, useUpdateFoodDrink } from "@/hooks/use-fooddrinks";
-
-const foodDrinkSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Name is required")
-    .min(2, "Name must be at least 2 characters")
-    .max(100, "Name must be less than 100 characters"),
-  description: z
-    .string()
-    .min(1, "Description is required")
-    .max(500, "Description must be less than 500 characters"),
-  price: z
-    .number({ error: "Price is required" })
-    .min(0, "Price must be greater than or equal to 0")
-    .int("Price must be an integer"),
-  type: z.enum(["SNACK", "DRINK", "COMBO"], {
-    error: "Type is required",
-  }),
-  image: z.string().optional(),
-});
-
-type FoodDrinkFormData = z.infer<typeof foodDrinkSchema>;
+import { useI18n } from "@/contexts/I18nContext";
 
 interface FoodDrinkDialogProps {
   open: boolean;
@@ -72,6 +51,30 @@ export function FoodDrinkDialog({
   foodDrink,
   onSuccess,
 }: FoodDrinkDialogProps) {
+  const { t } = useI18n();
+
+  const foodDrinkSchema = z.object({
+    name: z
+      .string()
+      .min(1, t("foodDrinks.modal.name.min1"))
+      .min(2, t("foodDrinks.modal.name.min2"))
+      .max(100, t("foodDrinks.modal.name.max100")),
+    description: z
+      .string()
+      .min(1, t("foodDrinks.modal.desc.min1"))
+      .max(500, t("foodDrinks.modal.desc.max500")),
+    price: z
+      .number({ error: t("foodDrinks.modal.price.number") })
+      .min(0, t("foodDrinks.modal.price.min0"))
+      .int(t("foodDrinks.modal.price.int")),
+    type: z.enum(["SNACK", "DRINK", "COMBO"], {
+      error: t("foodDrinks.modal.type.error"),
+    }),
+    image: z.string().optional(),
+  });
+
+  type FoodDrinkFormData = z.infer<typeof foodDrinkSchema>;
+
   const isEditing = !!foodDrink;
   const createMutation = useCreateFoodDrink();
   const updateMutation = useUpdateFoodDrink();
@@ -192,12 +195,14 @@ export function FoodDrinkDialog({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Food/Drink" : "Create New Food/Drink"}
+            {isEditing
+              ? t("foodDrinks.updateFoodDrink.title")
+              : t("foodDrinks.createFoodDrink.title")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the food/drink information below."
-              : "Fill in the details to create a new food/drink item."}
+              ? t("foodDrinks.updateFoodDrink.description")
+              : t("foodDrinks.createFoodDrink.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -210,7 +215,7 @@ export function FoodDrinkDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Image{" "}
+                    {t("foodDrinks.image")}
                     {!isEditing && <span className="text-red-500">*</span>}
                   </FormLabel>
                   <FormControl>
@@ -237,10 +242,10 @@ export function FoodDrinkDialog({
                             <div className="flex flex-col items-center justify-center">
                               <ImagePlus size={40} />
                               <p className="mt-2 text-sm text-gray-500 font-semibold">
-                                Upload image
+                                {t("foodDrinks.uploadimage")}
                               </p>
                               <p className="text-xs text-gray-400">
-                                PNG, JPG, WEBP up to 10MB
+                                {t("foodDrinks.size")}
                               </p>
                             </div>
                           </Label>
@@ -266,7 +271,8 @@ export function FoodDrinkDialog({
                             <X className="h-4 w-4" />
                           </Button>
                           <p className="text-xs text-muted-foreground mt-2">
-                            {imagePreview.imageFile?.name || "Current image"}
+                            {imagePreview.imageFile?.name ||
+                              t("foodDrinks.currentimage")}
                           </p>
                         </div>
                       )}
@@ -283,10 +289,10 @@ export function FoodDrinkDialog({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{t("foodDrinks.name")}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter name"
+                        placeholder={t("foodDrinks.modal.enter_name")}
                         {...field}
                         disabled={isLoading}
                       />
@@ -301,7 +307,7 @@ export function FoodDrinkDialog({
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type</FormLabel>
+                    <FormLabel>{t("foodDrinks.type")}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -313,9 +319,17 @@ export function FoodDrinkDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="SNACK">Snack</SelectItem>
-                        <SelectItem value="DRINK">Drink</SelectItem>
-                        <SelectItem value="COMBO">Combo</SelectItem>
+                        <SelectItem value="SNACK">
+                          {t("foodDrinks.filterFoodDrink.SNACK")}
+                        </SelectItem>
+                        <SelectItem value="DRINK">
+                          {" "}
+                          {t("foodDrinks.filterFoodDrink.DRINK")}
+                        </SelectItem>
+                        <SelectItem value="COMBO">
+                          {" "}
+                          {t("foodDrinks.filterFoodDrink.COMBO")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -329,11 +343,11 @@ export function FoodDrinkDialog({
               name="price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Price (VND)</FormLabel>
+                  <FormLabel>{t("foodDrinks.price")}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Enter price"
+                      placeholder={t("foodDrinks.modal.enter_price")}
                       {...field}
                       value={field.value?.toString() ?? ""}
                       onChange={(e) => {
@@ -355,10 +369,10 @@ export function FoodDrinkDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t("foodDrinks.desc")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter description"
+                      placeholder={t("foodDrinks.modal.enter_desc")}
                       className="resize-none"
                       rows={4}
                       {...field}
@@ -377,16 +391,16 @@ export function FoodDrinkDialog({
                 onClick={handleClose}
                 disabled={isLoading}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading
                   ? isEditing
-                    ? "Updating..."
-                    : "Creating..."
+                    ? t("common.updating")
+                    : t("common.creating")
                   : isEditing
-                  ? "Update Food/Drink"
-                  : "Create Food/Drink"}
+                  ? t("foodDrinks.updateFoodDrink.title")
+                  : t("foodDrinks.createFoodDrink.title")}
               </Button>
             </DialogFooter>
           </form>

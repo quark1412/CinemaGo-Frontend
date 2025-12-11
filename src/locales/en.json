@@ -6,7 +6,9 @@
     "edit": "Edit",
     "create": "Create",
     "update": "Update",
+    "selected": "selected",
     "add": "Add",
+    "min": "min",
     "search": "Search",
     "filter": "Filter",
     "updatedAt": "Updated At",
@@ -49,6 +51,7 @@
     "showtimes": "Showtimes",
     "users": "Users",
     "foodDrinks": "Food & Drinks",
+    "bookings": "Bookings",
     "report": "Report"
   },
   "auth": {
@@ -349,6 +352,7 @@
   },
   "showtimes": {
     "searchShowtimes": "Search showtimes",
+    "searchmovies": "Search movies...",
     "movie": "Movie",
     "startTime": "Start Time",
     "endTime": "End Time",
@@ -599,9 +603,83 @@
   },
   "foodDrinks": {
     "title": "Food & Drinks",
-    "createFoodDrink": "Create Food/Drink",
-    "updateFoodDrink": "Update Food/Drink",
-    "deleteFoodDrink": "Delete Food/Drink"
+    "deleteFoodDrink": "Delete Food/Drink",
+    "create": "Create New Food/Drink",
+    "image": "Image",
+    "currentimage": "Current image",
+    "uploadimage": "Upload Image",
+    "size": "PNG, JPG, WEBP up to 10MB",
+    "name": "Name",
+    "type": "Type",
+    "price": "Price (VND)",
+    "desc": "Description",
+    "availability": "Availability",
+    "created": "CreatedAt",
+    "searchfood": "Filter food/drinks ....",
+    "copy": "Copy ID",
+    "edit": "Edit",
+    "delete": "Mark Unavailable",
+    "restore": "Mark Available",
+
+    "createFoodDrink": {
+      "title": "Add New Food/Drink",
+      "description": "Fill in the details to create a new food/drink item.",
+      "createFoodDrinkSuccess": "Food/Drink created successfully!",
+      "createFoodDrinkError": "Failed to create food/drink"
+    },
+
+    "updateFoodDrink": {
+      "title": "Update Food/Drink",
+      "description": "Update the food/drink information below.",
+      "updateFoodDrinkSuccess": "Food/Drink updated successfully!",
+      "updateFoodDrinkError": "Failed to update food/drink"
+    },
+
+    "filterFoodDrink": {
+      "all": "All item",
+      "available": "Available",
+      "unavailable": "Unavailable",
+      "SNACK": "Snack",
+      "DRINK": "Drink",
+      "COMBO": "Combo"
+    },
+    "archiveFoodDrink": {
+      "title": "Mark available",
+      "description": "Are you sure you want to mark ",
+      "archiveFoodDrinkSuccess": "Availability toggled successfully!",
+      "archiveFoodDrinkError": "Failed to toggle availability",
+      "confirmText": " as unavailable?"
+    },
+    "restoreFoodDrink": {
+      "title": "Mark unavailable",
+
+      "restoreFoodDrinkSuccess": "Hiển thị đánh giá thành công",
+      "restoreFoodDrinkError": "Hiển thị đánh giá thất bại",
+      "confirmText": " as available?"
+    },
+    "modal": {
+      "enter_name": "Enter name",
+      "enter_price": "Enter price",
+      "enter_desc": "Enter description",
+
+      "name": {
+        "min1": "Name is required",
+        "min2": "Name must be at least 2 characters",
+        "max100": "Name must be less than 100 characters"
+      },
+      "desc": {
+        "min1": "Description is required",
+        "max500": "Description must be less than 500 characters"
+      },
+      "price": {
+        "number": "Price is required",
+        "min0": "Price must be greater than or equal to 0",
+        "int": "Price must be an integer"
+      },
+      "type": {
+        "error": "Type is required"
+      }
+    }
   },
   "account": {
     "account": "Account",
@@ -657,6 +735,56 @@
       "week": "Week",
       "total": "Total",
       "fileName": "Revenue_Report_"
+    }
+  },
+
+  "bookings": {
+    "title": "Đồ ăn & Đồ uống",
+    "deleteFoodDrink": "Xóa đồ ăn/đồ uống",
+
+    "id": "Ticket ID",
+    "customer": "Customer",
+    "showtime": "Showtime/ Movie",
+    "type": "Type",
+    "total": "TotalPrice",
+    "created": "CreatedAt",
+    "online": "Online",
+    "offline": "Offline",
+    "loadingmovie": "Loading movie...",
+    "loadingroom": "Loading room...",
+    "loadingcinema": "Loading cinema...",
+    "loadingcus": "Loading customer...",
+    "unknownCus": "Noname customer",
+
+    "filterBooking": {
+      "allfilm": "All Movie",
+      "allshowtime": "All Showtime",
+      "allshowtimeofmovie": "All Showtime of this movie",
+      "noshowtime": "No Showtime",
+      "allType": "All ticket type"
+    },
+
+    "modal": {
+      "title": "Ticket Detail",
+      "cusinfo": "Customer Information",
+      "name": "Name: ",
+      "phone": "Phone Number: ",
+      "showtimeinfo": "Showtime Information",
+      "movie": "Movie: ",
+      "room/cinema": "Cinema/ Room: ",
+      "time": "Time: ",
+      "bookedseat": "Booked Seat",
+      "seat": "Seat",
+      "seatnumber": "Seat Number",
+      "seattype": "Seat Type",
+      "ticketprice": "Ticket Price",
+      "noseat": "No seats data",
+      "foodDrink": "Food & Drink",
+      "foodname": "Name",
+      "quantity": "Quantity",
+      "foodprice": "Price",
+      "totalprice": "Total Price",
+      "cancel": "Close"
     }
   }
 }
