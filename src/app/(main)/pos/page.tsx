@@ -59,8 +59,6 @@ import {
   releaseSeat,
   getHeldSeats,
 } from "@/services/booking";
-import { useUser } from "@/contexts/UserContext";
-import { User as UserType } from "@/types/user";
 import { Showtime } from "@/types/showtime";
 import { Room, Seat as SeatType } from "@/types/cinema";
 import { FoodDrink } from "@/types/fooddrink";
@@ -75,7 +73,6 @@ import { format } from "date-fns";
 import Image from "next/image";
 import { convertToEmbedUrl, formatPrice, cn } from "@/lib/utils";
 import { getSocket } from "@/services/socket";
-import { getAllUsers } from "@/services/users";
 import { getAllMovies } from "@/services/movies";
 import { getAllFoodDrinks } from "@/services/fooddrinks";
 import { Calendar } from "@/components/ui/calendar";
@@ -97,10 +94,8 @@ interface MovieWithShowtimes extends Movie {
 }
 
 export default function POSPage() {
-  const { user: adminUser } = useUser();
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [movieSearchTerm, setMovieSearchTerm] = useState<string>("");
-  const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [selectedShowtime, setSelectedShowtime] = useState<Showtime | null>(
     null
   );
@@ -123,22 +118,12 @@ export default function POSPage() {
     useState<Movie | null>(null);
   const [trailerOpen, setTrailerOpen] = useState(false);
   const [trailerUrl, setTrailerUrl] = useState<string>("");
-  const [userSelectOpen, setUserSelectOpen] = useState(false);
   const [foodDrinkSelectOpen, setFoodDrinkSelectOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "MOMO">("COD");
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [successBooking, setSuccessBooking] = useState<Booking | null>(null);
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [checkingPayment, setCheckingPayment] = useState(false);
-
-  // Fetch users
-  const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ["users"],
-    queryFn: () =>
-      getAllUsers({
-        limit: undefined,
-      }),
-  });
 
   // Set today's date as default
   useEffect(() => {
@@ -545,13 +530,6 @@ export default function POSPage() {
       return;
     }
 
-    // Use admin user if no user is selected
-    const bookingUserId = selectedUser?.id || adminUser?.id;
-    if (!bookingUserId) {
-      toast.error("Please select a user or ensure you are logged in");
-      return;
-    }
-
     // Handle couple seats
     let seatsToProcess: SeatType[] = [];
 
@@ -716,12 +694,6 @@ export default function POSPage() {
 
   // Create booking
   const handleCreateBooking = async () => {
-    const bookingUserId = selectedUser?.id || adminUser?.id;
-    if (!bookingUserId) {
-      toast.error("Please select a user or ensure you are logged in");
-      return;
-    }
-
     if (!selectedShowtime || selectedSeats.length === 0) {
       toast.error("Please select a showtime and at least one seat");
       return;
@@ -774,7 +746,6 @@ export default function POSPage() {
       }
 
       // Reset form
-      setSelectedUser(null);
       setSelectedShowtime(null);
       setSelectedSeats([]);
       setSelectedFoodDrinks([]);
@@ -1074,42 +1045,6 @@ export default function POSPage() {
               {/* User and Food/Drink Selection Row */}
               {selectedShowtime && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* User Selection */}
-                  <div className="space-y-2">
-                    <Label className="text-lg font-semibold">
-                      Chọn tài khoản
-                    </Label>
-                    <Select
-                      value={selectedUser?.id || adminUser?.id || ""}
-                      onValueChange={(value) => {
-                        const user = usersData?.data.find(
-                          (u) => u.id === value
-                        );
-                        setSelectedUser(user || null);
-                      }}
-                      onOpenChange={setUserSelectOpen}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn tài khoản"></SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
-                        {usersData?.data.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.fullname} - {user.email}
-                          </SelectItem>
-                        ))}
-                        {usersLoading && (
-                          <div className="flex items-center justify-center py-2">
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            <span className="text-sm text-muted-foreground">
-                              Đang tải...
-                            </span>
-                          </div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   {/* Food/Drink Selection */}
                   <div className="space-y-2">
                     <Label className="text-lg font-semibold">Đồ ăn/uống</Label>
@@ -1526,7 +1461,6 @@ export default function POSPage() {
                 size="lg"
                 onClick={handleCreateBooking}
                 disabled={
-                  (!selectedUser && !adminUser) ||
                   !selectedShowtime ||
                   selectedSeats.length === 0 ||
                   creatingBooking ||
