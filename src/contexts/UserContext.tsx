@@ -42,6 +42,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const userData = await authService.getProfile();
         setUser(userData);
         setIsAuthenticated(true);
+        return userData;
       } else {
         setUser(null);
         setIsAuthenticated(false);
@@ -58,7 +59,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       await authService.login(email, password);
-      await fetchUserProfile();
+      const userData = await fetchUserProfile();
+
+      if (userData.role === "USER") {
+        console.log("hehe log out nè con");
+
+        await authService.logout();
+      }
     } catch (error) {
       throw error;
     }
