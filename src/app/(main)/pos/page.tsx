@@ -125,6 +125,15 @@ export default function POSPage() {
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [checkingPayment, setCheckingPayment] = useState(false);
 
+  const SEAT_HOLD_TIMEOUT_MINUTES = 5;
+  const [timeRemaining, setTimeRemaining] = useState({
+    minutes: SEAT_HOLD_TIMEOUT_MINUTES,
+    seconds: 0,
+  });
+  const [timerActive, setTimerActive] = useState(false);
+  const timerStartTimeRef = useRef<number | null>(null);
+  const previousShowtimeIdRef = useRef<string | null>(null);
+
   // Set today's date as default
   useEffect(() => {
     if (!selectedDate) {
@@ -418,8 +427,120 @@ export default function POSPage() {
     }
   }, [sheetOpen]);
 
+  // Calculate remaining time
+  const calculateRemainingTime = useCallback((startTime: number) => {
+    const now = Date.now();
+    const elapsed = Math.floor((now - startTime) / 1000);
+    const totalSeconds = SEAT_HOLD_TIMEOUT_MINUTES * 60 - elapsed;
+
+    if (totalSeconds <= 0) {
+      return { minutes: 0, seconds: 0 };
+    }
+
+    return {
+      minutes: Math.floor(totalSeconds / 60),
+      seconds: totalSeconds % 60,
+    };
+  }, []);
+
+  // Handle timer expiration
+  const handleTimerExpired = useCallback(async () => {
+    if (!selectedShowtime || selectedSeats.length === 0) return;
+
+    try {
+      // Release all selected seats
+      await Promise.all(
+        selectedSeats.map((seat) =>
+          releaseSeat({
+            showtimeId: selectedShowtime.id,
+            seatId: seat.id,
+          }).catch(() => {})
+        )
+      );
+
+      setSelectedSeats([]);
+      setHeldSeatIds([]);
+      setTimerActive(false);
+      timerStartTimeRef.current = null;
+
+      toast.error("Hết thời gian giữ ghế.");
+    } catch (error) {
+      console.error("Failed to release seats on timer expiration:", error);
+    }
+  }, [selectedShowtime, selectedSeats]);
+
+  // Reset timer when showtime changes
+  useEffect(() => {
+    setTimerActive(false);
+    timerStartTimeRef.current = null;
+    setTimeRemaining({
+      minutes: SEAT_HOLD_TIMEOUT_MINUTES,
+      seconds: 0,
+    });
+  }, [selectedShowtime?.id]);
+
+  // Start timer when seats are selected
+  useEffect(() => {
+    if (selectedSeats.length > 0 && !timerActive && selectedShowtime) {
+      timerStartTimeRef.current = Date.now();
+      setTimerActive(true);
+    } else if (selectedSeats.length === 0 && timerActive) {
+      setTimerActive(false);
+      timerStartTimeRef.current = null;
+      setTimeRemaining({
+        minutes: SEAT_HOLD_TIMEOUT_MINUTES,
+        seconds: 0,
+      });
+    }
+  }, [selectedSeats.length, timerActive, selectedShowtime]);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (!timerActive || !timerStartTimeRef.current) return;
+
+    const interval = setInterval(() => {
+      if (!timerStartTimeRef.current) return;
+
+      const remaining = calculateRemainingTime(timerStartTimeRef.current);
+      setTimeRemaining(remaining);
+
+      // Check if expired
+      if (remaining.minutes === 0 && remaining.seconds === 0) {
+        clearInterval(interval);
+        handleTimerExpired();
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timerActive, calculateRemainingTime, handleTimerExpired]);
+
+  const formatTime = (minutes: number, seconds: number) => {
+    return {
+      minutes: minutes.toString().padStart(2, "0"),
+      seconds: seconds.toString().padStart(2, "0"),
+    };
+  };
+
+  // Socket setup
   useEffect(() => {
     const socket = getSocket();
+    const currentShowtimeId = selectedShowtime?.id || null;
+
+    if (previousShowtimeIdRef.current === currentShowtimeId) {
+      return;
+    }
+
+    if (previousShowtimeIdRef.current) {
+      socket.emit("leave-showtime", previousShowtimeIdRef.current);
+      console.log("Left showtime room:", previousShowtimeIdRef.current);
+    }
+
+    if (currentShowtimeId) {
+      socket.emit("join-showtime", currentShowtimeId);
+      console.log("Joined showtime room:", currentShowtimeId);
+    }
+
+    previousShowtimeIdRef.current = currentShowtimeId;
 
     socket.on("connect", () => {
       console.log("Socket connected for POS");
@@ -493,24 +614,7 @@ export default function POSPage() {
       socket.off("disconnect");
       socket.off("seat-update");
     };
-  }, [selectedShowtime]);
-
-  // Join/leave showtime room when showtime changes
-  useEffect(() => {
-    const socket = getSocket();
-
-    if (selectedShowtime) {
-      socket.emit("join-showtime", selectedShowtime.id);
-      console.log("Joined showtime room:", selectedShowtime.id);
-    }
-
-    return () => {
-      if (selectedShowtime) {
-        socket.emit("leave-showtime", selectedShowtime.id);
-        console.log("Left showtime room:", selectedShowtime.id);
-      }
-    };
-  }, [selectedShowtime]);
+  }, [selectedShowtime?.id]);
 
   const handleBookTicketClick = (movie: Movie) => {
     setSelectedMovieForBooking(movie);
@@ -761,787 +865,842 @@ export default function POSPage() {
   // Convert selectedDate string to Date for Calendar
   const selectedDateAsDate = selectedDate ? new Date(selectedDate) : new Date();
 
+  const timeDisplay = formatTime(timeRemaining.minutes, timeRemaining.seconds);
+
   return (
-    <div className="container space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center">
-        {/* Movie Search */}
-        <div className="flex-1 sm:w-auto">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Tìm kiếm phim..."
-              value={movieSearchTerm}
-              onChange={(e) => setMovieSearchTerm(e.target.value)}
-              className="pl-10 w-3/4"
-            />
+    <>
+      {/* Timer overlay */}
+      {timerActive && (
+        <div
+          className="fixed top-4 right-4 z-[9999] shadow-2xl rounded-xl p-4 bg-white dark:bg-gray-900 border-2 border-red-500"
+          style={{
+            boxShadow: "0 10px 25px rgba(0, 0, 0, 0.3)",
+          }}
+        >
+          <div className="text-xs text-gray-600 dark:text-gray-400 mb-2 text-center font-medium">
+            Thời gian giữ ghế
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2 text-center min-w-[60px]">
+              <div className="text-xl font-bold text-red-600 dark:text-red-400">
+                {timeDisplay.minutes}
+              </div>
+              <div className="text-[10px] text-gray-600 dark:text-gray-400">
+                Phút
+              </div>
+            </div>
+            <div className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              :
+            </div>
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2 text-center min-w-[60px]">
+              <div className="text-xl font-bold text-red-600 dark:text-red-400">
+                {timeDisplay.seconds}
+              </div>
+              <div className="text-[10px] text-gray-600 dark:text-gray-400">
+                Giây
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="container space-y-6 relative">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center">
+          {/* Movie Search */}
+          <div className="flex-1 sm:w-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Tìm kiếm phim..."
+                value={movieSearchTerm}
+                onChange={(e) => setMovieSearchTerm(e.target.value)}
+                className="pl-10 w-3/4"
+              />
+            </div>
+          </div>
+
+          {/* Date Picker */}
+          <div className="">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full sm:w-[280px] justify-start text-left font-normal",
+                    !selectedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? (
+                    format(selectedDateAsDate, "dd/MM/yyyy")
+                  ) : (
+                    <span>Chọn ngày</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDateAsDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setSelectedDate(format(date, "yyyy-MM-dd"));
+                    }
+                  }}
+                  // disabled={(date) =>
+                  //   date < new Date(new Date().setHours(0, 0, 0, 0))
+                  // }
+                  autoFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
-        {/* Date Picker */}
-        <div className="">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full sm:w-[280px] justify-start text-left font-normal",
-                  !selectedDate && "text-muted-foreground"
-                )}
+        {/* Movies with Showtimes */}
+        {showtimesLoading || moviesLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : moviesWithShowtimes.length === 0 ? (
+          <div className="py-8 text-center text-muted-foreground">
+            Không có phim nào có suất chiếu cho ngày đã chọn
+          </div>
+        ) : (
+          <div className="flex flex-row gap-6">
+            {moviesWithShowtimes.map((movie) => (
+              <div
+                key={movie.id}
+                className="overflow-hidden min-w-62 hover:shadow-2xl transition-all duration-300 border-0 shadow-lg rounded-xl cursor-pointer"
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? (
-                  format(selectedDateAsDate, "dd/MM/yyyy")
-                ) : (
-                  <span>Chọn ngày</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={selectedDateAsDate}
-                onSelect={(date) => {
-                  if (date) {
-                    setSelectedDate(format(date, "yyyy-MM-dd"));
-                  }
-                }}
-                // disabled={(date) =>
-                //   date < new Date(new Date().setHours(0, 0, 0, 0))
-                // }
-                autoFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
-
-      {/* Movies with Showtimes */}
-      {showtimesLoading || moviesLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      ) : moviesWithShowtimes.length === 0 ? (
-        <div className="py-8 text-center text-muted-foreground">
-          Không có phim nào có suất chiếu cho ngày đã chọn
-        </div>
-      ) : (
-        <div className="flex flex-row gap-6">
-          {moviesWithShowtimes.map((movie) => (
-            <div
-              key={movie.id}
-              className="overflow-hidden min-w-62 hover:shadow-2xl transition-all duration-300 border-0 shadow-lg rounded-xl cursor-pointer"
-            >
-              <div className="relative group">
-                {/* Poster */}
-                <div className="aspect-[2/3] relative overflow-hidden bg-gradient-to-b from-blue-900 to-blue-700 rounded-t-xl">
-                  {movie.thumbnail ? (
-                    <Image
-                      src={movie.thumbnail}
-                      alt={movie.title}
-                      fill
-                      className="object-cover transition-transform duration-300 rounded-t-xl group-hover:scale-105"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
-                      <Film className="h-12 w-12" />
-                    </div>
-                  )}
-
-                  {/* Hover overlay with detailed information */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/95 via-black/90 to-black/95 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-6 flex flex-col justify-between">
-                    <div className="space-y-4">
-                      {/* Title */}
-                      <div>
-                        <h3 className="text-white font-bold text-xl mb-2">
-                          {movie.title}
-                        </h3>
-                        {movie.status && (
-                          <Badge variant="secondary" className="mb-2">
-                            {movie.status}
-                          </Badge>
-                        )}
+                <div className="relative group">
+                  {/* Poster */}
+                  <div className="aspect-[2/3] relative overflow-hidden bg-gradient-to-b from-blue-900 to-blue-700 rounded-t-xl">
+                    {movie.thumbnail ? (
+                      <Image
+                        src={movie.thumbnail}
+                        alt={movie.title}
+                        fill
+                        className="object-cover transition-transform duration-300 rounded-t-xl group-hover:scale-105"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
+                        <Film className="h-12 w-12" />
                       </div>
+                    )}
 
-                      {/* Description */}
-                      <p className="text-white/90 text-sm line-clamp-3">
-                        {movie.description}
-                      </p>
+                    {/* Hover overlay with detailed information */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/95 via-black/90 to-black/95 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-6 flex flex-col justify-between">
+                      <div className="space-y-4">
+                        {/* Title */}
+                        <div>
+                          <h3 className="text-white font-bold text-xl mb-2">
+                            {movie.title}
+                          </h3>
+                          {movie.status && (
+                            <Badge variant="secondary" className="mb-2">
+                              {movie.status}
+                            </Badge>
+                          )}
+                        </div>
 
-                      {/* Movie Details */}
-                      <div className="space-y-2 text-white/90 text-sm">
-                        {/* Genres */}
-                        <div className="flex items-start gap-2">
-                          <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                          <div className="flex flex-wrap gap-1">
-                            {movie.genres.map((genre) => (
-                              <Badge
-                                key={genre.id}
+                        {/* Description */}
+                        <p className="text-white/90 text-sm line-clamp-3">
+                          {movie.description}
+                        </p>
+
+                        {/* Movie Details */}
+                        <div className="space-y-2 text-white/90 text-sm">
+                          {/* Genres */}
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <div className="flex flex-wrap gap-1">
+                              {movie.genres.map((genre) => (
+                                <Badge
+                                  key={genre.id}
+                                  variant="outline"
+                                  className="text-xs border-white/30 text-white/90 bg-white/10"
+                                >
+                                  {genre.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Duration */}
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 flex-shrink-0" />
+                            <span>{movie.duration} phút</span>
+                          </div>
+
+                          {/* Language/Format */}
+                          {movie.showtimes.length > 0 && (
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                              <span>
+                                {movie.showtimes[0]?.language || "Phụ đề"}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Rating */}
+                          {movie.rating > 0 && (
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                <span className="text-yellow-400">★</span>
+                                <span>{movie.rating.toFixed(1)}/10</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom section*/}
+                  <div className="bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 p-5">
+                    <h3 className="text-white font-bold text-lg mb-4 text-center line-clamp-2">
+                      {movie.title}
+                    </h3>
+                    <div className="flex items-center justify-center gap-3 mb-3">
+                      {movie.trailerUrl && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-white hover:text-white hover:bg-white/10 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTrailerUrl(movie.trailerUrl);
+                            setTrailerOpen(true);
+                          }}
+                        >
+                          <Play className="h-4 w-4 mr-1" />
+                          <span className="underline">Xem Trailer</span>
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-base py-3 shadow-xl cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                      onClick={() => handleBookTicketClick(movie)}
+                    >
+                      ĐẶT VÉ
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Booking Sheet */}
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetContent
+            side="right"
+            className="w-full min-w-4xl sm:max-w-2xl p-0 flex flex-col h-full"
+          >
+            <SheetHeader className="px-8 pt-8 pb-4 flex-shrink-0">
+              <SheetTitle className="text-2xl font-bold">
+                {selectedMovieForBooking
+                  ? `Đặt vé - ${selectedMovieForBooking.title}`
+                  : "Tạo đơn đặt vé"}
+              </SheetTitle>
+              <SheetDescription>
+                {selectedShowtime
+                  ? "Chọn ghế và thêm đồ ăn/uống cho suất chiếu"
+                  : "Vui lòng chọn suất chiếu"}
+              </SheetDescription>
+            </SheetHeader>
+
+            <div className="flex-1 overflow-y-auto px-8 pb-4">
+              <div className="space-y-6 mt-6">
+                {/* Showtime Selection */}
+                {selectedMovieForBooking && (
+                  <div className="space-y-4">
+                    <Label className="text-lg font-semibold">
+                      Chọn suất chiếu -{" "}
+                      {format(new Date(selectedDate), "dd/MM/yyyy")}
+                    </Label>
+                    {movieShowtimesLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                      </div>
+                    ) : !movieShowtimesData?.data ||
+                      movieShowtimesData.data.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Không có suất chiếu nào cho ngày đã chọn
+                      </div>
+                    ) : (
+                      <div className="flex flex-row flex-wrap gap-3">
+                        {movieShowtimesData.data
+                          .sort(
+                            (a, b) =>
+                              new Date(a.startTime).getTime() -
+                              new Date(b.startTime).getTime()
+                          )
+                          .map((showtime: Showtime) => {
+                            const isSelected =
+                              selectedShowtime?.id === showtime.id;
+                            return (
+                              <Button
+                                key={showtime.id}
                                 variant="outline"
-                                className="text-xs border-white/30 text-white/90 bg-white/10"
+                                className={`h-auto cursor-pointer py-3 flex flex-col items-start transition-all ${
+                                  isSelected
+                                    ? "border-primary border-2 ring-2 ring-primary ring-offset-2 bg-primary/10 dark:bg-primary/20"
+                                    : "hover:bg-accent hover:text-accent-foreground"
+                                }`}
+                                onClick={() => handleShowtimeSelect(showtime)}
                               >
-                                {genre.name}
-                              </Badge>
+                                <div
+                                  className={`font-semibold text-base ${
+                                    isSelected ? "text-primary" : ""
+                                  }`}
+                                >
+                                  {format(
+                                    new Date(showtime.startTime),
+                                    "HH:mm"
+                                  )}{" "}
+                                  -{" "}
+                                  {format(new Date(showtime.endTime), "HH:mm")}
+                                </div>
+                                <div
+                                  className={`text-xs mt-1 ${
+                                    isSelected
+                                      ? "text-primary/80 dark:text-primary/90"
+                                      : "text-muted-foreground"
+                                  }`}
+                                >
+                                  {showtime.language} • {showtime.format}
+                                </div>
+                                <div
+                                  className={`text-sm font-bold mt-1 ${
+                                    isSelected ? "text-primary" : ""
+                                  }`}
+                                >
+                                  {formatPrice(showtime.price)}
+                                </div>
+                              </Button>
+                            );
+                          })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* User and Food/Drink Selection Row */}
+                {selectedShowtime && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Food/Drink Selection */}
+                    <div className="space-y-2">
+                      <Label className="text-lg font-semibold">
+                        Đồ ăn/uống
+                      </Label>
+                      <Select
+                        onValueChange={(value) => {
+                          const foodDrink = foodDrinksData?.data.find(
+                            (fd) => fd.id === value
+                          );
+                          if (foodDrink) {
+                            handleFoodDrinkQuantityChange(
+                              foodDrink,
+                              (selectedFoodDrinks.find(
+                                (fd) => fd.foodDrink.id === foodDrink.id
+                              )?.quantity || 0) + 1
+                            );
+                          }
+                        }}
+                        onOpenChange={setFoodDrinkSelectOpen}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Thêm đồ ăn/uống" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {foodDrinksData?.data.map((foodDrink) => (
+                            <SelectItem key={foodDrink.id} value={foodDrink.id}>
+                              {foodDrink.name}
+                            </SelectItem>
+                          ))}
+                          {foodDrinksLoading && (
+                            <div className="flex items-center justify-center py-2">
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              <span className="text-sm text-muted-foreground">
+                                Đang tải...
+                              </span>
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected Food/Drinks */}
+                {selectedShowtime && selectedFoodDrinks.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-lg font-semibold">
+                      Đồ ăn/uống đã chọn
+                    </Label>
+                    <div className="space-y-2">
+                      {selectedFoodDrinks.map((fd) => (
+                        <div
+                          key={fd.foodDrink.id}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
+                          <div className="flex-1">
+                            <div className="text-sm font-medium">
+                              {fd.foodDrink.name}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {formatPrice(fd.foodDrink.price)}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleFoodDrinkQuantityChange(
+                                  fd.foodDrink,
+                                  fd.quantity - 1
+                                )
+                              }
+                            >
+                              -
+                            </Button>
+                            <span className="w-8 text-center">
+                              {fd.quantity}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleFoodDrinkQuantityChange(
+                                  fd.foodDrink,
+                                  fd.quantity + 1
+                                )
+                              }
+                            >
+                              +
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Seat Selection */}
+                {selectedShowtime && room && seatLayout && (
+                  <div className="space-y-4">
+                    <Label className="text-lg font-semibold">
+                      Chọn ghế - {room.name}
+                    </Label>
+                    {loading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex gap-4 justify-center flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-white border-2 border-gray-800 rounded"></div>
+                            <span className="text-sm">Còn trống</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-blue-100 border-2 border-blue-500 rounded"></div>
+                            <span className="text-sm">Đã chọn</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-yellow-100 border-2 border-yellow-500 rounded"></div>
+                            <span className="text-sm">
+                              Đã giữ bởi người khác
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-red-100 border-2 border-red-500 rounded"></div>
+                            <span className="text-sm">Đã đặt</span>
+                          </div>
+                        </div>
+                        <div className="border rounded-lg p-4 overflow-x-auto flex justify-center">
+                          <BookingSeatGrid
+                            layout={seatLayout}
+                            bookedSeatNumbers={bookedSeatNumbers}
+                            heldSeatNumbers={heldSeatNumbers}
+                            selectedSeatNumbers={selectedSeatNumbers}
+                            onSeatClick={handleSeatClick}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Summary - Fixed at bottom */}
+            {selectedShowtime && (
+              <div className="flex-shrink-0 border-t bg-background px-8 py-4 space-y-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                <div>
+                  <Label className="text-lg font-semibold">Suất chiếu</Label>
+                  <div>
+                    {format(
+                      new Date(selectedShowtime.startTime),
+                      "HH:mm dd/MM/yyyy"
+                    )}
+                  </div>
+                </div>
+
+                {/* Seats and Food/Drinks */}
+                {(selectedSeats.length > 0 ||
+                  selectedFoodDrinks.length > 0) && (
+                  <>
+                    <Separator />
+                    <div className="flex flex-row gap-4">
+                      {/* Seats Column */}
+                      {selectedSeats.length > 0 && (
+                        <div className="flex-1">
+                          <Label className="text-sm text-muted-foreground">
+                            Ghế
+                          </Label>
+                          <div className="mt-2 space-y-2">
+                            {(() => {
+                              const getSeatTypeName = (type: string) => {
+                                const typeMap: Record<string, string> = {
+                                  NORMAL: "Thường",
+                                  VIP: "VIP",
+                                  COUPLE: "Đôi",
+                                };
+                                return typeMap[type] || type;
+                              };
+
+                              // Group seats by type and handle couple seats
+                              const seatsByType: Record<
+                                string,
+                                { seats: SeatType[]; coupleSeats: Set<string> }
+                              > = {};
+                              const processedSeatNumbers = new Set<string>();
+
+                              // Find all couple seats from seatLayout
+                              if (seatLayout) {
+                                seatLayout.seats.forEach((row) => {
+                                  row.forEach((seatPos) => {
+                                    if (
+                                      seatPos.isCoupleSeat &&
+                                      seatPos.seatNumber &&
+                                      selectedSeatNumbers.has(
+                                        seatPos.seatNumber
+                                      )
+                                    ) {
+                                      // Check if all individual seats in the couple are selected
+                                      const [start, end] =
+                                        seatPos.seatNumber.split("-");
+                                      const rowLetter = start[0];
+                                      const startNum = parseInt(start.slice(1));
+                                      const endNum = parseInt(end);
+
+                                      let allSeatsSelected = true;
+                                      for (
+                                        let num = startNum;
+                                        num <= endNum;
+                                        num++
+                                      ) {
+                                        const individualSeatNumber = `${rowLetter}${num}`;
+                                        if (
+                                          !selectedSeatNumbers.has(
+                                            individualSeatNumber
+                                          )
+                                        ) {
+                                          allSeatsSelected = false;
+                                          break;
+                                        }
+                                      }
+
+                                      if (allSeatsSelected) {
+                                        // Find the seat type from one of the individual seats
+                                        const coupleSeat = selectedSeats.find(
+                                          (s) => {
+                                            const seatNum = parseInt(
+                                              s.seatNumber.slice(1)
+                                            );
+                                            return (
+                                              s.seatNumber.startsWith(
+                                                rowLetter
+                                              ) &&
+                                              seatNum >= startNum &&
+                                              seatNum <= endNum
+                                            );
+                                          }
+                                        );
+
+                                        if (coupleSeat) {
+                                          const type =
+                                            coupleSeat.seatType || "COUPLE";
+                                          if (!seatsByType[type]) {
+                                            seatsByType[type] = {
+                                              seats: [],
+                                              coupleSeats: new Set(),
+                                            };
+                                          }
+                                          seatsByType[type].coupleSeats.add(
+                                            seatPos.seatNumber
+                                          );
+
+                                          // Mark individual seats as processed
+                                          for (
+                                            let num = startNum;
+                                            num <= endNum;
+                                            num++
+                                          ) {
+                                            processedSeatNumbers.add(
+                                              `${rowLetter}${num}`
+                                            );
+                                          }
+                                        }
+                                      }
+                                    }
+                                  });
+                                });
+                              }
+
+                              // Add regular seats (not part of couple seats)
+                              selectedSeats.forEach((seat) => {
+                                if (
+                                  !processedSeatNumbers.has(seat.seatNumber)
+                                ) {
+                                  const type = seat.seatType || "NORMAL";
+                                  if (!seatsByType[type]) {
+                                    seatsByType[type] = {
+                                      seats: [],
+                                      coupleSeats: new Set(),
+                                    };
+                                  }
+                                  seatsByType[type].seats.push(seat);
+                                }
+                              });
+
+                              const basePrice = selectedShowtime?.price || 0;
+
+                              return Object.entries(seatsByType).map(
+                                ([type, { seats, coupleSeats }]) => {
+                                  const seatNumbers: string[] = [];
+
+                                  // Add couple seat numbers (e.g., "J5-6")
+                                  coupleSeats.forEach((coupleNum) => {
+                                    seatNumbers.push(coupleNum);
+                                  });
+
+                                  // Add regular seat numbers
+                                  seats.forEach((seat) => {
+                                    seatNumbers.push(seat.seatNumber);
+                                  });
+
+                                  // Calculate total price for this seat type
+                                  let totalSeatPrice = 0;
+
+                                  // Calculate price for regular seats
+                                  seats.forEach((seat) => {
+                                    const extraPrice =
+                                      seatPriceMap.get(seat.seatNumber) ||
+                                      seat.extraPrice ||
+                                      0;
+                                    totalSeatPrice += basePrice + extraPrice;
+                                  });
+
+                                  // Calculate price for couple seats (each couple = 2 seats)
+                                  coupleSeats.forEach((coupleNum) => {
+                                    const [start] = coupleNum.split("-");
+                                    const rowLetter = start[0];
+                                    const startNum = parseInt(start.slice(1));
+                                    // Get the first seat of the couple for pricing
+                                    const firstSeatNumber = `${rowLetter}${startNum}`;
+                                    const firstSeat = selectedSeats.find(
+                                      (s) => s.seatNumber === firstSeatNumber
+                                    );
+                                    const extraPrice = firstSeat
+                                      ? seatPriceMap.get(firstSeatNumber) ||
+                                        firstSeat.extraPrice ||
+                                        0
+                                      : 0;
+                                    // Couple seat = 2 seats
+                                    totalSeatPrice +=
+                                      (basePrice + extraPrice) * 2;
+                                  });
+
+                                  return (
+                                    <div
+                                      key={type}
+                                      className="flex justify-between text-sm"
+                                    >
+                                      <span>
+                                        {getSeatTypeName(type)}:{" "}
+                                        {seatNumbers.join(", ")}
+                                      </span>
+                                      <span>{formatPrice(totalSeatPrice)}</span>
+                                    </div>
+                                  );
+                                }
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Vertical Separator */}
+                      {selectedSeats.length > 0 &&
+                        selectedFoodDrinks.length > 0 && (
+                          <div className="w-px bg-border"></div>
+                        )}
+
+                      {/* Food/Drinks Column */}
+                      {selectedFoodDrinks.length > 0 && (
+                        <div className="flex-1">
+                          <Label className="text-lg font-semibold">
+                            Đồ ăn/uống
+                          </Label>
+                          <div className="space-y-2 mt-2">
+                            {selectedFoodDrinks.map((fd) => (
+                              <div
+                                key={fd.foodDrink.id}
+                                className="flex justify-between text-sm"
+                              >
+                                <span>
+                                  {fd.foodDrink.name} × {fd.quantity}
+                                </span>
+                                <span>
+                                  {formatPrice(
+                                    fd.foodDrink.price * fd.quantity
+                                  )}
+                                </span>
+                              </div>
                             ))}
                           </div>
                         </div>
-
-                        {/* Duration */}
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 flex-shrink-0" />
-                          <span>{movie.duration} phút</span>
-                        </div>
-
-                        {/* Language/Format */}
-                        {movie.showtimes.length > 0 && (
-                          <div className="flex items-center gap-2">
-                            <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                            <span>
-                              {movie.showtimes[0]?.language || "Phụ đề"}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Rating */}
-                        {movie.rating > 0 && (
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1">
-                              <span className="text-yellow-400">★</span>
-                              <span>{movie.rating.toFixed(1)}/10</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom section*/}
-                <div className="bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 p-5">
-                  <h3 className="text-white font-bold text-lg mb-4 text-center line-clamp-2">
-                    {movie.title}
-                  </h3>
-                  <div className="flex items-center justify-center gap-3 mb-3">
-                    {movie.trailerUrl && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-white hover:text-white hover:bg-white/10 cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTrailerUrl(movie.trailerUrl);
-                          setTrailerOpen(true);
-                        }}
-                      >
-                        <Play className="h-4 w-4 mr-1" />
-                        <span className="underline">Xem Trailer</span>
-                      </Button>
-                    )}
-                  </div>
-                  <Button
-                    className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-base py-3 shadow-xl cursor-pointer transition-all duration-200 hover:scale-[1.02]"
-                    onClick={() => handleBookTicketClick(movie)}
-                  >
-                    ĐẶT VÉ
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Booking Sheet */}
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent
-          side="right"
-          className="w-full min-w-4xl sm:max-w-2xl p-0 flex flex-col h-full"
-        >
-          <SheetHeader className="px-8 pt-8 pb-4 flex-shrink-0">
-            <SheetTitle className="text-2xl font-bold">
-              {selectedMovieForBooking
-                ? `Đặt vé - ${selectedMovieForBooking.title}`
-                : "Tạo đơn đặt vé"}
-            </SheetTitle>
-            <SheetDescription>
-              {selectedShowtime
-                ? "Chọn ghế và thêm đồ ăn/uống cho suất chiếu"
-                : "Vui lòng chọn suất chiếu"}
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="flex-1 overflow-y-auto px-8 pb-4">
-            <div className="space-y-6 mt-6">
-              {/* Showtime Selection */}
-              {selectedMovieForBooking && (
-                <div className="space-y-4">
-                  <Label className="text-lg font-semibold">
-                    Chọn suất chiếu -{" "}
-                    {format(new Date(selectedDate), "dd/MM/yyyy")}
-                  </Label>
-                  {movieShowtimesLoading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin" />
-                    </div>
-                  ) : !movieShowtimesData?.data ||
-                    movieShowtimesData.data.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Không có suất chiếu nào cho ngày đã chọn
-                    </div>
-                  ) : (
-                    <div className="flex flex-row flex-wrap gap-3">
-                      {movieShowtimesData.data
-                        .sort(
-                          (a, b) =>
-                            new Date(a.startTime).getTime() -
-                            new Date(b.startTime).getTime()
-                        )
-                        .map((showtime: Showtime) => {
-                          const isSelected =
-                            selectedShowtime?.id === showtime.id;
-                          return (
-                            <Button
-                              key={showtime.id}
-                              variant="outline"
-                              className={`h-auto cursor-pointer py-3 flex flex-col items-start transition-all ${
-                                isSelected
-                                  ? "border-primary border-2 ring-2 ring-primary ring-offset-2 bg-primary/10 dark:bg-primary/20"
-                                  : "hover:bg-accent hover:text-accent-foreground"
-                              }`}
-                              onClick={() => handleShowtimeSelect(showtime)}
-                            >
-                              <div
-                                className={`font-semibold text-base ${
-                                  isSelected ? "text-primary" : ""
-                                }`}
-                              >
-                                {format(new Date(showtime.startTime), "HH:mm")}{" "}
-                                - {format(new Date(showtime.endTime), "HH:mm")}
-                              </div>
-                              <div
-                                className={`text-xs mt-1 ${
-                                  isSelected
-                                    ? "text-primary/80 dark:text-primary/90"
-                                    : "text-muted-foreground"
-                                }`}
-                              >
-                                {showtime.language} • {showtime.format}
-                              </div>
-                              <div
-                                className={`text-sm font-bold mt-1 ${
-                                  isSelected ? "text-primary" : ""
-                                }`}
-                              >
-                                {formatPrice(showtime.price)}
-                              </div>
-                            </Button>
-                          );
-                        })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* User and Food/Drink Selection Row */}
-              {selectedShowtime && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Food/Drink Selection */}
-                  <div className="space-y-2">
-                    <Label className="text-lg font-semibold">Đồ ăn/uống</Label>
-                    <Select
-                      onValueChange={(value) => {
-                        const foodDrink = foodDrinksData?.data.find(
-                          (fd) => fd.id === value
-                        );
-                        if (foodDrink) {
-                          handleFoodDrinkQuantityChange(
-                            foodDrink,
-                            (selectedFoodDrinks.find(
-                              (fd) => fd.foodDrink.id === foodDrink.id
-                            )?.quantity || 0) + 1
-                          );
-                        }
-                      }}
-                      onOpenChange={setFoodDrinkSelectOpen}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Thêm đồ ăn/uống" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
-                        {foodDrinksData?.data.map((foodDrink) => (
-                          <SelectItem key={foodDrink.id} value={foodDrink.id}>
-                            {foodDrink.name}
-                          </SelectItem>
-                        ))}
-                        {foodDrinksLoading && (
-                          <div className="flex items-center justify-center py-2">
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            <span className="text-sm text-muted-foreground">
-                              Đang tải...
-                            </span>
-                          </div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              )}
-
-              {/* Selected Food/Drinks */}
-              {selectedShowtime && selectedFoodDrinks.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-lg font-semibold">
-                    Đồ ăn/uống đã chọn
-                  </Label>
-                  <div className="space-y-2">
-                    {selectedFoodDrinks.map((fd) => (
-                      <div
-                        key={fd.foodDrink.id}
-                        className="flex items-center justify-between p-3 border rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">
-                            {fd.foodDrink.name}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {formatPrice(fd.foodDrink.price)}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleFoodDrinkQuantityChange(
-                                fd.foodDrink,
-                                fd.quantity - 1
-                              )
-                            }
-                          >
-                            -
-                          </Button>
-                          <span className="w-8 text-center">{fd.quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleFoodDrinkQuantityChange(
-                                fd.foodDrink,
-                                fd.quantity + 1
-                              )
-                            }
-                          >
-                            +
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Seat Selection */}
-              {selectedShowtime && room && seatLayout && (
-                <div className="space-y-4">
-                  <Label className="text-lg font-semibold">
-                    Chọn ghế - {room.name}
-                  </Label>
-                  {loading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin" />
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="flex gap-4 justify-center flex-wrap">
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 bg-white border-2 border-gray-800 rounded"></div>
-                          <span className="text-sm">Còn trống</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 bg-blue-100 border-2 border-blue-500 rounded"></div>
-                          <span className="text-sm">Đã chọn</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 bg-yellow-100 border-2 border-yellow-500 rounded"></div>
-                          <span className="text-sm">Đã giữ bởi người khác</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 bg-red-100 border-2 border-red-500 rounded"></div>
-                          <span className="text-sm">Đã đặt</span>
-                        </div>
-                      </div>
-                      <div className="border rounded-lg p-4 overflow-x-auto flex justify-center">
-                        <BookingSeatGrid
-                          layout={seatLayout}
-                          bookedSeatNumbers={bookedSeatNumbers}
-                          heldSeatNumbers={heldSeatNumbers}
-                          selectedSeatNumbers={selectedSeatNumbers}
-                          onSeatClick={handleSeatClick}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Summary - Fixed at bottom */}
-          {selectedShowtime && (
-            <div className="flex-shrink-0 border-t bg-background px-8 py-4 space-y-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-              <div>
-                <Label className="text-lg font-semibold">Suất chiếu</Label>
-                <div>
-                  {format(
-                    new Date(selectedShowtime.startTime),
-                    "HH:mm dd/MM/yyyy"
-                  )}
-                </div>
-              </div>
-
-              {/* Seats and Food/Drinks */}
-              {(selectedSeats.length > 0 || selectedFoodDrinks.length > 0) && (
-                <>
-                  <Separator />
-                  <div className="flex flex-row gap-4">
-                    {/* Seats Column */}
-                    {selectedSeats.length > 0 && (
-                      <div className="flex-1">
-                        <Label className="text-sm text-muted-foreground">
-                          Ghế
-                        </Label>
-                        <div className="mt-2 space-y-2">
-                          {(() => {
-                            const getSeatTypeName = (type: string) => {
-                              const typeMap: Record<string, string> = {
-                                NORMAL: "Thường",
-                                VIP: "VIP",
-                                COUPLE: "Đôi",
-                              };
-                              return typeMap[type] || type;
-                            };
-
-                            // Group seats by type and handle couple seats
-                            const seatsByType: Record<
-                              string,
-                              { seats: SeatType[]; coupleSeats: Set<string> }
-                            > = {};
-                            const processedSeatNumbers = new Set<string>();
-
-                            // Find all couple seats from seatLayout
-                            if (seatLayout) {
-                              seatLayout.seats.forEach((row) => {
-                                row.forEach((seatPos) => {
-                                  if (
-                                    seatPos.isCoupleSeat &&
-                                    seatPos.seatNumber &&
-                                    selectedSeatNumbers.has(seatPos.seatNumber)
-                                  ) {
-                                    // Check if all individual seats in the couple are selected
-                                    const [start, end] =
-                                      seatPos.seatNumber.split("-");
-                                    const rowLetter = start[0];
-                                    const startNum = parseInt(start.slice(1));
-                                    const endNum = parseInt(end);
-
-                                    let allSeatsSelected = true;
-                                    for (
-                                      let num = startNum;
-                                      num <= endNum;
-                                      num++
-                                    ) {
-                                      const individualSeatNumber = `${rowLetter}${num}`;
-                                      if (
-                                        !selectedSeatNumbers.has(
-                                          individualSeatNumber
-                                        )
-                                      ) {
-                                        allSeatsSelected = false;
-                                        break;
-                                      }
-                                    }
-
-                                    if (allSeatsSelected) {
-                                      // Find the seat type from one of the individual seats
-                                      const coupleSeat = selectedSeats.find(
-                                        (s) => {
-                                          const seatNum = parseInt(
-                                            s.seatNumber.slice(1)
-                                          );
-                                          return (
-                                            s.seatNumber.startsWith(
-                                              rowLetter
-                                            ) &&
-                                            seatNum >= startNum &&
-                                            seatNum <= endNum
-                                          );
-                                        }
-                                      );
-
-                                      if (coupleSeat) {
-                                        const type =
-                                          coupleSeat.seatType || "COUPLE";
-                                        if (!seatsByType[type]) {
-                                          seatsByType[type] = {
-                                            seats: [],
-                                            coupleSeats: new Set(),
-                                          };
-                                        }
-                                        seatsByType[type].coupleSeats.add(
-                                          seatPos.seatNumber
-                                        );
-
-                                        // Mark individual seats as processed
-                                        for (
-                                          let num = startNum;
-                                          num <= endNum;
-                                          num++
-                                        ) {
-                                          processedSeatNumbers.add(
-                                            `${rowLetter}${num}`
-                                          );
-                                        }
-                                      }
-                                    }
-                                  }
-                                });
-                              });
-                            }
-
-                            // Add regular seats (not part of couple seats)
-                            selectedSeats.forEach((seat) => {
-                              if (!processedSeatNumbers.has(seat.seatNumber)) {
-                                const type = seat.seatType || "NORMAL";
-                                if (!seatsByType[type]) {
-                                  seatsByType[type] = {
-                                    seats: [],
-                                    coupleSeats: new Set(),
-                                  };
-                                }
-                                seatsByType[type].seats.push(seat);
-                              }
-                            });
-
-                            const basePrice = selectedShowtime?.price || 0;
-
-                            return Object.entries(seatsByType).map(
-                              ([type, { seats, coupleSeats }]) => {
-                                const seatNumbers: string[] = [];
-
-                                // Add couple seat numbers (e.g., "J5-6")
-                                coupleSeats.forEach((coupleNum) => {
-                                  seatNumbers.push(coupleNum);
-                                });
-
-                                // Add regular seat numbers
-                                seats.forEach((seat) => {
-                                  seatNumbers.push(seat.seatNumber);
-                                });
-
-                                // Calculate total price for this seat type
-                                let totalSeatPrice = 0;
-
-                                // Calculate price for regular seats
-                                seats.forEach((seat) => {
-                                  const extraPrice =
-                                    seatPriceMap.get(seat.seatNumber) ||
-                                    seat.extraPrice ||
-                                    0;
-                                  totalSeatPrice += basePrice + extraPrice;
-                                });
-
-                                // Calculate price for couple seats (each couple = 2 seats)
-                                coupleSeats.forEach((coupleNum) => {
-                                  const [start] = coupleNum.split("-");
-                                  const rowLetter = start[0];
-                                  const startNum = parseInt(start.slice(1));
-                                  // Get the first seat of the couple for pricing
-                                  const firstSeatNumber = `${rowLetter}${startNum}`;
-                                  const firstSeat = selectedSeats.find(
-                                    (s) => s.seatNumber === firstSeatNumber
-                                  );
-                                  const extraPrice = firstSeat
-                                    ? seatPriceMap.get(firstSeatNumber) ||
-                                      firstSeat.extraPrice ||
-                                      0
-                                    : 0;
-                                  // Couple seat = 2 seats
-                                  totalSeatPrice +=
-                                    (basePrice + extraPrice) * 2;
-                                });
-
-                                return (
-                                  <div
-                                    key={type}
-                                    className="flex justify-between text-sm"
-                                  >
-                                    <span>
-                                      {getSeatTypeName(type)}:{" "}
-                                      {seatNumbers.join(", ")}
-                                    </span>
-                                    <span>{formatPrice(totalSeatPrice)}</span>
-                                  </div>
-                                );
-                              }
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Vertical Separator */}
-                    {selectedSeats.length > 0 &&
-                      selectedFoodDrinks.length > 0 && (
-                        <div className="w-px bg-border"></div>
                       )}
-
-                    {/* Food/Drinks Column */}
-                    {selectedFoodDrinks.length > 0 && (
-                      <div className="flex-1">
-                        <Label className="text-lg font-semibold">
-                          Đồ ăn/uống
-                        </Label>
-                        <div className="space-y-2 mt-2">
-                          {selectedFoodDrinks.map((fd) => (
-                            <div
-                              key={fd.foodDrink.id}
-                              className="flex justify-between text-sm"
-                            >
-                              <span>
-                                {fd.foodDrink.name} × {fd.quantity}
-                              </span>
-                              <span>
-                                {formatPrice(fd.foodDrink.price * fd.quantity)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-
-              <Separator />
-
-              <div className="flex justify-between items-center">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xl font-semibold">Tổng</Label>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground">
-                      Phương thức thanh toán:
-                    </span>
-                    <Select
-                      value={paymentMethod}
-                      onValueChange={(value) =>
-                        setPaymentMethod(value as "COD" | "MOMO")
-                      }
-                    >
-                      <SelectTrigger className="w-[220px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="COD">
-                          Thanh toán khi nhận (COD)
-                        </SelectItem>
-                        <SelectItem value="MOMO">
-                          Thanh toán với MoMo
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="text-2xl font-bold">
-                  {formatPrice(totalPrice)}
-                </div>
-              </div>
-
-              <Button
-                className="w-full cursor-pointer"
-                size="lg"
-                onClick={handleCreateBooking}
-                disabled={
-                  !selectedShowtime ||
-                  selectedSeats.length === 0 ||
-                  creatingBooking ||
-                  checkingPayment
-                }
-              >
-                {creatingBooking ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang tạo...
-                  </>
-                ) : checkingPayment ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang kiểm tra thanh toán...
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Thanh toán
+                    </div>
                   </>
                 )}
-              </Button>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
 
-      {/* Trailer Dialog */}
-      <Dialog open={trailerOpen} onOpenChange={setTrailerOpen}>
-        <DialogContent className="min-w-6xl w-full p-0">
-          <DialogHeader className="px-6 pt-6 pb-4">
-            <DialogTitle className="flex items-center justify-between"></DialogTitle>
-          </DialogHeader>
-          <div className="px-6 pb-6">
-            {trailerUrl && (
-              <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
-                <iframe
-                  src={convertToEmbedUrl(trailerUrl)}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+                <Separator />
+
+                <div className="flex justify-between items-center">
+                  <div className="flex flex-col gap-2">
+                    <Label className="text-xl font-semibold">Tổng</Label>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground">
+                        Phương thức thanh toán:
+                      </span>
+                      <Select
+                        value={paymentMethod}
+                        onValueChange={(value) =>
+                          setPaymentMethod(value as "COD" | "MOMO")
+                        }
+                      >
+                        <SelectTrigger className="w-[220px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="COD">
+                            Thanh toán khi nhận (COD)
+                          </SelectItem>
+                          <SelectItem value="MOMO">
+                            Thanh toán với MoMo
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {formatPrice(totalPrice)}
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full cursor-pointer"
+                  size="lg"
+                  onClick={handleCreateBooking}
+                  disabled={
+                    !selectedShowtime ||
+                    selectedSeats.length === 0 ||
+                    creatingBooking ||
+                    checkingPayment
+                  }
+                >
+                  {creatingBooking ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Đang tạo...
+                    </>
+                  ) : checkingPayment ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Đang kiểm tra thanh toán...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Thanh toán
+                    </>
+                  )}
+                </Button>
               </div>
             )}
-          </div>
-        </DialogContent>
-      </Dialog>
+          </SheetContent>
+        </Sheet>
 
-      {/* Booking Success Dialog */}
-      <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Thông báo đặt vé</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <p className="text-base font-medium">{successMessage}</p>
-            {successBooking && (
-              <div className="text-sm space-y-1">
-                <div>
-                  <span className="font-semibold">Mã đơn hàng:</span>{" "}
-                  {successBooking.id}
+        {/* Trailer Dialog */}
+        <Dialog open={trailerOpen} onOpenChange={setTrailerOpen}>
+          <DialogContent className="min-w-6xl w-full p-0">
+            <DialogHeader className="px-6 pt-6 pb-4">
+              <DialogTitle className="flex items-center justify-between"></DialogTitle>
+            </DialogHeader>
+            <div className="px-6 pb-6">
+              {trailerUrl && (
+                <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
+                  <iframe
+                    src={convertToEmbedUrl(trailerUrl)}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
                 </div>
-                <div>
-                  <span className="font-semibold">Tổng tiền:</span>{" "}
-                  {formatPrice(successBooking.totalPrice)}
-                </div>
-              </div>
-            )}
-            <div className="pt-2 flex justify-end">
-              <Button
-                variant="outline"
-                className="cursor-pointer"
-                onClick={() => setSuccessDialogOpen(false)}
-              >
-                Đóng
-              </Button>
+              )}
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Booking Success Dialog */}
+        <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Thông báo đặt vé</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-base font-medium">{successMessage}</p>
+              {successBooking && (
+                <div className="text-sm space-y-1">
+                  <div>
+                    <span className="font-semibold">Mã đơn hàng:</span>{" "}
+                    {successBooking.id}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Tổng tiền:</span>{" "}
+                    {formatPrice(successBooking.totalPrice)}
+                  </div>
+                </div>
+              )}
+              <div className="pt-2 flex justify-end">
+                <Button
+                  variant="outline"
+                  className="cursor-pointer"
+                  onClick={() => setSuccessDialogOpen(false)}
+                >
+                  Đóng
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </>
   );
 }
