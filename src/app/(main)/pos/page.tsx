@@ -4,13 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
 import {
   Select,
   SelectContent,
@@ -38,20 +32,21 @@ import {
 import {
   Loader2,
   ShoppingCart,
-  User,
   Calendar as CalendarIcon,
   Film,
-  Armchair,
   Clock,
   MapPin,
-  Globe,
   MessageSquare,
   Play,
   X,
   Search,
+  Printer,
 } from "lucide-react";
-import { getAllShowtimes } from "@/services/showtimes";
-import { getRoomById } from "@/services/cinemas";
+import { getAllShowtimes, getShowtimeById } from "@/services/showtimes";
+import { getRoomById, getCinemaById } from "@/services/cinemas";
+import { getMovieById } from "@/services/movies";
+import { getUserById } from "@/services/users";
+import { getFoodDrinkById } from "@/services/fooddrinks";
 import {
   createBooking,
   getBookedSeats,
@@ -71,7 +66,7 @@ import {
 import { BookingSeatGrid } from "@/components/seat-layout/booking-seat-grid";
 import { format } from "date-fns";
 import Image from "next/image";
-import { convertToEmbedUrl, formatPrice, cn } from "@/lib/utils";
+import { convertToEmbedUrl, formatPrice, cn, formatDate } from "@/lib/utils";
 import { getSocket } from "@/services/socket";
 import { getAllMovies } from "@/services/movies";
 import { getAllFoodDrinks } from "@/services/fooddrinks";
@@ -83,6 +78,8 @@ import {
 } from "@/components/ui/popover";
 import { paymentService } from "@/services/payment";
 import type { Booking } from "@/services/booking";
+import { QRCodeSVG } from "qrcode.react";
+import { generateBookingQRData } from "@/lib/qrCodeHelpers";
 
 interface SelectedFoodDrink {
   foodDrink: FoodDrink;
@@ -91,6 +88,23 @@ interface SelectedFoodDrink {
 
 interface MovieWithShowtimes extends Movie {
   showtimes: Showtime[];
+}
+
+interface ShowtimeData {
+  id: string;
+  movieTitle: string;
+  cinemaName: string;
+  roomName: string;
+  startTime: string;
+  date: string;
+  price: number;
+}
+
+interface SeatData {
+  id: string;
+  seatNumber: string;
+  row: string;
+  type: string;
 }
 
 export default function POSPage() {
@@ -124,6 +138,32 @@ export default function POSPage() {
   const [successBooking, setSuccessBooking] = useState<Booking | null>(null);
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [checkingPayment, setCheckingPayment] = useState(false);
+  const [booking, setBooking] = useState<Booking>();
+  const [ticketLoading, setTicketLoading] = useState(true);
+  const [ticketData, setTicketData] = useState<{
+    movieTitle: string;
+    cinemaName: string;
+    cinemaAddress: string;
+    roomName: string;
+    date: string;
+    startTime: string;
+    seatsData: SeatData[];
+    userName: string;
+    userEmail: string;
+    userPhone: string;
+    foodDrinks: Array<{
+      name: string;
+      quantity: number;
+      price: number;
+    }>;
+    seatsPrice: number;
+    showtimePrice: number;
+    roomExtraPrices: {
+      VIP?: number;
+      COUPLE?: number;
+      NORMAL?: number;
+    };
+  } | null>(null);
 
   const SEAT_HOLD_TIMEOUT_MINUTES = 5;
   const [timeRemaining, setTimeRemaining] = useState({
@@ -816,6 +856,8 @@ export default function POSPage() {
       });
 
       const booking = bookingResponse.data;
+      setBooking(booking);
+      setSuccessBooking(booking as Booking);
 
       if (paymentMethod === "MOMO") {
         try {
@@ -860,6 +902,204 @@ export default function POSPage() {
     } finally {
       setCreatingBooking(false);
     }
+  };
+
+  useEffect(() => {
+    const fetchTicketData = async () => {
+      setTicketLoading(true);
+      try {
+        if (booking) {
+          const showtimeResponse = await getShowtimeById(
+            booking?.showtimeId || ""
+          );
+
+          const showtimeDetails =
+            (showtimeResponse as any)?.data || showtimeResponse;
+
+          if (!showtimeDetails || !showtimeDetails.startTime) {
+            console.error(
+              "Failed to get showtime details or invalid structure",
+              showtimeResponse
+            );
+            setTicketLoading(false);
+            return;
+          }
+
+          const [movieDetails, cinemaDetails, roomDetails, userDetails] =
+            await Promise.all([
+              getMovieById(showtimeDetails.movieId).catch((err) => {
+                console.warn("Failed to fetch movie details:", err);
+                return null;
+              }),
+              getCinemaById(showtimeDetails.cinemaId).catch((err) => {
+                console.warn("Failed to fetch cinema details:", err);
+                return null;
+              }),
+              getRoomById(showtimeDetails.roomId).catch((err) => {
+                console.warn("Failed to fetch room details:", err);
+                return null;
+              }),
+              getUserById(booking.userId).catch((err) => {
+                console.warn("Failed to fetch user details:", err);
+                return null;
+              }),
+            ]);
+
+          // Fetch food/drinks details
+          const foodDrinksDetails = await Promise.all(
+            booking.bookingFoodDrinks.map((bfd) =>
+              getFoodDrinkById(bfd.foodDrinkId)
+                .then((res) => ({
+                  name: res.data?.name || "N/A",
+                  quantity: bfd.quantity,
+                  price: bfd.totalPrice,
+                }))
+                .catch(() => ({
+                  name: "N/A",
+                  quantity: bfd.quantity,
+                  price: bfd.totalPrice,
+                }))
+            )
+          );
+
+          // Format start time
+          const startTimeDate = new Date(showtimeDetails.startTime);
+          const formattedStartTime = startTimeDate.toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+          const seatMap = new Map<string, any>();
+          if (
+            roomDetails?.data.seats &&
+            Array.isArray(roomDetails.data.seats)
+          ) {
+            roomDetails.data.seats.forEach((seat: any) => {
+              seatMap.set(seat.id, seat);
+            });
+          }
+
+          // Map booking seats to seat data
+          const seatsData = booking.bookingSeats.map((bookingSeat) => {
+            const seatData = seatMap.get(bookingSeat.seatId);
+
+            if (seatData) {
+              const rowMatch = seatData.seatNumber?.match(/^([A-Z])/i);
+              const row = rowMatch ? rowMatch[1].toUpperCase() : "A";
+
+              return {
+                id: bookingSeat.seatId,
+                seatNumber: seatData.seatNumber || bookingSeat.seatId,
+                row,
+                type: seatData.seatType || "NORMAL",
+              };
+            }
+          });
+
+          // Format showtime
+          const formattedShowtime = `${formattedStartTime} ${format(
+            startTimeDate,
+            "dd/MM/yyyy"
+          )}`;
+
+          // Calculate seats price
+          const foodDrinksTotal = foodDrinksDetails.reduce(
+            (sum, fd) => sum + fd.price,
+            0
+          );
+          const seatsPrice = booking.totalPrice - foodDrinksTotal;
+
+          // Get room extra prices for seat types
+          const roomExtraPrices = {
+            VIP: (roomDetails?.data as any)?.VIP || 0,
+            COUPLE: (roomDetails?.data as any)?.COUPLE || 0,
+            NORMAL: (roomDetails?.data as any)?.NORMAL || 0,
+          };
+
+          setTicketData({
+            movieTitle: movieDetails?.data?.title || "",
+            cinemaName: cinemaDetails?.data?.name || "",
+            cinemaAddress: cinemaDetails?.data?.address || "",
+            roomName: roomDetails?.data?.name || "",
+            date: formatDate(new Date(showtimeDetails.startTime)),
+            startTime: formattedShowtime,
+            seatsData: seatsData as SeatData[],
+            userName: userDetails?.data?.fullname || "",
+            userEmail: userDetails?.data?.email || "",
+            userPhone: (userDetails?.data as any)?.phone || "",
+            foodDrinks: foodDrinksDetails,
+            seatsPrice,
+            showtimePrice: showtimeDetails.price || 0,
+            roomExtraPrices,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching ticket data:", error);
+      } finally {
+        setTicketLoading(false);
+      }
+    };
+
+    fetchTicketData();
+  }, [booking]);
+
+  // Handle print ticket
+  const handlePrintTicket = () => {
+    if (!successBooking || !ticketData) return;
+
+    const ticketElement = document.getElementById("ticket-content");
+    if (!ticketElement) return;
+
+    const printContent = ticketElement.innerHTML;
+    const originalContent = document.body.innerHTML;
+
+    const printStyles = `
+      <style>
+        @media print {
+          @page {
+            margin: 10mm;
+          }
+          body {
+            margin: 0;
+            padding: 0;
+          }
+          .ticket-wrapper {
+            width: 400px !important;
+            max-width: 400px !important;
+            margin: 0 auto !important;
+            padding: 10px !important;
+            font-size: 12px !important;
+            border: 2px solid #000000 !important;
+            border-radius: 8px !important;
+          }
+          .ticket-wrapper * {
+            font-size: inherit !important;
+          }
+          .ticket-wrapper h2 {
+            font-size: 16px !important;
+          }
+          .ticket-wrapper .text-base {
+            font-size: 13px !important;
+          }
+          .ticket-wrapper .text-sm {
+            font-size: 11px !important;
+          }
+          .ticket-wrapper .text-xs {
+            font-size: 10px !important;
+          }
+        }
+      </style>
+    `;
+
+    document.body.innerHTML = `
+      ${printStyles}
+      <div class="ticket-wrapper" style="font-family: Arial, sans-serif; width: 400px; margin: 0 auto; padding: 10px;">
+        ${printContent}
+      </div>
+    `;
+    window.print();
+    document.body.innerHTML = originalContent;
+    window.location.reload();
   };
 
   // Convert selectedDate string to Date for Calendar
@@ -1670,31 +1910,259 @@ export default function POSPage() {
 
         {/* Booking Success Dialog */}
         <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Thông báo đặt vé</DialogTitle>
+              <DialogTitle>Đặt vé thành công</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
-              <p className="text-base font-medium">{successMessage}</p>
+            <div className="space-y-4">
+              <p className="text-base font-medium text-green-600">
+                {successMessage}
+              </p>
+
               {successBooking && (
-                <div className="text-sm space-y-1">
-                  <div>
-                    <span className="font-semibold">Mã đơn hàng:</span>{" "}
-                    {successBooking.id}
-                  </div>
-                  <div>
-                    <span className="font-semibold">Tổng tiền:</span>{" "}
-                    {formatPrice(successBooking.totalPrice)}
+                <div
+                  id="ticket-content"
+                  className="border-2 border-gray-300 rounded-lg overflow-hidden bg-white flex flex-col"
+                  style={{ width: "400px", margin: "0 auto" }}
+                >
+                  {/* Ticket Content */}
+                  <div className="p-6 space-y-4">
+                    {ticketLoading ? (
+                      <div className="flex justify-center items-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                      </div>
+                    ) : (
+                      <>
+                        {/* Movie Title - Centered */}
+                        <div className="text-center">
+                          <h2 className="text-xl font-bold">
+                            {ticketData?.movieTitle || "Đang tải..."}
+                          </h2>
+                        </div>
+
+                        {/* Cinema Name and Address - Centered */}
+                        <div className="text-center space-y-1">
+                          <p className="text-base font-black">
+                            {ticketData?.cinemaName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {ticketData?.cinemaAddress || "N/A"}
+                          </p>
+                        </div>
+
+                        {/* QR Code - Centered */}
+                        <div className="flex justify-center py-2">
+                          {successBooking && (
+                            <div className="bg-white p-2 rounded-lg">
+                              <QRCodeSVG
+                                value={generateBookingQRData({
+                                  id: successBooking.id,
+                                  userId: successBooking.userId,
+                                  showtimeId: successBooking.showtimeId,
+                                  totalPrice: successBooking.totalPrice,
+                                  bookingSeats: successBooking.bookingSeats.map(
+                                    (seat) => ({ seatId: seat.seatId })
+                                  ),
+                                  createdAt:
+                                    successBooking.createdAt instanceof Date
+                                      ? successBooking.createdAt
+                                      : new Date(successBooking.createdAt),
+                                })}
+                                size={160}
+                                level="H"
+                                marginSize={1}
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* User Information - Centered */}
+                        {/* <div className="text-center space-y-1">
+                          <p className="text-sm">{ticketData?.userName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {ticketData?.userEmail}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {ticketData?.userPhone}
+                          </p>
+                        </div> */}
+
+                        {/* Ticket Information Section */}
+                        <div className="space-y-2">
+                          <h3 className="text-base font-black text-center">
+                            Thông tin vé
+                          </h3>
+                          <div className="space-y-1 text-sm">
+                            <div className="flex justify-between">
+                              <span>Mã vé</span>
+                              <span className="font-medium">
+                                {successBooking.id}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Ghế</span>
+                              <span className="font-medium">
+                                {ticketData?.seatsData
+                                  ?.map((s) => s.seatNumber)
+                                  .join(", ") || "N/A"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Suất chiếu</span>
+                              <span className="font-medium">
+                                {ticketData?.startTime || "N/A"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Phòng chiếu</span>
+                              <span className="font-medium">
+                                {ticketData?.roomName || "N/A"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Order Information Section */}
+                        <div className="space-y-2">
+                          <h3 className="text-base font-black text-center">
+                            Thông tin đơn hàng
+                          </h3>
+                          <div className="space-y-1 text-sm">
+                            {/* Seats grouped by type */}
+                            {(() => {
+                              if (
+                                !ticketData?.seatsData ||
+                                ticketData.seatsData.length === 0
+                              ) {
+                                return null;
+                              }
+
+                              const getSeatTypeName = (type: string) => {
+                                const typeMap: Record<string, string> = {
+                                  NORMAL: "Thường",
+                                  VIP: "VIP",
+                                  COUPLE: "Đôi",
+                                };
+                                return typeMap[type] || type;
+                              };
+
+                              // Group seats by type
+                              const seatsByType: Record<string, SeatData[]> =
+                                {};
+                              const coupleSeatNumbers = new Set<string>();
+
+                              ticketData.seatsData.forEach((seat) => {
+                                // Check couple seat
+                                if (seat.seatNumber.includes("-")) {
+                                  const coupleKey = seat.seatNumber;
+                                  if (!coupleSeatNumbers.has(coupleKey)) {
+                                    coupleSeatNumbers.add(coupleKey);
+                                    if (!seatsByType["COUPLE"]) {
+                                      seatsByType["COUPLE"] = [];
+                                    }
+                                    seatsByType["COUPLE"].push(seat);
+                                  }
+                                } else {
+                                  // Regular seat
+                                  const type = seat.type || "NORMAL";
+                                  if (!seatsByType[type]) {
+                                    seatsByType[type] = [];
+                                  }
+                                  seatsByType[type].push(seat);
+                                }
+                              });
+
+                              const showtimePrice =
+                                ticketData.showtimePrice || 0;
+                              const roomExtraPrices =
+                                ticketData.roomExtraPrices || {};
+
+                              return Object.entries(seatsByType).map(
+                                ([type, seats]) => {
+                                  let seatCount = seats.length;
+                                  let pricePerSeat = showtimePrice;
+
+                                  // Add extra price based on seat type
+                                  if (type === "VIP") {
+                                    pricePerSeat += roomExtraPrices.VIP || 0;
+                                  } else if (type === "COUPLE") {
+                                    pricePerSeat += roomExtraPrices.COUPLE || 0;
+                                    seatCount = seats.length * 2;
+                                  } else {
+                                    pricePerSeat += roomExtraPrices.NORMAL || 0;
+                                  }
+
+                                  const totalPrice = seatCount * pricePerSeat;
+
+                                  return (
+                                    <div
+                                      key={type}
+                                      className="flex justify-between"
+                                    >
+                                      <span>
+                                        {seatCount} Ghế ({getSeatTypeName(type)}
+                                        )
+                                      </span>
+                                      <span className="font-medium">
+                                        {formatPrice(totalPrice)}
+                                      </span>
+                                    </div>
+                                  );
+                                }
+                              );
+                            })()}
+
+                            {/* Food/Drinks */}
+                            {ticketData?.foodDrinks &&
+                              ticketData.foodDrinks.length > 0 &&
+                              ticketData.foodDrinks.map((fd, index) => (
+                                <div
+                                  key={index}
+                                  className="flex justify-between"
+                                >
+                                  <span>
+                                    {fd.quantity} {fd.name}
+                                  </span>
+                                  <span className="font-medium">
+                                    {formatPrice(fd.price)}
+                                  </span>
+                                </div>
+                              ))}
+
+                            {/* Total */}
+                            <div className="border-t border-gray-300 pt-1 mt-2">
+                              <div className="flex justify-between font-bold">
+                                <span>Tổng</span>
+                                <span>
+                                  {formatPrice(successBooking.totalPrice)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
-              <div className="pt-2 flex justify-end">
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 justify-end pt-2">
                 <Button
                   variant="outline"
                   className="cursor-pointer"
                   onClick={() => setSuccessDialogOpen(false)}
                 >
                   Đóng
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={handlePrintTicket}
+                  disabled={!successBooking || ticketLoading}
+                  className="cursor-pointer"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  In vé
                 </Button>
               </div>
             </div>
