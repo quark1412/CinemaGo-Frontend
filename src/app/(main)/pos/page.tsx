@@ -868,14 +868,7 @@ export default function POSPage() {
 
           if (momoResponse.URL) {
             if (typeof window !== "undefined") {
-              if (momoResponse.paymentId) {
-                window.localStorage.setItem(
-                  "paymentId",
-                  momoResponse.paymentId
-                );
-              }
               window.localStorage.setItem("bookingId", booking.id);
-
               window.open(momoResponse.URL, "_self");
             }
           }

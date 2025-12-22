@@ -104,7 +104,23 @@ export const getRevenueByPeriodAndCinema = async (
         requiresAuth: true,
       } as any
     );
-    return response.data.data?.cinemasRevenue || [];
+    const data = response.data.data;
+    // Handle both old and new response formats
+    if (data?.cinemasRevenue) {
+      return data.cinemasRevenue.map((item: any) => ({
+        cinemaId: item.cinema?.id || item.cinemaId,
+        cinemaName: item.cinema?.name || item.cinemaName,
+        totalRevenue: item.totalRevenue || 0,
+      }));
+    }
+    if (Array.isArray(data)) {
+      return data.map((item: any) => ({
+        cinemaId: item.cinema?.id || item.cinemaId,
+        cinemaName: item.cinema?.name || item.cinemaName,
+        totalRevenue: item.totalRevenue || 0,
+      }));
+    }
+    return [];
   } catch (error) {
     throw error;
   }
@@ -127,7 +143,23 @@ export const getRevenueByPeriodAndMovie = async (
         requiresAuth: true,
       } as any
     );
-    return response.data.data?.moviesRevenue || [];
+    const data = response.data.data;
+    // Handle both old and new response formats
+    if (data?.moviesRevenue) {
+      return data.moviesRevenue.map((item: any) => ({
+        movieId: item.movie?.id || item.movieId,
+        movieName: item.movie?.title || item.movieName,
+        totalRevenue: item.totalRevenue || 0,
+      }));
+    }
+    if (Array.isArray(data)) {
+      return data.map((item: any) => ({
+        movieId: item.movie?.id || item.movieId,
+        movieName: item.movie?.title || item.movieName,
+        totalRevenue: item.totalRevenue || 0,
+      }));
+    }
+    return [];
   } catch (error) {
     throw error;
   }

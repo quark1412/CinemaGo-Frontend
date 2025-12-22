@@ -6,6 +6,8 @@ import {
   CinemaRevenue,
   MovieRevenue,
 } from "@/services/dashboard";
+import { getAllCinemas } from "@/services/cinemas";
+import { getAllMovies } from "@/services/movies";
 import dayjs from "dayjs";
 
 export interface DailyReport {
@@ -263,13 +265,11 @@ async function fetchRevenueByType(
   return data;
 }
 
-// Fetch revenue by cinema
-async function fetchRevenueByCinema(
+async function fetchAllCinemaRevenueData(
   viewType: "week" | "month" | "year",
-  selectedDate: dayjs.Dayjs,
-  cinemaId?: string
-): Promise<{ time: string; revenue: number }[]> {
-  const data: { time: string; revenue: number }[] = [];
+  selectedDate: dayjs.Dayjs
+): Promise<Map<string, CinemaRevenue[]>> {
+  const revenueMap = new Map<string, CinemaRevenue[]>();
 
   if (viewType === "week") {
     const startOfWeek = selectedDate.startOf("week").add(1, "day");
@@ -284,20 +284,9 @@ async function fetchRevenueByCinema(
           startDate,
           endDate
         );
-        let totalRevenue: number;
-        if (cinemaId) {
-          // Filter by cinema
-          const cinema = cinemasRevenue.find((c) => c.cinemaId === cinemaId);
-          totalRevenue = cinema?.totalRevenue || 0;
-        } else {
-          totalRevenue = cinemasRevenue.reduce(
-            (sum, cinema) => sum + cinema.totalRevenue,
-            0
-          );
-        }
-        data.push({ time: timeKey, revenue: totalRevenue });
+        revenueMap.set(timeKey, cinemasRevenue);
       } catch (error) {
-        data.push({ time: timeKey, revenue: 0 });
+        revenueMap.set(timeKey, []);
       }
     }
   } else if (viewType === "month") {
@@ -316,20 +305,9 @@ async function fetchRevenueByCinema(
           startDate,
           endDate
         );
-        let totalRevenue: number;
-        if (cinemaId) {
-          // Filter by cinema
-          const cinema = cinemasRevenue.find((c) => c.cinemaId === cinemaId);
-          totalRevenue = cinema?.totalRevenue || 0;
-        } else {
-          totalRevenue = cinemasRevenue.reduce(
-            (sum, cinema) => sum + cinema.totalRevenue,
-            0
-          );
-        }
-        data.push({ time: timeKey, revenue: totalRevenue });
+        revenueMap.set(timeKey, cinemasRevenue);
       } catch (error) {
-        data.push({ time: timeKey, revenue: 0 });
+        revenueMap.set(timeKey, []);
       }
     }
   } else if (viewType === "year") {
@@ -347,130 +325,133 @@ async function fetchRevenueByCinema(
           startDate,
           endDate
         );
-        let totalRevenue: number;
-        if (cinemaId) {
-          // Filter by cinema
-          const cinema = cinemasRevenue.find((c) => c.cinemaId === cinemaId);
-          totalRevenue = cinema?.totalRevenue || 0;
-        } else {
-          totalRevenue = cinemasRevenue.reduce(
-            (sum, cinema) => sum + cinema.totalRevenue,
-            0
-          );
-        }
-        data.push({ time: timeKey, revenue: totalRevenue });
+        revenueMap.set(timeKey, cinemasRevenue);
       } catch (error) {
-        data.push({ time: timeKey, revenue: 0 });
+        revenueMap.set(timeKey, []);
       }
     }
   }
 
-  return data;
+  return revenueMap;
+}
+
+// Fetch revenue by cinema
+function filterCinemaRevenueData(
+  revenueMap: Map<string, CinemaRevenue[]>,
+  cinemaId?: string
+): { time: string; revenue: number }[] {
+  const data: { time: string; revenue: number }[] = [];
+
+  revenueMap.forEach((cinemasRevenue, timeKey) => {
+    let totalRevenue: number;
+    if (cinemaId) {
+      const cinema = cinemasRevenue.find((c) => c.cinemaId === cinemaId);
+      totalRevenue = cinema?.totalRevenue || 0;
+    } else {
+      totalRevenue = cinemasRevenue.reduce(
+        (sum, cinema) => sum + cinema.totalRevenue,
+        0
+      );
+    }
+    data.push({ time: timeKey, revenue: totalRevenue });
+  });
+
+  return data.sort((a, b) => a.time.localeCompare(b.time));
+}
+
+// Fetch all movie revenue data for the entire date range and store in map
+async function fetchAllMovieRevenueData(
+  viewType: "week" | "month" | "year",
+  selectedDate: dayjs.Dayjs
+): Promise<Map<string, MovieRevenue[]>> {
+  const revenueMap = new Map<string, MovieRevenue[]>();
+
+  if (viewType === "week") {
+    const startOfWeek = selectedDate.startOf("week").add(1, "day");
+    for (let i = 0; i < 7; i++) {
+      const currentDay = startOfWeek.add(i, "day");
+      const startDate = currentDay.startOf("day").toISOString();
+      const endDate = currentDay.endOf("day").toISOString();
+      const timeKey = currentDay.format("YYYY-MM-DD");
+
+      try {
+        const moviesRevenue = await getRevenueByPeriodAndMovie(
+          startDate,
+          endDate
+        );
+        revenueMap.set(timeKey, moviesRevenue);
+      } catch (error) {
+        revenueMap.set(timeKey, []);
+      }
+    }
+  } else if (viewType === "month") {
+    const year = selectedDate.year();
+    const month = selectedDate.month() + 1;
+    const daysInMonth = dayjs(`${year}-${month}`).daysInMonth();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDay = dayjs(`${year}-${month}-${day}`);
+      const startDate = currentDay.startOf("day").toISOString();
+      const endDate = currentDay.endOf("day").toISOString();
+      const timeKey = currentDay.format("YYYY-MM-DD");
+
+      try {
+        const moviesRevenue = await getRevenueByPeriodAndMovie(
+          startDate,
+          endDate
+        );
+        revenueMap.set(timeKey, moviesRevenue);
+      } catch (error) {
+        revenueMap.set(timeKey, []);
+      }
+    }
+  } else if (viewType === "year") {
+    const year = selectedDate.year();
+
+    for (let month = 1; month <= 12; month++) {
+      const monthStart = dayjs(`${year}-${month}-1`);
+      const monthEnd = monthStart.endOf("month");
+      const startDate = monthStart.startOf("day").toISOString();
+      const endDate = monthEnd.endOf("day").toISOString();
+      const timeKey = `${year}-${String(month).padStart(2, "0")}`;
+
+      try {
+        const moviesRevenue = await getRevenueByPeriodAndMovie(
+          startDate,
+          endDate
+        );
+        revenueMap.set(timeKey, moviesRevenue);
+      } catch (error) {
+        revenueMap.set(timeKey, []);
+      }
+    }
+  }
+
+  return revenueMap;
 }
 
 // Fetch revenue by movie
-async function fetchRevenueByMovie(
-  viewType: "week" | "month" | "year",
-  selectedDate: dayjs.Dayjs,
+function filterMovieRevenueData(
+  revenueMap: Map<string, MovieRevenue[]>,
   movieId?: string
-): Promise<{ time: string; revenue: number }[]> {
+): { time: string; revenue: number }[] {
   const data: { time: string; revenue: number }[] = [];
 
-  if (viewType === "week") {
-    const startOfWeek = selectedDate.startOf("week").add(1, "day");
-    for (let i = 0; i < 7; i++) {
-      const currentDay = startOfWeek.add(i, "day");
-      const startDate = currentDay.startOf("day").toISOString();
-      const endDate = currentDay.endOf("day").toISOString();
-      const timeKey = currentDay.format("YYYY-MM-DD");
-
-      try {
-        const moviesRevenue = await getRevenueByPeriodAndMovie(
-          startDate,
-          endDate
-        );
-        let totalRevenue: number;
-        if (movieId) {
-          // Filter by movie
-          const movie = moviesRevenue.find((m) => m.movieId === movieId);
-          totalRevenue = movie?.totalRevenue || 0;
-        } else {
-          totalRevenue = moviesRevenue.reduce(
-            (sum, movie) => sum + movie.totalRevenue,
-            0
-          );
-        }
-        data.push({ time: timeKey, revenue: totalRevenue });
-      } catch (error) {
-        data.push({ time: timeKey, revenue: 0 });
-      }
+  revenueMap.forEach((moviesRevenue, timeKey) => {
+    let totalRevenue: number;
+    if (movieId) {
+      const movie = moviesRevenue.find((m) => m.movieId === movieId);
+      totalRevenue = movie?.totalRevenue || 0;
+    } else {
+      totalRevenue = moviesRevenue.reduce(
+        (sum, movie) => sum + movie.totalRevenue,
+        0
+      );
     }
-  } else if (viewType === "month") {
-    const year = selectedDate.year();
-    const month = selectedDate.month() + 1;
-    const daysInMonth = dayjs(`${year}-${month}`).daysInMonth();
+    data.push({ time: timeKey, revenue: totalRevenue });
+  });
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      const currentDay = dayjs(`${year}-${month}-${day}`);
-      const startDate = currentDay.startOf("day").toISOString();
-      const endDate = currentDay.endOf("day").toISOString();
-      const timeKey = currentDay.format("YYYY-MM-DD");
-
-      try {
-        const moviesRevenue = await getRevenueByPeriodAndMovie(
-          startDate,
-          endDate
-        );
-        let totalRevenue: number;
-        if (movieId) {
-          // Filter by movie
-          const movie = moviesRevenue.find((m) => m.movieId === movieId);
-          totalRevenue = movie?.totalRevenue || 0;
-        } else {
-          totalRevenue = moviesRevenue.reduce(
-            (sum, movie) => sum + movie.totalRevenue,
-            0
-          );
-        }
-        data.push({ time: timeKey, revenue: totalRevenue });
-      } catch (error) {
-        data.push({ time: timeKey, revenue: 0 });
-      }
-    }
-  } else if (viewType === "year") {
-    const year = selectedDate.year();
-
-    for (let month = 1; month <= 12; month++) {
-      const monthStart = dayjs(`${year}-${month}-1`);
-      const monthEnd = monthStart.endOf("month");
-      const startDate = monthStart.startOf("day").toISOString();
-      const endDate = monthEnd.endOf("day").toISOString();
-      const timeKey = `${year}-${String(month).padStart(2, "0")}`;
-
-      try {
-        const moviesRevenue = await getRevenueByPeriodAndMovie(
-          startDate,
-          endDate
-        );
-        let totalRevenue: number;
-        if (movieId) {
-          // Filter by movie
-          const movie = moviesRevenue.find((m) => m.movieId === movieId);
-          totalRevenue = movie?.totalRevenue || 0;
-        } else {
-          totalRevenue = moviesRevenue.reduce(
-            (sum, movie) => sum + movie.totalRevenue,
-            0
-          );
-        }
-        data.push({ time: timeKey, revenue: totalRevenue });
-      } catch (error) {
-        data.push({ time: timeKey, revenue: 0 });
-      }
-    }
-  }
-
-  return data;
+  return data.sort((a, b) => a.time.localeCompare(b.time));
 }
 
 export function useRevenueByType(
@@ -492,148 +473,124 @@ export function useRevenueByType(
   });
 }
 
+// Fetch all cinema revenue data
+export function useAllCinemaRevenueData(
+  viewType: "week" | "month" | "year",
+  selectedDate: dayjs.Dayjs
+) {
+  return useQuery({
+    queryKey: [
+      ...reportKeys.all,
+      "all-cinema-revenue",
+      viewType,
+      selectedDate.toISOString(),
+    ],
+    queryFn: () => fetchAllCinemaRevenueData(viewType, selectedDate),
+    enabled: !!selectedDate,
+    staleTime: 60 * 1000,
+  });
+}
+
+// Fetch all movie revenue data
+export function useAllMovieRevenueData(
+  viewType: "week" | "month" | "year",
+  selectedDate: dayjs.Dayjs
+) {
+  return useQuery({
+    queryKey: [
+      ...reportKeys.all,
+      "all-movie-revenue",
+      viewType,
+      selectedDate.toISOString(),
+    ],
+    queryFn: () => fetchAllMovieRevenueData(viewType, selectedDate),
+    enabled: !!selectedDate,
+    staleTime: 60 * 1000,
+  });
+}
+
+// Get filtered cinema revenue
 export function useRevenueByCinema(
   viewType: "week" | "month" | "year",
   selectedDate: dayjs.Dayjs,
   cinemaId?: string
 ) {
-  return useQuery({
-    queryKey: [
-      ...reportKeys.all,
-      "revenue-by-cinema",
-      viewType,
-      selectedDate.toISOString(),
-      cinemaId || "all",
-    ],
-    queryFn: () => fetchRevenueByCinema(viewType, selectedDate, cinemaId),
-    enabled: !!selectedDate,
-    staleTime: 60 * 1000,
-  });
+  const { data: revenueMap } = useAllCinemaRevenueData(viewType, selectedDate);
+
+  return {
+    data: revenueMap
+      ? filterCinemaRevenueData(revenueMap, cinemaId)
+      : undefined,
+    isLoading: !revenueMap,
+  };
 }
 
+// Get filtered movie revenue
 export function useRevenueByMovie(
   viewType: "week" | "month" | "year",
   selectedDate: dayjs.Dayjs,
   movieId?: string
 ) {
-  return useQuery({
-    queryKey: [
-      ...reportKeys.all,
-      "revenue-by-movie",
-      viewType,
-      selectedDate.toISOString(),
-      movieId || "all",
-    ],
-    queryFn: () => fetchRevenueByMovie(viewType, selectedDate, movieId),
-    enabled: !!selectedDate,
-    staleTime: 60 * 1000,
-  });
+  const { data: revenueMap } = useAllMovieRevenueData(viewType, selectedDate);
+
+  return {
+    data: revenueMap ? filterMovieRevenueData(revenueMap, movieId) : undefined,
+    isLoading: !revenueMap,
+  };
 }
 
-// Fetch available cinemas and movies
-async function fetchAvailableCinemas(
-  viewType: "week" | "month" | "year",
-  selectedDate: dayjs.Dayjs
-): Promise<CinemaRevenue[]> {
-  let startDate: string;
-  let endDate: string;
-
-  if (viewType === "week") {
-    const startOfWeek = selectedDate.startOf("week").add(1, "day");
-    const endOfWeek = startOfWeek.add(6, "days");
-    startDate = startOfWeek.startOf("day").toISOString();
-    endDate = endOfWeek.endOf("day").toISOString();
-  } else if (viewType === "month") {
-    const year = selectedDate.year();
-    const month = selectedDate.month() + 1;
-    const monthStart = dayjs(`${year}-${month}-1`);
-    const monthEnd = monthStart.endOf("month");
-    startDate = monthStart.startOf("day").toISOString();
-    endDate = monthEnd.endOf("day").toISOString();
-  } else {
-    const year = selectedDate.year();
-    const yearStart = dayjs(`${year}-1-1`);
-    const yearEnd = yearStart.endOf("year");
-    startDate = yearStart.startOf("day").toISOString();
-    endDate = yearEnd.endOf("day").toISOString();
-  }
-
+async function fetchAvailableCinemas(): Promise<
+  { cinemaId: string; cinemaName: string }[]
+> {
   try {
-    const cinemasRevenue = await getRevenueByPeriodAndCinema(
-      startDate,
-      endDate
+    const response = await getAllCinemas({
+      limit: undefined,
+      isActive: true,
+    });
+    return (
+      response.data?.map((cinema) => ({
+        cinemaId: cinema.id,
+        cinemaName: cinema.name,
+      })) || []
     );
-    return cinemasRevenue.sort((a, b) => b.totalRevenue - a.totalRevenue);
   } catch (error) {
+    console.error("Failed to fetch cinemas:", error);
     return [];
   }
 }
 
-async function fetchAvailableMovies(
-  viewType: "week" | "month" | "year",
-  selectedDate: dayjs.Dayjs
-): Promise<MovieRevenue[]> {
-  let startDate: string;
-  let endDate: string;
-
-  if (viewType === "week") {
-    const startOfWeek = selectedDate.startOf("week").add(1, "day");
-    const endOfWeek = startOfWeek.add(6, "days");
-    startDate = startOfWeek.startOf("day").toISOString();
-    endDate = endOfWeek.endOf("day").toISOString();
-  } else if (viewType === "month") {
-    const year = selectedDate.year();
-    const month = selectedDate.month() + 1;
-    const monthStart = dayjs(`${year}-${month}-1`);
-    const monthEnd = monthStart.endOf("month");
-    startDate = monthStart.startOf("day").toISOString();
-    endDate = monthEnd.endOf("day").toISOString();
-  } else {
-    const year = selectedDate.year();
-    const yearStart = dayjs(`${year}-1-1`);
-    const yearEnd = yearStart.endOf("year");
-    startDate = yearStart.startOf("day").toISOString();
-    endDate = yearEnd.endOf("day").toISOString();
-  }
-
+async function fetchAvailableMovies(): Promise<
+  { movieId: string; movieName: string }[]
+> {
   try {
-    const moviesRevenue = await getRevenueByPeriodAndMovie(startDate, endDate);
-    return moviesRevenue.sort((a, b) => b.totalRevenue - a.totalRevenue);
+    const response = await getAllMovies({
+      limit: undefined,
+      isActive: true,
+    });
+    return (
+      response.data?.map((movie) => ({
+        movieId: movie.id,
+        movieName: movie.title,
+      })) || []
+    );
   } catch (error) {
+    console.error("Failed to fetch movies:", error);
     return [];
   }
 }
 
-export function useAvailableCinemas(
-  viewType: "week" | "month" | "year",
-  selectedDate: dayjs.Dayjs
-) {
+export function useAvailableCinemas() {
   return useQuery({
-    queryKey: [
-      ...reportKeys.all,
-      "available-cinemas",
-      viewType,
-      selectedDate.toISOString(),
-    ],
-    queryFn: () => fetchAvailableCinemas(viewType, selectedDate),
-    enabled: !!selectedDate,
-    staleTime: 60 * 1000,
+    queryKey: [...reportKeys.all, "available-cinemas"],
+    queryFn: fetchAvailableCinemas,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
-export function useAvailableMovies(
-  viewType: "week" | "month" | "year",
-  selectedDate: dayjs.Dayjs
-) {
+export function useAvailableMovies() {
   return useQuery({
-    queryKey: [
-      ...reportKeys.all,
-      "available-movies",
-      viewType,
-      selectedDate.toISOString(),
-    ],
-    queryFn: () => fetchAvailableMovies(viewType, selectedDate),
-    enabled: !!selectedDate,
-    staleTime: 60 * 1000,
+    queryKey: [...reportKeys.all, "available-movies"],
+    queryFn: fetchAvailableMovies,
+    staleTime: 5 * 60 * 1000,
   });
 }

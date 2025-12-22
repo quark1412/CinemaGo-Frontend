@@ -57,7 +57,6 @@ import {
   useAvailableCinemas,
   useAvailableMovies,
 } from "@/hooks/use-report";
-import { getMockRevenueData } from "@/lib/mock-revenue-data";
 import { DashboardCard } from "@/components/dashboard-card";
 import { useI18n } from "@/contexts/I18nContext";
 
@@ -82,9 +81,27 @@ const ITEMS_PER_PAGE = 10;
 
 type ViewType = "week" | "month" | "year";
 
+// Helper function to get Monday of the week for any date
+function getMondayOfWeek(date: dayjs.Dayjs): dayjs.Dayjs {
+  const dayOfWeek = date.day();
+  let daysToSubtract: number;
+  if (dayOfWeek === 0) {
+    daysToSubtract = 6;
+  } else {
+    daysToSubtract = dayOfWeek - 1;
+  }
+
+  const monday = date.subtract(daysToSubtract, "day").startOf("day");
+
+  return monday;
+}
+
 export default function ReportPage() {
   const { t } = useI18n();
-  const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs>(dayjs());
+  const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs>(() => {
+    const today = dayjs(new Date());
+    return getMondayOfWeek(today);
+  });
   const [selectedView, setSelectedView] = useState<ViewType>("week");
   const [currentPage, setCurrentPage] = useState(1);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -124,19 +141,12 @@ export default function ReportPage() {
     selectedMovieId === "all" ? undefined : selectedMovieId
   );
 
-  // Fetch available cinemas and movies for dropdowns
-  const { data: availableCinemas } = useAvailableCinemas(
-    selectedView,
-    selectedDate
-  );
-  const { data: availableMovies } = useAvailableMovies(
-    selectedView,
-    selectedDate
-  );
+  const { data: availableCinemas } = useAvailableCinemas();
+  const { data: availableMovies } = useAvailableMovies();
 
   const getCurrentDateRange = (date: dayjs.Dayjs): string => {
     if (selectedView === "week") {
-      const startOfWeek = date.startOf("week").add(1, "day");
+      const startOfWeek = getMondayOfWeek(date);
       const endOfWeek = startOfWeek.add(6, "days");
       return `${startOfWeek.format("DD/MM/YYYY")} - ${endOfWeek.format(
         "DD/MM/YYYY"
@@ -156,7 +166,7 @@ export default function ReportPage() {
 
   const { data: statistics } = useDashboardStatistics();
 
-  // Combine offline and online data for grouped bar chart with ticket and food/drink separated
+  // Combine offline and online data
   const offlineOnlineChartData = useMemo(() => {
     if (!offlineRevenueData || !onlineRevenueData) {
       return [];
@@ -211,18 +221,6 @@ export default function ReportPage() {
       .sort((a, b) => a.time.localeCompare(b.time));
   }, [offlineRevenueData, onlineRevenueData]);
 
-  // Use mock data
-  const useMockData = true;
-  const chartDataToDisplay = useMemo(() => {
-    if (useMockData) {
-      return getMockRevenueData(selectedView);
-    }
-    if (offlineOnlineChartData.length === 0) {
-      return getMockRevenueData(selectedView);
-    }
-    return offlineOnlineChartData;
-  }, [useMockData, selectedView, offlineOnlineChartData]);
-
   const handleDateChange = (
     date: Date | Date[] | { from: Date; to?: Date } | undefined
   ) => {
@@ -243,7 +241,7 @@ export default function ReportPage() {
         adjustedDate = dayjs(date as Date);
       }
       // Set to start of week (Monday)
-      adjustedDate = adjustedDate.startOf("week").add(1, "day");
+      adjustedDate = getMondayOfWeek(adjustedDate);
     } else if (selectedView === "month") {
       // For month/year views
       const dateObj = Array.isArray(date)
@@ -278,7 +276,7 @@ export default function ReportPage() {
   // Calculate week range for week view
   const weekRange = useMemo(() => {
     if (selectedView === "week") {
-      const weekStart = selectedDate.startOf("week").add(1, "day");
+      const weekStart = getMondayOfWeek(selectedDate);
       const weekEnd = weekStart.add(6, "days");
       return {
         from: weekStart.toDate(),
@@ -299,7 +297,9 @@ export default function ReportPage() {
 
   useEffect(() => {
     if (calendarOpen && selectedView === "week") {
-      setCalendarMonth(selectedDate.toDate());
+      // Update calendar month to show the week's Monday
+      const monday = getMondayOfWeek(selectedDate);
+      setCalendarMonth(monday.toDate());
     }
   }, [calendarOpen, selectedView, selectedDate]);
 
@@ -514,12 +514,12 @@ export default function ReportPage() {
                   <div className="flex items-center justify-center h-[400px]">
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
-                ) : chartDataToDisplay.length === 0 ? (
+                ) : offlineOnlineChartData.length === 0 ? (
                   <div className="flex items-center justify-center h-[400px]">
                     <p className="text-muted-foreground">No data available</p>
                   </div>
                 ) : (
-                  <BarChart data={chartDataToDisplay} />
+                  <BarChart data={offlineOnlineChartData} />
                 )}
               </CardContent>
             </Card>

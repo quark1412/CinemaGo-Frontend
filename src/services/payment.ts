@@ -13,7 +13,7 @@ export interface Payment {
 
 export interface PaymentResponse {
   URL: string;
-  paymentId?: string;
+  bookingId?: string;
 }
 
 export const paymentService = {
@@ -40,27 +40,14 @@ export const paymentService = {
     }
   },
 
-  checkMoMoStatus: async (paymentId: string): Promise<Payment> => {
+  checkMoMoStatus: async (bookingId: string): Promise<{ message: string }> => {
     try {
       const response = await instance.get(
-        `/v1/payments/public/momo/status/${paymentId}`
+        `/v1/payments/public/momo/status/${bookingId}`
       );
-      return response.data.data;
+      return response.data;
     } catch (error: any) {
       throw error;
-    }
-  },
-
-  getPaymentById: async (paymentId: string): Promise<Payment> => {
-    try {
-      const response = await instance.get(`/v1/payments/${paymentId}`, {
-        requiresAuth: true,
-      } as any);
-      return response.data.data;
-    } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || "Failed to fetch payment"
-      );
     }
   },
 };
