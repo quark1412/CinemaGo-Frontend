@@ -25,14 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { formatPrice } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+
+import CustomCalendar from "@/components/custom-calendar";
 import {
   useWeeklyReport,
   useMonthlyReport,
@@ -44,8 +38,6 @@ import {
 import { Loader2 } from "lucide-react";
 import { LineChart } from "@/components/line-chart";
 import { BarChart } from "@/components/bar-chart";
-import { MonthPicker } from "@/components/month-picker";
-import { YearPicker } from "@/components/year-picker";
 import {
   useDashboardStatistics,
   useMonthlyRevenue,
@@ -108,6 +100,15 @@ export default function ReportPage() {
   const [selectedCinemaId, setSelectedCinemaId] = useState<string>("all");
   const [selectedMovieId, setSelectedMovieId] = useState<string>("all");
   const [calendarMonth, setCalendarMonth] = useState<Date>(dayjs().toDate());
+  const [showPicker, setShowPicker] = useState(false);
+  const [inputValue, setInputValue] = useState<string>(() => {
+    const today = dayjs(new Date());
+    const mondayOfWeek = getMondayOfWeek(today);
+    const endOfWeek = mondayOfWeek.add(6, "days");
+    return `${mondayOfWeek.format("DD/MM/YYYY")} - ${endOfWeek.format(
+      "DD/MM/YYYY"
+    )}`;
+  });
 
   const year = selectedDate.year();
   const month = selectedDate.month() + 1;
@@ -144,16 +145,17 @@ export default function ReportPage() {
   const { data: availableCinemas } = useAvailableCinemas();
   const { data: availableMovies } = useAvailableMovies();
 
-  const getCurrentDateRange = (date: dayjs.Dayjs): string => {
-    if (selectedView === "week") {
+  const getCurrentDateRange = (date: dayjs.Dayjs, view?: ViewType): string => {
+    const currentView = view ?? selectedView;
+    if (currentView === "week") {
       const startOfWeek = getMondayOfWeek(date);
       const endOfWeek = startOfWeek.add(6, "days");
       return `${startOfWeek.format("DD/MM/YYYY")} - ${endOfWeek.format(
         "DD/MM/YYYY"
       )}`;
-    } else if (selectedView === "month") {
+    } else if (currentView === "month") {
       return date.format("MM/YYYY");
-    } else if (selectedView === "year") {
+    } else if (currentView === "year") {
       return date.format("YYYY");
     }
     return "";
@@ -221,56 +223,14 @@ export default function ReportPage() {
       .sort((a, b) => a.time.localeCompare(b.time));
   }, [offlineRevenueData, onlineRevenueData]);
 
-  const handleDateChange = (
-    date: Date | Date[] | { from: Date; to?: Date } | undefined
-  ) => {
-    if (!date) {
-      setCalendarOpen(false);
-      return;
+  const handleDateChange = (date: dayjs.Dayjs | null) => {
+    if (date) {
+      const normalizedDate =
+        selectedView === "week" ? getMondayOfWeek(date) : date;
+      setSelectedDate(normalizedDate);
+      setInputValue(getCurrentDateRange(normalizedDate));
     }
-
-    let adjustedDate: dayjs.Dayjs;
-
-    if (selectedView === "week") {
-      // For week view, date comes as a range
-      if (Array.isArray(date)) {
-        adjustedDate = dayjs(date[0]);
-      } else if (typeof date === "object" && "from" in date) {
-        adjustedDate = dayjs(date.from);
-      } else {
-        adjustedDate = dayjs(date as Date);
-      }
-      // Set to start of week (Monday)
-      adjustedDate = getMondayOfWeek(adjustedDate);
-    } else if (selectedView === "month") {
-      // For month/year views
-      const dateObj = Array.isArray(date)
-        ? date[0]
-        : typeof date === "object" && "from" in date
-        ? date.from
-        : (date as Date);
-      adjustedDate = dayjs(dateObj).startOf("month");
-    } else if (selectedView === "year") {
-      const dateObj = Array.isArray(date)
-        ? date[0]
-        : typeof date === "object" && "from" in date
-        ? date.from
-        : (date as Date);
-      adjustedDate = dayjs(dateObj).startOf("year");
-    } else {
-      const dateObj = Array.isArray(date)
-        ? date[0]
-        : typeof date === "object" && "from" in date
-        ? date.from
-        : (date as Date);
-      adjustedDate = dayjs(dateObj);
-    }
-
-    setSelectedDate(adjustedDate);
-    setCurrentPage(1);
-    setSelectedCinemaId("all");
-    setSelectedMovieId("all");
-    setCalendarOpen(false);
+    setShowPicker(false);
   };
 
   // Calculate week range for week view
@@ -287,12 +247,24 @@ export default function ReportPage() {
   }, [selectedView, selectedDate]);
 
   const handleViewChange = (value: ViewType) => {
+    const today = dayjs();
+    let newDate: dayjs.Dayjs;
+
+    if (value === "week") {
+      newDate = getMondayOfWeek(today);
+    } else if (value === "month") {
+      newDate = today.startOf("month");
+    } else {
+      newDate = today.startOf("year");
+    }
+
     setSelectedView(value);
+    setSelectedDate(newDate);
+    setInputValue(getCurrentDateRange(newDate, value));
     setCurrentPage(1);
     setCalendarOpen(false);
-    setSelectedCinemaId("all");
-    setSelectedMovieId("all");
-    setCalendarMonth(selectedDate.toDate());
+    setShowPicker(false);
+    setCalendarMonth(newDate.toDate());
   };
 
   useEffect(() => {
@@ -429,66 +401,48 @@ export default function ReportPage() {
       </div>
 
       <div className="flex flex-row gap-x-3 items-center flex-wrap">
-        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "font-semibold justify-start text-left",
-                !selectedDate && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {getCurrentDateRange(selectedDate)}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            {selectedView === "week" ? (
-              <Calendar
-                mode="range"
-                selected={weekRange || undefined}
-                month={calendarMonth}
-                onMonthChange={setCalendarMonth}
-                onSelect={(range) => {
-                  if (range?.from) {
-                    handleDateChange({
-                      from: range.from,
-                      to: range.to,
-                    });
-                  }
-                }}
-                autoFocus
-                captionLayout="label"
-                weekStartsOn={1}
-                numberOfMonths={1}
+        <div className="relative custom-calendar-container">
+          <input
+            onClick={() => setShowPicker(true)}
+            value={inputValue}
+            placeholder="Chọn ngày"
+            className="w-full font-semibold font-manrope px-5 py-2 focus:outline-none border rounded-lg text-[#0a0a0a] text-sm cursor-pointer"
+            readOnly
+          />
+          {showPicker && (
+            <div className="absolute top-full left-0 mt-2 z-50 custom-calendar-container">
+              <CustomCalendar
+                key={`${selectedView}-${selectedDate.format("YYYY-MM-DD")}`}
+                value={selectedDate}
+                timeOption={selectedView}
+                onDateChange={handleDateChange}
               />
-            ) : selectedView === "month" ? (
-              <MonthPicker
-                selectedDate={selectedDate}
-                onSelect={(date) => handleDateChange(date)}
-                currentYear={year}
-                onYearChange={(newYear) => {
-                  const newDate = dayjs(`${newYear}-${month}-1`);
-                  handleDateChange(newDate.toDate());
-                }}
-              />
-            ) : (
-              <YearPicker
-                selectedDate={selectedDate}
-                onSelect={(date) => handleDateChange(date)}
-              />
-            )}
-          </PopoverContent>
-        </Popover>
-
+            </div>
+          )}
+        </div>
         <Select value={selectedView} onValueChange={handleViewChange}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger>
             <SelectValue placeholder={t("report.selectView")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="week">{t("report.week")}</SelectItem>
-            <SelectItem value="month">{t("report.month")}</SelectItem>
-            <SelectItem value="year">{t("report.year")}</SelectItem>
+            <SelectItem
+              value="week"
+              className="font-medium font-manrope text-sm"
+            >
+              {t("report.week")}
+            </SelectItem>
+            <SelectItem
+              value="month"
+              className="font-medium font-manrope text-sm"
+            >
+              {t("report.month")}
+            </SelectItem>
+            <SelectItem
+              value="year"
+              className="font-medium font-manrope text-sm"
+            >
+              {t("report.year")}
+            </SelectItem>
           </SelectContent>
         </Select>
 
@@ -507,7 +461,7 @@ export default function ReportPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle>Revenue by Type - Online vs Offline</CardTitle>
+                <CardTitle>{t("report.revenueByType")}</CardTitle>
               </CardHeader>
               <CardContent>
                 {offlineLoading || onlineLoading ? (
@@ -516,7 +470,9 @@ export default function ReportPage() {
                   </div>
                 ) : offlineOnlineChartData.length === 0 ? (
                   <div className="flex items-center justify-center h-[400px]">
-                    <p className="text-muted-foreground">No data available</p>
+                    <p className="text-muted-foreground">
+                      {t("common.noData")}
+                    </p>
                   </div>
                 ) : (
                   <BarChart data={offlineOnlineChartData} />
@@ -527,16 +483,18 @@ export default function ReportPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Revenue by Cinema</CardTitle>
+                  <CardTitle>{t("report.revenueByCinema")}</CardTitle>
                   <Select
                     value={selectedCinemaId}
                     onValueChange={setSelectedCinemaId}
                   >
                     <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select cinema" />
+                      <SelectValue placeholder={t("report.allCinema")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Select cinema</SelectItem>
+                      <SelectItem value="all">
+                        {t("report.allCinema")}
+                      </SelectItem>
                       {availableCinemas?.map((cinema) => (
                         <SelectItem
                           key={cinema.cinemaId}
@@ -570,16 +528,18 @@ export default function ReportPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Revenue by Movie</CardTitle>
+                  <CardTitle>{t("report.revenueByMovie")}</CardTitle>
                   <Select
                     value={selectedMovieId}
                     onValueChange={setSelectedMovieId}
                   >
                     <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select movie" />
+                      <SelectValue placeholder={t("report.allMovie")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Select movie</SelectItem>
+                      <SelectItem value="all">
+                        {t("report.allMovie")}
+                      </SelectItem>
                       {availableMovies?.map((movie) => (
                         <SelectItem key={movie.movieId} value={movie.movieId}>
                           {movie.movieName}

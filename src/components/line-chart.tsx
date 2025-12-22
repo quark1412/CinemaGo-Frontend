@@ -16,6 +16,7 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface ChartDataPoint {
   time: string;
@@ -28,9 +29,11 @@ interface LineChartProps {
 }
 
 export function LineChart({ data, onPointClick }: LineChartProps) {
+  const { t } = useI18n();
+
   const chartConfig: ChartConfig = {
     revenue: {
-      label: `: Revenue`,
+      label: `: ${t("report.charts.revenue")}`,
       color: "hsl(221.2 83.2% 53.3%)",
     },
   };

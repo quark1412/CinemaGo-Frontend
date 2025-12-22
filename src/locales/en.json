@@ -54,6 +54,17 @@
     "bookings": "Bookings",
     "report": "Report"
   },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalMovies": "Total Movies",
+    "totalMoviesDesc": "Total number of movies in the database",
+    "totalCinemas": "Total Cinemas",
+    "totalCinemasDesc": "Total number of cinemas available",
+    "totalUsers": "Total Users",
+    "totalUsersDesc": "Total number of registered users",
+    "totalBookings": "Total Bookings",
+    "totalBookingsDesc": "Total number of bookings made"
+  },
   "auth": {
     "welcomeBack": "Welcome back!",
     "email": "Email",
@@ -728,6 +739,35 @@
     "totalTicketRevenue": "Total Ticket Revenue",
     "totalFoodDrinkRevenue": "Total Food & Drink Revenue",
     "revenue": "Revenue",
+    "selectDate": "Select date",
+    "revenueByType": "Revenue by Type - Online vs Offline",
+    "revenueByCinema": "Revenue by Cinema",
+    "revenueByMovie": "Revenue by Movie",
+    "allCinema": "All cinema",
+    "allMovie": "All movie",
+    "selectCinema": "Select cinema",
+    "selectMovie": "Select movie",
+    "charts": {
+      "offlineTicket": "Offline Ticket",
+      "offlineFoodDrink": "Offline Food & Drink",
+      "onlineTicket": "Online Ticket",
+      "onlineFoodDrink": "Online Food & Drink",
+      "revenue": "Revenue",
+      "months": {
+        "jan": "Jan",
+        "feb": "Feb",
+        "mar": "Mar",
+        "apr": "Apr",
+        "may": "May",
+        "jun": "Jun",
+        "jul": "Jul",
+        "aug": "Aug",
+        "sep": "Sep",
+        "oct": "Oct",
+        "nov": "Nov",
+        "dec": "Dec"
+      }
+    },
     "excel": {
       "worksheetName": "Revenue Report",
       "month": "Month",

@@ -8,7 +8,18 @@ import {
 } from "@/services/dashboard";
 import { getAllCinemas } from "@/services/cinemas";
 import { getAllMovies } from "@/services/movies";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
+
+function getMondayOfWeek(date: Dayjs): Dayjs {
+  const dayOfWeek = date.day();
+  let daysToSubtract: number;
+  if (dayOfWeek === 0) {
+    daysToSubtract = 6;
+  } else {
+    daysToSubtract = dayOfWeek - 1;
+  }
+  return date.subtract(daysToSubtract, "day").startOf("day");
+}
 
 export interface DailyReport {
   day: number;
@@ -46,7 +57,7 @@ export const reportKeys = {
 };
 
 async function fetchWeeklyReport(date: dayjs.Dayjs): Promise<WeeklyReport[]> {
-  const startOfWeek = date.startOf("week").add(1, "day"); // Monday
+  const startOfWeek = getMondayOfWeek(date);
   const reports: WeeklyReport[] = [];
 
   for (let i = 0; i < 7; i++) {
@@ -190,7 +201,7 @@ async function fetchRevenueByType(
   }[] = [];
 
   if (viewType === "week") {
-    const startOfWeek = selectedDate.startOf("week").add(1, "day"); // Monday
+    const startOfWeek = getMondayOfWeek(selectedDate);
     for (let i = 0; i < 7; i++) {
       const currentDay = startOfWeek.add(i, "day");
       const startDate = currentDay.startOf("day").toISOString();
@@ -272,7 +283,7 @@ async function fetchAllCinemaRevenueData(
   const revenueMap = new Map<string, CinemaRevenue[]>();
 
   if (viewType === "week") {
-    const startOfWeek = selectedDate.startOf("week").add(1, "day");
+    const startOfWeek = getMondayOfWeek(selectedDate);
     for (let i = 0; i < 7; i++) {
       const currentDay = startOfWeek.add(i, "day");
       const startDate = currentDay.startOf("day").toISOString();
@@ -367,7 +378,7 @@ async function fetchAllMovieRevenueData(
   const revenueMap = new Map<string, MovieRevenue[]>();
 
   if (viewType === "week") {
-    const startOfWeek = selectedDate.startOf("week").add(1, "day");
+    const startOfWeek = getMondayOfWeek(selectedDate);
     for (let i = 0; i < 7; i++) {
       const currentDay = startOfWeek.add(i, "day");
       const startDate = currentDay.startOf("day").toISOString();

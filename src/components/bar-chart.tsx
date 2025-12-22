@@ -16,6 +16,7 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface ChartDataPoint {
   time: string;
@@ -31,32 +32,49 @@ interface BarChartProps {
 }
 
 export function BarChart({ data, onPointClick }: BarChartProps) {
+  const { t } = useI18n();
+
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[400px]">
-        <p className="text-muted-foreground">No data available</p>
+        <p className="text-muted-foreground">{t("common.noData")}</p>
       </div>
     );
   }
 
   const chartConfig: ChartConfig = {
     offlineTicket: {
-      label: ": Offline Ticket",
+      label: `: ${t("report.charts.offlineTicket")}`,
       color: "hsl(221.2 83.2% 53.3%)", // Dark blue
     },
     offlineFoodDrink: {
-      label: ": Offline Food & Drink",
+      label: `: ${t("report.charts.offlineFoodDrink")}`,
       color: "hsl(221.2 83.2% 70%)", // Lighter blue
     },
     onlineTicket: {
-      label: ": Online Ticket",
+      label: `: ${t("report.charts.onlineTicket")}`,
       color: "hsl(199.1 89.1% 48.2%)", // Light blue
     },
     onlineFoodDrink: {
-      label: ": Online Food & Drink",
+      label: `: ${t("report.charts.onlineFoodDrink")}`,
       color: "hsl(199.1 89.1% 65%)", // Lighter blue
     },
   };
+
+  const monthNames = [
+    t("report.charts.months.jan"),
+    t("report.charts.months.feb"),
+    t("report.charts.months.mar"),
+    t("report.charts.months.apr"),
+    t("report.charts.months.may"),
+    t("report.charts.months.jun"),
+    t("report.charts.months.jul"),
+    t("report.charts.months.aug"),
+    t("report.charts.months.sep"),
+    t("report.charts.months.oct"),
+    t("report.charts.months.nov"),
+    t("report.charts.months.dec"),
+  ];
 
   return (
     <ChartContainer config={chartConfig} className="h-[600px] w-full">
@@ -89,20 +107,6 @@ export function BarChart({ data, onPointClick }: BarChartProps) {
                 if (parts.length === 3) {
                   return parts[2];
                 } else if (parts.length === 2) {
-                  const monthNames = [
-                    "Jan",
-                    "Feb",
-                    "Mar",
-                    "Apr",
-                    "May",
-                    "Jun",
-                    "Jul",
-                    "Aug",
-                    "Sep",
-                    "Oct",
-                    "Nov",
-                    "Dec",
-                  ];
                   const monthIndex = parseInt(parts[1]) - 1;
                   return monthNames[monthIndex] || parts[1];
                 }
