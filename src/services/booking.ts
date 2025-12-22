@@ -99,6 +99,24 @@ export const getBookingById = async (id: string): Promise<Booking> => {
   }
 };
 
+export const updatePaymentStatus = async (
+  id: string,
+  data: { paymentStatus: string }
+): Promise<{ message: string }> => {
+  try {
+    const response = await instance.patch(
+      `/v1/bookings/${id}/payment-status`,
+      data,
+      {
+        requiresAuth: true,
+      } as any
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getBookedSeats = async (
   showtimeId: string
 ): Promise<{ data: BookedSeat[] }> => {

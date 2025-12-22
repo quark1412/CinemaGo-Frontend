@@ -82,13 +82,22 @@ export function DataTable<TData, TValue>({
   selectedMovieId = "all",
   onMovieChange,
   onShowtimeChange,
-}: DataTableProps<TData, TValue>) {
+  onPaymentMethodChange,
+  onPaymentStatusChange,
+  onBulkUpdate,
+}: DataTableProps<TData, TValue> & {
+  onPaymentMethodChange?: (val: string) => void;
+  onPaymentStatusChange?: (val: string) => void;
+  onBulkUpdate?: (ids: string[], status: string) => void;
+}) {
   const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [rowSelection, setRowSelection] = useState({});
 
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedShowtime, setSelectedShowtime] = useState<string>("all");
+  const [targetStatus, setTargetStatus] = useState<string>("");
 
   const table = useReactTable({
     data,
@@ -99,9 +108,11 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
+      rowSelection,
     },
     manualPagination: true,
     pageCount: pagination?.totalPages,
@@ -115,6 +126,18 @@ export function DataTable<TData, TValue>({
     onPaginationChange?.(1, parseInt(pageSize));
   };
 
+  const hasSelection = Object.keys(rowSelection).length > 0;
+
+  const handleBulkSubmit = () => {
+    if (!targetStatus) return;
+    const selectedIds = table
+      .getFilteredSelectedRowModel()
+      .rows.map((row) => (row.original as any).id);
+    onBulkUpdate?.(selectedIds, targetStatus);
+    setRowSelection({});
+    setTargetStatus("");
+  };
+
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-3 py-4 flex-shrink-0 sm:flex-row sm:items-center sm:justify-between">
@@ -125,6 +148,7 @@ export function DataTable<TData, TValue>({
               onMovieChange?.(val);
               setSelectedShowtime("all");
             }}
+            disabled={hasSelection}
           >
             <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Chọn Phim trước" />
@@ -147,7 +171,7 @@ export function DataTable<TData, TValue>({
               setSelectedShowtime(value);
               onShowtimeChange?.(value === "all" ? "" : value);
             }}
-            //disabled={selectedMovieId === "all"}
+            disabled={hasSelection || selectedMovieId === "all"}
           >
             <SelectTrigger className="w-full sm:w-[240px]">
               <SelectValue placeholder="Chọn Suất chiếu" />
@@ -184,6 +208,7 @@ export function DataTable<TData, TValue>({
               setSelectedType(value);
               onTypeChange?.(value);
             }}
+            disabled={hasSelection}
           >
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Loại vé" />
@@ -196,6 +221,61 @@ export function DataTable<TData, TValue>({
               <SelectItem value="offline"> {t("bookings.offline")}</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select
+            onValueChange={(value) => {
+              onPaymentMethodChange?.(value);
+            }}
+            disabled={hasSelection}
+          >
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Phương thức TT" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả PT</SelectItem>
+              <SelectItem value="COD">Tiền mặt (COD)</SelectItem>
+              <SelectItem value="MOMO">Momo</SelectItem>
+              <SelectItem value="VNPAY">VNPay</SelectItem>
+              <SelectItem value="ZaloPay">ZaloPay</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {hasSelection ? (
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-5">
+              <Select
+                value={targetStatus}
+                onValueChange={setTargetStatus}
+              >
+                <SelectTrigger className="w-[180px] border-blue-500 ring-2 ring-blue-100">
+                  <SelectValue placeholder="Chọn trạng thái mới..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PENDING">Pending (Chờ)</SelectItem>
+                  <SelectItem value="SUCCESS">Success (Đã thu)</SelectItem>
+                  <SelectItem value="FAILED">Failed (Hủy)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={handleBulkSubmit} disabled={!targetStatus}>
+                Cập nhật ({Object.keys(rowSelection).length})
+              </Button>
+            </div>
+          ) : (
+            <Select
+              onValueChange={(value) => {
+                onPaymentStatusChange?.(value);
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Trạng thái TT" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả TT</SelectItem>
+                <SelectItem value="PENDING">Chờ thanh toán</SelectItem>
+                <SelectItem value="SUCCESS">Thành công</SelectItem>
+                <SelectItem value="FAILED">Thất bại</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -211,9 +291,9 @@ export function DataTable<TData, TValue>({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                       </TableHead>
                     );
                   })}
