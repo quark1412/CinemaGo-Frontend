@@ -19,7 +19,8 @@ export interface PaymentResponse {
 export const paymentService = {
   checkoutWithMoMo: async (
     amount: number,
-    bookingId: string
+    bookingId: string,
+    urlCheckoutCompleted?: string
   ): Promise<PaymentResponse> => {
     try {
       const response = await instance.post(
@@ -27,6 +28,7 @@ export const paymentService = {
         {
           amount,
           bookingId,
+          urlCheckoutCompleted,
         },
         {
           requiresAuth: true,

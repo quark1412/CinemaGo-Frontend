@@ -443,7 +443,7 @@ export default function BookingCompletedPage() {
                             const coupleSeatNumbers = new Set<string>();
 
                             ticketData.seatsData.forEach((seat) => {
-                              if (seat.seatNumber.includes("-")) {
+                              if (seat.type === "COUPLE") {
                                 const coupleKey = seat.seatNumber;
                                 if (!coupleSeatNumbers.has(coupleKey)) {
                                   coupleSeatNumbers.add(coupleKey);
@@ -461,25 +461,21 @@ export default function BookingCompletedPage() {
                               }
                             });
 
-                            const showtimePrice = ticketData.showtimePrice || 0;
-                            const roomExtraPrices =
-                              ticketData.roomExtraPrices || {};
-
                             return Object.entries(seatsByType).map(
                               ([type, seats]) => {
-                                let seatCount = seats.length;
-                                let pricePerSeat = showtimePrice;
+                                const basePrice =
+                                  ticketData?.showtimePrice || 0;
+                                const roomExtraPrices =
+                                  ticketData?.roomExtraPrices || {};
+                                const extraPrice =
+                                  roomExtraPrices[
+                                    type as keyof typeof roomExtraPrices
+                                  ] || 0;
 
-                                if (type === "VIP") {
-                                  pricePerSeat += roomExtraPrices.VIP || 0;
-                                } else if (type === "COUPLE") {
-                                  pricePerSeat += roomExtraPrices.COUPLE || 0;
-                                  seatCount = seats.length * 2;
-                                } else {
-                                  pricePerSeat += roomExtraPrices.NORMAL || 0;
-                                }
+                                const seatCount = seats.length;
 
-                                const totalPrice = seatCount * pricePerSeat;
+                                const totalPrice =
+                                  seatCount * (basePrice + extraPrice);
 
                                 return (
                                   <div

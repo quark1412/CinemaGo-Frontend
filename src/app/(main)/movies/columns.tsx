@@ -138,7 +138,7 @@ export const createColumns = ({
             case "COMING_SOON":
               return "secondary";
             case "ENDED":
-              return "destructive";
+              return "outline";
             default:
               return "outline";
           }

@@ -89,11 +89,6 @@ export const createMovie = async (movieData: {
       },
     });
 
-    if (response.status !== 201 && response.status !== 200) {
-      const error = response.data;
-      throw new Error(error.message || "Failed to create movie");
-    }
-
     return response.data;
   } catch (error) {
     throw error;

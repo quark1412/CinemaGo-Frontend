@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ImagePlus, Loader2 } from "lucide-react";
@@ -40,6 +41,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useI18n } from "@/contexts/I18nContext";
+import { movieKeys } from "@/hooks/use-movies";
 
 const formSchema = z.object({
   thumbnail: z.string().optional(),
@@ -69,6 +71,7 @@ export function EditMovieDialog({
 }: EditMovieDialogProps) {
   const { t } = useI18n();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -212,6 +215,7 @@ export function EditMovieDialog({
 
       await updateMovie(movieId, updateData);
       toast.success(t("movies.updateMovie.updateMovieSuccess"));
+      queryClient.invalidateQueries({ queryKey: movieKeys.lists() });
       handleClose();
     } catch (error: any) {
       console.error("Update movie error:", error);
@@ -329,10 +333,11 @@ export function EditMovieDialog({
                                       onChange={handleTrailerChange}
                                     />
                                     <div
-                                      className={`flex h-84 p-5 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${form.formState.errors.trailer
-                                        ? "border-red-500"
-                                        : "border-gray-300"
-                                        } cursor-pointer hover:bg-accent`}
+                                      className={`flex h-84 p-5 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${
+                                        form.formState.errors.trailer
+                                          ? "border-red-500"
+                                          : "border-gray-300"
+                                      } cursor-pointer hover:bg-accent`}
                                     >
                                       <Label
                                         htmlFor="trailer-file"
@@ -442,10 +447,11 @@ export function EditMovieDialog({
                                 onChange={handlePhotoChange}
                               />
                               <div
-                                className={`flex h-84 w-60 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${form.formState.errors.thumbnail
-                                  ? "border-red-500"
-                                  : "border-gray-300"
-                                  } cursor-pointer hover:bg-accent`}
+                                className={`flex h-84 w-60 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${
+                                  form.formState.errors.thumbnail
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                } cursor-pointer hover:bg-accent`}
                               >
                                 <Label
                                   htmlFor="dropzone-file"
@@ -488,23 +494,23 @@ export function EditMovieDialog({
                     />
 
                     <div className="flex-[2] flex flex-col gap-4 min-w-64">
+                      <FormField
+                        control={form.control}
+                        name="title"
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>
+                              {t("movies.title")}{" "}
+                              <span className="text-xs text-red-500">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       <div className="flex gap-4">
-                        <FormField
-                          control={form.control}
-                          name="title"
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
-                              <FormLabel>
-                                {t("movies.title")}{" "}
-                                <span className="text-xs text-red-500">*</span>
-                              </FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
                         <FormField
                           control={form.control}
                           name="duration"
@@ -548,7 +554,7 @@ export function EditMovieDialog({
                                 value={field.value}
                               >
                                 <FormControl>
-                                  <SelectTrigger>
+                                  <SelectTrigger className="w-full">
                                     <SelectValue
                                       placeholder={t(
                                         "movies.filterMovies.allMovieStatus"
@@ -573,6 +579,7 @@ export function EditMovieDialog({
                           )}
                         />
                       </div>
+
                       <div className="flex gap-4">
                         <FormField
                           control={form.control}
@@ -596,7 +603,6 @@ export function EditMovieDialog({
                             </FormItem>
                           )}
                         />
-
                       </div>
 
                       <FormField
