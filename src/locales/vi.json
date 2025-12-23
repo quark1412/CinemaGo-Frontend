@@ -557,21 +557,18 @@
     "male": "Nam",
     "female": "Nữ",
     "other": "Khác",
-
     "createUser": {
       "title": "Tạo người dùng",
       "description": "Tạo mới thông tin tài khoản người dùng",
       "createUserSuccess": "Tạo người dùng thành công!",
       "createUserError": "Tạo người dùng thất bại"
     },
-
     "updateUser": {
       "title": "Cập nhật người dùng",
       "description": "Chỉnh sửa thông tin người dùng và vai trò bên dưới.",
       "updateUserSuccess": "Cập nhật người dùng thành công!",
       "updateUserError": "Cập nhật người dùng thất bại"
     },
-
     "archiveUser": {
       "title": "Lưu trữ người dùng",
       "description": "Bạn có chắc muốn lưu trữ người dùng tên",
@@ -608,11 +605,9 @@
       "min8": "Mật khẩu tối thiếu 8 ký tự"
     }
   },
-
   "foodDrinks": {
     "title": "Đồ ăn & Đồ uống",
     "deleteFoodDrink": "Xóa đồ ăn/đồ uống",
-
     "image": "Ảnh",
     "uploadimage": "Tải lên ảnh",
     "currentimage": "Ảnh hiện tại",
@@ -628,7 +623,6 @@
     "edit": "Chỉnh sửa",
     "delete": "Đánh dấu hết hàng",
     "restore": "Đánh dấu có sẵn",
-
     "filterFoodDrink": {
       "all": "Tất cả",
       "available": "Có sẵn",
@@ -637,21 +631,18 @@
       "DRINK": "Đồ uống",
       "COMBO": "Combo"
     },
-
     "createFoodDrink": {
       "title": "Thêm đồ ăn/uống",
       "description": "Tạo mới thông tin đồ ăn/uống",
       "createFoodDrinkSuccess": "Tạo đồ ăn/uống thành công!",
       "createFoodDrinkError": "Tạo đồ ăn/uống thất bại"
     },
-
     "updateFoodDrink": {
       "title": "Cập nhật đồ ăn/đồ uống",
       "description": "Chỉnh sửa thông tin đồ ăn/uống bên dưới.",
       "updateFoodDrinkSuccess": "Cập nhật đồ ăn/uống thành công!",
       "updateFoodDrinkError": "Cập nhật đồ ăn/uống thất bại"
     },
-
     "archiveFoodDrink": {
       "title": "Đánh dấu hết hàng",
       "description": "Bạn có chắc muốn đánh dấu ",
@@ -661,7 +652,6 @@
     },
     "restoreFoodDrink": {
       "title": "Đánh dấu còn hàng",
-
       "restoreFoodDrinkSuccess": "Hiển thị đánh giá thành công",
       "restoreFoodDrinkError": "Hiển thị đánh giá thất bại",
       "confirmText": " là còn hàng?"
@@ -670,7 +660,6 @@
       "enter_name": "Nhập tên món",
       "enter_price": "Nhập giá",
       "enter_desc": "Nhập mô tả",
-
       "name": {
         "min1": "Vui lòng nhập tên món",
         "min2": "Tên món ít nhất 2 ký tự",
@@ -690,7 +679,6 @@
       }
     }
   },
-
   "account": {
     "account": "Tài khoản",
     "logOut": "Đăng xuất",
@@ -776,7 +764,6 @@
       "fileName": "Bao_Cao_Doanh_Thu_"
     }
   },
-
   "bookings": {
     "id": "Mã đơn",
     "customer": "Khách hàng",
@@ -791,15 +778,23 @@
     "loadingcinema": "Đang tải rạp...",
     "loadingcus": "Đang tải khách hàng...",
     "unknownCus": "Khách vãng lai",
-
+    "status": "Trạng thái TT",
+    "paymentMethod": "Phương thức TT",
+    "paid": "Đã thanh toán",
+    "unpaid": "Chưa thanh toán",
+    "failed": "Thanh toán thất bại",
+    "selectStatus": "Chọn trạng thái....",
     "filterBooking": {
       "allfilm": "Tất cả phim",
       "allshowtime": "Tất cả suất chiếu",
       "allshowtimeofmovie": "Tất cả suất chiếu của phim này",
       "noshowtime": "Không có suất chiếu",
-      "allType": "Tất cả loại vé"
+      "allType": "Tất cả loại vé",
+      "allStatus": "Tất cả trạng thái",
+      "paid": "Đã thanh toán",
+      "unpaid": "Chưa thanh toán",
+      "failed": "Thanh toán thất bại"
     },
-
     "modal": {
       "title": "Chi tiết đơn hàng",
       "cusinfo": "Thông tin khách hàng",

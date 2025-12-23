@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import { Booking } from "@/types/booking";
+import { updatePaymentStatus } from "@/services/booking";
+import { toast } from "sonner";
 
 import { DataTable } from "./data-table";
 import { createColumns } from "./columns";
@@ -20,10 +22,12 @@ export default function AllBookings() {
     bookings,
     pagination,
     isLoading,
+    refresh,
     maps,
 
     setType,
     setShowtime,
+    setPaymentStatus,
     onPaginationChange,
   } = useBookingTable({
     page: 1,
@@ -78,14 +82,55 @@ export default function AllBookings() {
     setDialogOpen(true);
   };
 
+  const handleUpdatePaymentStatus = async (id: string, status: string) => {
+    try {
+      const booking = bookings.find((b) => b.id === id);
+      await updatePaymentStatus(id, {
+        status,
+        paymentMethod: booking?.paymentMethod,
+      });
+      toast.success("Cập nhật trạng thái thành công");
+      refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error("Cập nhật thất bại");
+    }
+  };
+
   const columns = createColumns({
     onView: handleViewDetail,
+    onUpdatePaymentStatus: handleUpdatePaymentStatus,
     userMap: maps.userMap,
     movieMap: maps.movieMap,
     roomMap: maps.roomMap,
     cinemaMap: maps.cinemaMap,
     showtimeMap: maps.showTimeMap,
   });
+
+  const handleBulkUpdate = async (
+    ids: string[],
+    status: string,
+    paymentMethod?: string
+  ) => {
+    try {
+      if (ids.length === 0) return;
+      // Loop update since no bulk API yet
+      await Promise.all(
+        ids.map((id) => {
+          const booking = bookings.find((b) => b.id === id);
+          return updatePaymentStatus(id, {
+            status,
+            paymentMethod: booking?.paymentMethod || paymentMethod,
+          });
+        })
+      );
+      toast.success(`Đã cập nhật ${ids.length} đơn hàng thành ${status}`);
+      refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error("Cập nhật hàng loạt thất bại!");
+    }
+  };
 
   return (
     <div className="h-full space-y-4">
@@ -96,6 +141,9 @@ export default function AllBookings() {
         pagination={pagination}
         onPaginationChange={onPaginationChange}
         onTypeChange={setType}
+
+        onPaymentStatusChange={setPaymentStatus}
+        onBulkUpdate={handleBulkUpdate}
         //
         movieOptions={movieOptions}
         showtimeOptions={showtimeOptions}

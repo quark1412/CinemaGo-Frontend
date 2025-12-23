@@ -61,6 +61,7 @@ export const createMovie = async (movieData: {
   thumbnail: File;
   trailer?: File;
   trailerPath?: string;
+  status?: string;
 }) => {
   try {
     const formData = new FormData();
@@ -70,6 +71,9 @@ export const createMovie = async (movieData: {
     formData.append("duration", movieData.duration.toString());
     formData.append("releaseDate", new Date().toISOString());
     formData.append("genresIds", movieData.genres.join(","));
+    if (movieData.status) {
+      formData.append("status", movieData.status);
+    }
 
     formData.append("thumbnail", movieData.thumbnail);
 
@@ -106,6 +110,7 @@ export const updateMovie = async (
     thumbnail?: File;
     trailer?: File;
     trailerPath?: string;
+    status?: string;
   }
 ): Promise<{ data: Movie }> => {
   try {
@@ -116,6 +121,9 @@ export const updateMovie = async (
     formData.append("duration", movieData.duration.toString());
     formData.append("releaseDate", movieData.releaseDate);
     formData.append("genresIds", movieData.genresIds);
+    if (movieData.status) {
+      formData.append("status", movieData.status);
+    }
 
     if (movieData.thumbnail) {
       formData.append("thumbnail", movieData.thumbnail);

@@ -561,21 +561,18 @@
     "admin": "Admin",
     "male": "Male",
     "female": "Female",
-
     "createUser": {
       "title": "Create User",
       "description": "Create a new user account with the information below.",
       "createUserSuccess": "User created successfully!",
       "createUserError": "Failed to create user"
     },
-
     "updateUser": {
       "title": "Update User",
       "description": "Update the user information and role below.",
       "updateUserSuccess": "User updated successfully!",
       "updateUserError": "Failed to update user"
     },
-
     "archiveUser": {
       "title": "Delete User",
       "description": "Are you sure you want to archive",
@@ -631,21 +628,18 @@
     "edit": "Edit",
     "delete": "Mark Unavailable",
     "restore": "Mark Available",
-
     "createFoodDrink": {
       "title": "Add New Food/Drink",
       "description": "Fill in the details to create a new food/drink item.",
       "createFoodDrinkSuccess": "Food/Drink created successfully!",
       "createFoodDrinkError": "Failed to create food/drink"
     },
-
     "updateFoodDrink": {
       "title": "Update Food/Drink",
       "description": "Update the food/drink information below.",
       "updateFoodDrinkSuccess": "Food/Drink updated successfully!",
       "updateFoodDrinkError": "Failed to update food/drink"
     },
-
     "filterFoodDrink": {
       "all": "All item",
       "available": "Available",
@@ -663,7 +657,6 @@
     },
     "restoreFoodDrink": {
       "title": "Mark unavailable",
-
       "restoreFoodDrinkSuccess": "Hiển thị đánh giá thành công",
       "restoreFoodDrinkError": "Hiển thị đánh giá thất bại",
       "confirmText": " as available?"
@@ -672,7 +665,6 @@
       "enter_name": "Enter name",
       "enter_price": "Enter price",
       "enter_desc": "Enter description",
-
       "name": {
         "min1": "Name is required",
         "min2": "Name must be at least 2 characters",
@@ -777,11 +769,9 @@
       "fileName": "Revenue_Report_"
     }
   },
-
   "bookings": {
     "title": "Đồ ăn & Đồ uống",
     "deleteFoodDrink": "Xóa đồ ăn/đồ uống",
-
     "id": "Ticket ID",
     "customer": "Customer",
     "showtime": "Showtime/ Movie",
@@ -795,15 +785,23 @@
     "loadingcinema": "Loading cinema...",
     "loadingcus": "Loading customer...",
     "unknownCus": "Noname customer",
-
+    "status": "Payment Status",
+    "paymentMethod": "Payment Method",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "failed": "Failed",
+     "selectStatus": "Select status....",
     "filterBooking": {
       "allfilm": "All Movie",
       "allshowtime": "All Showtime",
       "allshowtimeofmovie": "All Showtime of this movie",
       "noshowtime": "No Showtime",
-      "allType": "All ticket type"
+      "allType": "All ticket type",
+      "allStatus": "All status",
+      "paid": "Paid",
+      "unpaid": "Unpaid",
+      "failed": "Failed"
     },
-
     "modal": {
       "title": "Ticket Detail",
       "cusinfo": "Customer Information",

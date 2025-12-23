@@ -99,6 +99,24 @@ export const getBookingById = async (id: string): Promise<Booking> => {
   }
 };
 
+export const updatePaymentStatus = async (
+  id: string,
+  data: { status: string; paymentMethod?: string }
+): Promise<{ message: string }> => {
+  try {
+    const response = await instance.put(
+      `/v1/bookings/update-status/${id}`,
+      data,
+      {
+        requiresAuth: true,
+      } as any
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getBookedSeats = async (
   showtimeId: string
 ): Promise<{ data: BookedSeat[] }> => {

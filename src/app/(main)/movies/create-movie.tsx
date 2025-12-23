@@ -52,6 +52,7 @@ const formSchema = z.object({
     .min(1, { message: "At least one genre is required" }),
   trailer: z.string().optional(),
   trailerUrl: z.string().optional(),
+  status: z.enum(["COMING_SOON", "NOW_SHOWING", "ENDED"]),
 });
 
 interface CreateMovieProps {
@@ -86,6 +87,7 @@ export default function CreateMovie({
       genres: [],
       trailer: "",
       trailerUrl: "",
+      status: "COMING_SOON",
     },
     mode: "onSubmit",
     reValidateMode: "onSubmit",
@@ -116,12 +118,14 @@ export default function CreateMovie({
       thumbnail: File;
       trailer?: File;
       trailerPath?: string;
+      status: string;
     } = {
       title: values.title,
       description: values.description,
       duration: values.duration,
       genres: values.genres,
       thumbnail: thumbnail?.imageFile as File,
+      status: values.status,
     };
 
     if (trailerMode === "file" && trailer?.videoFile) {
@@ -254,11 +258,10 @@ export default function CreateMovie({
                                     onChange={handleTrailerChange}
                                   />
                                   <div
-                                    className={`flex h-84 p-5 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${
-                                      form.formState.errors.trailer
-                                        ? "border-red-500"
-                                        : "border-gray-300"
-                                    } cursor-pointer hover:bg-accent`}
+                                    className={`flex h-84 p-5 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${form.formState.errors.trailer
+                                      ? "border-red-500"
+                                      : "border-gray-300"
+                                      } cursor-pointer hover:bg-accent`}
                                   >
                                     <Label
                                       htmlFor="trailer-file"
@@ -367,11 +370,10 @@ export default function CreateMovie({
                               onChange={handlePhotoChange}
                             />
                             <div
-                              className={`flex h-84 w-60 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${
-                                form.formState.errors.thumbnail
-                                  ? "border-red-500"
-                                  : "border-gray-300"
-                              } cursor-pointer hover:bg-accent`}
+                              className={`flex h-84 w-60 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${form.formState.errors.thumbnail
+                                ? "border-red-500"
+                                : "border-gray-300"
+                                } cursor-pointer hover:bg-accent`}
                             >
                               <Label
                                 htmlFor="dropzone-file"
@@ -415,7 +417,7 @@ export default function CreateMovie({
                         control={form.control}
                         name="title"
                         render={({ field }) => (
-                          <FormItem className="flex-1">
+                          <FormItem className="flex-[2]">
                             <FormLabel>
                               {t("movies.title")}{" "}
                               <span className="text-xs text-red-500">*</span>
@@ -457,6 +459,46 @@ export default function CreateMovie({
                         )}
                       />
                     </div>
+
+                    <div className="flex gap-4"> <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>
+                            {t("movies.header.movieStatus")}{" "}
+                            <span className="text-xs text-red-500">*</span>
+                          </FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue
+                                  placeholder={t(
+                                    "movies.filterMovies.allMovieStatus"
+                                  )}
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="COMING_SOON">
+                                {t("movies.filterMovies.COMING_SOON")}
+                              </SelectItem>
+                              <SelectItem value="NOW_SHOWING">
+                                {t("movies.filterMovies.NOW_SHOWING")}
+                              </SelectItem>
+                              <SelectItem value="ENDED">
+                                {t("movies.filterMovies.ENDED")}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    /></div>
+
                     <div className="flex gap-4">
                       <FormField
                         control={form.control}
@@ -479,6 +521,7 @@ export default function CreateMovie({
                             <FormMessage />
                           </FormItem>
                         )}
+
                       />
                     </div>
 
@@ -525,6 +568,6 @@ export default function CreateMovie({
           </div>
         </div>
       </DialogContent>
-    </Dialog>
+    </Dialog >
   );
 }

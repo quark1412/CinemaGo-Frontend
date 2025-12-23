@@ -4,6 +4,13 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Booking } from "@/types/booking";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Eye } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/shared/data-table-column-header";
 
@@ -18,6 +25,7 @@ import { useI18n } from "@/contexts/I18nContext";
 
 interface ColumnProps {
   onView: (booking: Booking) => void;
+  onUpdatePaymentStatus: (id: string, status: string) => void;
   userMap: UserMap;
   showtimeMap: ShowtimeMap;
   movieMap: MovieMap;
@@ -45,6 +53,7 @@ const formatDateTime = (dateString: string | Date) => {
 
 export const createColumns = ({
   onView,
+  onUpdatePaymentStatus,
   userMap,
   showtimeMap,
   movieMap,
@@ -54,6 +63,37 @@ export const createColumns = ({
   const { t } = useI18n();
 
   return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <input
+          type="checkbox"
+          checked={table.getIsAllPageRowsSelected()}
+          onChange={(e) => table.toggleAllPageRowsSelected(!!e.target.checked)}
+          aria-label="Select all"
+          className="translate-y-[2px]"
+        />
+      ),
+      cell: ({ row }) => {
+        const canSelect =
+          row.original.paymentMethod === "COD" &&
+          row.original.status === "Chưa thanh toán";
+
+        if (!canSelect) return null;
+
+        return (
+          <input
+            type="checkbox"
+            checked={row.getIsSelected()}
+            onChange={(e) => row.toggleSelected(!!e.target.checked)}
+            aria-label="Select row"
+            className="translate-y-[2px]"
+          />
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "id",
       header: () => <div className="font-bold text-xs">{t("bookings.id")}</div>,
@@ -66,7 +106,7 @@ export const createColumns = ({
       header: t("bookings.customer"),
       cell: ({ row }) => {
         const userId = row.original.userId;
-        const user = userMap[userId];
+        const user = userId ? userMap[userId] : null;
 
         if (!user) {
           return (
@@ -101,8 +141,8 @@ export const createColumns = ({
         const cinema = st.cinemaId
           ? cinemaMap[st.cinemaId]
           : room?.cinemaId
-          ? cinemaMap[room.cinemaId]
-          : null;
+            ? cinemaMap[room.cinemaId]
+            : null;
 
         const movieName = movie?.title || t("bookings.loadingmovie");
         const roomName = room?.name || t("bookings.loadingroom");
@@ -135,6 +175,53 @@ export const createColumns = ({
         return (
           <Badge variant={type === "online" ? "default" : "secondary"}>
             {type === "online" ? t("bookings.online") : t("bookings.offline")}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "paymentMethod",
+      header: t("bookings.paymentMethod"),
+      cell: ({ row }) => {
+        const method = row.original.paymentMethod;
+        return (
+          <Badge variant="outline" className="uppercase">
+            {method || "N/A"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: t("bookings.status"),
+      cell: ({ row }) => {
+        const status = row.original.status || "PENDING";
+
+        // Map status to VI labels
+        let label = status;
+        let colorClass = "bg-gray-100 text-gray-800 border-gray-200";
+
+        switch (status) {
+          case "Đã thanh toán":
+            label = t("bookings.paid");
+            colorClass = "bg-green-100 text-green-800 border-green-200";
+            break;
+          case "Chưa thanh toán":
+            label = t("bookings.unpaid");
+            colorClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
+            break;
+          case "Thanh toán thất bại":
+            label = t("bookings.failed");
+            colorClass = "bg-red-100 text-red-800 border-red-200";
+            break;
+        }
+
+        return (
+          <Badge
+            className={`${colorClass} hover:${colorClass}`}
+            variant="outline"
+          >
+            {label}
           </Badge>
         );
       },

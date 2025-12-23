@@ -82,13 +82,23 @@ export function DataTable<TData, TValue>({
   selectedMovieId = "all",
   onMovieChange,
   onShowtimeChange,
-}: DataTableProps<TData, TValue>) {
+  onPaymentStatusChange,
+  onBulkUpdate,
+}: DataTableProps<TData, TValue> & {
+
+  onPaymentStatusChange?: (val: string) => void;
+  onBulkUpdate?: (ids: string[], status: string, paymentMethod?: string) => void;
+}) {
   const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [rowSelection, setRowSelection] = useState({});
 
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedShowtime, setSelectedShowtime] = useState<string>("all");
+  const [targetStatus, setTargetStatus] = useState<string>("");
+  const [targetPaymentMethod, setTargetPaymentMethod] = useState<string>("");
+  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>("all");
 
   const table = useReactTable({
     data,
@@ -99,9 +109,11 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
+      rowSelection,
     },
     manualPagination: true,
     pageCount: pagination?.totalPages,
@@ -115,6 +127,19 @@ export function DataTable<TData, TValue>({
     onPaginationChange?.(1, parseInt(pageSize));
   };
 
+  const hasSelection = Object.keys(rowSelection).length > 0;
+
+  const handleBulkSubmit = () => {
+    if (!targetStatus) return;
+    const selectedIds = table
+      .getFilteredSelectedRowModel()
+      .rows.map((row) => (row.original as any).id);
+    onBulkUpdate?.(selectedIds, targetStatus, targetPaymentMethod);
+    setRowSelection({});
+    setTargetStatus("");
+    setTargetPaymentMethod("");
+  };
+
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-3 py-4 flex-shrink-0 sm:flex-row sm:items-center sm:justify-between">
@@ -125,6 +150,7 @@ export function DataTable<TData, TValue>({
               onMovieChange?.(val);
               setSelectedShowtime("all");
             }}
+            disabled={hasSelection}
           >
             <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Chọn Phim trước" />
@@ -147,7 +173,7 @@ export function DataTable<TData, TValue>({
               setSelectedShowtime(value);
               onShowtimeChange?.(value === "all" ? "" : value);
             }}
-            //disabled={selectedMovieId === "all"}
+            disabled={hasSelection || selectedMovieId === "all"}
           >
             <SelectTrigger className="w-full sm:w-[240px]">
               <SelectValue placeholder="Chọn Suất chiếu" />
@@ -184,6 +210,7 @@ export function DataTable<TData, TValue>({
               setSelectedType(value);
               onTypeChange?.(value);
             }}
+            disabled={hasSelection}
           >
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Loại vé" />
@@ -196,6 +223,45 @@ export function DataTable<TData, TValue>({
               <SelectItem value="offline"> {t("bookings.offline")}</SelectItem>
             </SelectContent>
           </Select>
+
+
+          {hasSelection ? (
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-5">
+              <Select
+                value={targetStatus}
+                onValueChange={setTargetStatus}
+              >
+                <SelectTrigger className="w-[180px] border-blue-500 ring-2 ring-blue-100">
+                  <SelectValue placeholder={t("bookings.selectStatus")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Đã thanh toán">{t("bookings.filterBooking.paid")}</SelectItem>
+                  <SelectItem value="Thanh toán thất bại">{t("bookings.filterBooking.failed")}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={handleBulkSubmit} disabled={!targetStatus}>
+                {t("common.update")} ({Object.keys(rowSelection).length})
+              </Button>
+            </div>
+          ) : (
+            <Select
+              value={selectedPaymentStatus}
+              onValueChange={(value) => {
+                setSelectedPaymentStatus(value);
+                onPaymentStatusChange?.(value);
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Trạng thái TT" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("bookings.filterBooking.allStatus")}</SelectItem>
+                <SelectItem value="Chưa thanh toán">{t("bookings.filterBooking.unpaid")}</SelectItem>
+                <SelectItem value="Đã thanh toán">{t("bookings.filterBooking.paid")}</SelectItem>
+                <SelectItem value="Thanh toán thất bại">{t("bookings.filterBooking.failed")}</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -211,9 +277,9 @@ export function DataTable<TData, TValue>({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                       </TableHead>
                     );
                   })}

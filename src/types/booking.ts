@@ -19,6 +19,9 @@ export interface Booking {
   createdAt: string;
   updatedAt: string;
   type: string;
+  status: string;
+  paymentMethod?: string;
+
   bookingSeats: BookingSeat[];
   bookingFoodDrinks: BookingFoodDrink[];
 }
@@ -28,6 +31,9 @@ export interface MyBookingParams {
   limit?: number;
   showtimeId?: string;
   type?: string;
+  status?: string;
+
+
 }
 
 export interface BookingResponse {
