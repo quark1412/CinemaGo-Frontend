@@ -58,14 +58,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      await authService.login(email, password);
-      const userData = await fetchUserProfile();
+      const response = await authService.login(email, password);
+      const tempToken = response.data.accessToken;
+
+      if (!tempToken) throw new Error("No access token received");
+
+      const userData = await authService.getProfile(tempToken);
+
+      const allowedRoles = ["ADMIN"];
+      if (!allowedRoles.includes(userData.role)) {
+        throw new Error("Bạn không có quyền truy cập vào trang quản trị!");
+      }
+
+      authService.saveToken(tempToken);
+      setUser(userData);
+      setIsAuthenticated(true);
 
       if (userData.role === "USER") {
-        console.log("hehe log out nè con");
-
         await authService.logout();
+        throw new Error("Bạn không có quyền truy cập!");
       }
+
     } catch (error) {
       throw error;
     }

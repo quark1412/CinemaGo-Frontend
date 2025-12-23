@@ -7,13 +7,13 @@ export const authService = {
       email,
       password,
     });
-
-    // Save accessToken to localStorage
-    if (response.data.accessToken) {
-      localStorage.setItem("accessToken", response.data.accessToken);
-    }
-
     return response;
+  },
+
+  saveToken: (token: string) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("accessToken", token);
+    }
   },
 
   signup: async (
@@ -46,9 +46,12 @@ export const authService = {
     }
   },
 
-  getProfile: async () => {
+  getProfile: async (token?: string) => {
     try {
-      const response = await instance.get(`/v1/users/profile`);
+      const config = token
+        ? { headers: { Authorization: `Bearer ${token}` } }
+        : undefined;
+      const response = await instance.get(`/v1/users/profile`, config);
       return response.data.data;
     } catch (error) {
       throw error;
@@ -63,8 +66,8 @@ export const authService = {
         headers:
           data instanceof FormData
             ? {
-                "Content-Type": "multipart/form-data",
-              }
+              "Content-Type": "multipart/form-data",
+            }
             : undefined,
       });
       return response.data;
