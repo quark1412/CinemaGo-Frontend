@@ -110,6 +110,15 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
+    enableRowSelection: (row) => {
+      // Strict selection: Only COD and PENDING
+      const data = row.original as any;
+      const isCOD = data.paymentMethod === "COD";
+      // Allow legacy data or undefined status to count as PENDING (matching columns logic)
+      const status = data.status || "Chưa thanh toán";
+      const isPending = status === "Chưa thanh toán";
+      return isCOD && isPending;
+    },
     state: {
       sorting,
       columnFilters,
