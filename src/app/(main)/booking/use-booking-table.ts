@@ -223,10 +223,9 @@ export function useBookingTable(initialParams: MyBookingParams) {
     setType: (val: string) =>
       setParamValue("type", val === "all" ? undefined : val),
     setShowtime: (val: string) => setParamValue("showtimeId", val || undefined),
-    setPaymentMethod: (val: string) =>
-      setParamValue("paymentMethod", val === "all" ? undefined : val),
+
     setPaymentStatus: (val: string) =>
-      setParamValue("paymentStatus", val === "all" ? undefined : val),
+      setParamValue("status", val === "all" ? undefined : val),
     onPaginationChange: handlePaginationChange,
   };
 }

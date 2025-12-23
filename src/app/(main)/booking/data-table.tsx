@@ -82,13 +82,12 @@ export function DataTable<TData, TValue>({
   selectedMovieId = "all",
   onMovieChange,
   onShowtimeChange,
-  onPaymentMethodChange,
   onPaymentStatusChange,
   onBulkUpdate,
 }: DataTableProps<TData, TValue> & {
-  onPaymentMethodChange?: (val: string) => void;
+
   onPaymentStatusChange?: (val: string) => void;
-  onBulkUpdate?: (ids: string[], status: string) => void;
+  onBulkUpdate?: (ids: string[], status: string, paymentMethod?: string) => void;
 }) {
   const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -98,6 +97,8 @@ export function DataTable<TData, TValue>({
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedShowtime, setSelectedShowtime] = useState<string>("all");
   const [targetStatus, setTargetStatus] = useState<string>("");
+  const [targetPaymentMethod, setTargetPaymentMethod] = useState<string>("");
+  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>("all");
 
   const table = useReactTable({
     data,
@@ -133,9 +134,10 @@ export function DataTable<TData, TValue>({
     const selectedIds = table
       .getFilteredSelectedRowModel()
       .rows.map((row) => (row.original as any).id);
-    onBulkUpdate?.(selectedIds, targetStatus);
+    onBulkUpdate?.(selectedIds, targetStatus, targetPaymentMethod);
     setRowSelection({});
     setTargetStatus("");
+    setTargetPaymentMethod("");
   };
 
   return (
@@ -222,23 +224,6 @@ export function DataTable<TData, TValue>({
             </SelectContent>
           </Select>
 
-          <Select
-            onValueChange={(value) => {
-              onPaymentMethodChange?.(value);
-            }}
-            disabled={hasSelection}
-          >
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Phương thức TT" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả PT</SelectItem>
-              <SelectItem value="COD">Tiền mặt (COD)</SelectItem>
-              <SelectItem value="MOMO">Momo</SelectItem>
-              <SelectItem value="VNPAY">VNPay</SelectItem>
-              <SelectItem value="ZaloPay">ZaloPay</SelectItem>
-            </SelectContent>
-          </Select>
 
           {hasSelection ? (
             <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-5">
@@ -247,21 +232,22 @@ export function DataTable<TData, TValue>({
                 onValueChange={setTargetStatus}
               >
                 <SelectTrigger className="w-[180px] border-blue-500 ring-2 ring-blue-100">
-                  <SelectValue placeholder="Chọn trạng thái mới..." />
+                  <SelectValue placeholder={t("bookings.selectStatus")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PENDING">Pending (Chờ)</SelectItem>
-                  <SelectItem value="SUCCESS">Success (Đã thu)</SelectItem>
-                  <SelectItem value="FAILED">Failed (Hủy)</SelectItem>
+                  <SelectItem value="Đã thanh toán">{t("bookings.filterBooking.paid")}</SelectItem>
+                  <SelectItem value="Thanh toán thất bại">{t("bookings.filterBooking.failed")}</SelectItem>
                 </SelectContent>
               </Select>
               <Button onClick={handleBulkSubmit} disabled={!targetStatus}>
-                Cập nhật ({Object.keys(rowSelection).length})
+                {t("common.update")} ({Object.keys(rowSelection).length})
               </Button>
             </div>
           ) : (
             <Select
+              value={selectedPaymentStatus}
               onValueChange={(value) => {
+                setSelectedPaymentStatus(value);
                 onPaymentStatusChange?.(value);
               }}
             >
@@ -269,10 +255,10 @@ export function DataTable<TData, TValue>({
                 <SelectValue placeholder="Trạng thái TT" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả TT</SelectItem>
-                <SelectItem value="PENDING">Chờ thanh toán</SelectItem>
-                <SelectItem value="SUCCESS">Thành công</SelectItem>
-                <SelectItem value="FAILED">Thất bại</SelectItem>
+                <SelectItem value="all">{t("bookings.filterBooking.allStatus")}</SelectItem>
+                <SelectItem value="Chưa thanh toán">{t("bookings.filterBooking.unpaid")}</SelectItem>
+                <SelectItem value="Đã thanh toán">{t("bookings.filterBooking.paid")}</SelectItem>
+                <SelectItem value="Thanh toán thất bại">{t("bookings.filterBooking.failed")}</SelectItem>
               </SelectContent>
             </Select>
           )}

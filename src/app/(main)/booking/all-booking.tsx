@@ -27,7 +27,6 @@ export default function AllBookings() {
 
     setType,
     setShowtime,
-    setPaymentMethod,
     setPaymentStatus,
     onPaginationChange,
   } = useBookingTable({
@@ -85,7 +84,11 @@ export default function AllBookings() {
 
   const handleUpdatePaymentStatus = async (id: string, status: string) => {
     try {
-      await updatePaymentStatus(id, { paymentStatus: status });
+      const booking = bookings.find((b) => b.id === id);
+      await updatePaymentStatus(id, {
+        status,
+        paymentMethod: booking?.paymentMethod,
+      });
       toast.success("Cập nhật trạng thái thành công");
       refresh();
     } catch (error) {
@@ -104,12 +107,22 @@ export default function AllBookings() {
     showtimeMap: maps.showTimeMap,
   });
 
-  const handleBulkUpdate = async (ids: string[], status: string) => {
+  const handleBulkUpdate = async (
+    ids: string[],
+    status: string,
+    paymentMethod?: string
+  ) => {
     try {
       if (ids.length === 0) return;
       // Loop update since no bulk API yet
       await Promise.all(
-        ids.map((id) => updatePaymentStatus(id, { paymentStatus: status }))
+        ids.map((id) => {
+          const booking = bookings.find((b) => b.id === id);
+          return updatePaymentStatus(id, {
+            status,
+            paymentMethod: booking?.paymentMethod || paymentMethod,
+          });
+        })
       );
       toast.success(`Đã cập nhật ${ids.length} đơn hàng thành ${status}`);
       refresh();
@@ -128,7 +141,7 @@ export default function AllBookings() {
         pagination={pagination}
         onPaginationChange={onPaginationChange}
         onTypeChange={setType}
-        onPaymentMethodChange={setPaymentMethod}
+
         onPaymentStatusChange={setPaymentStatus}
         onBulkUpdate={handleBulkUpdate}
         //

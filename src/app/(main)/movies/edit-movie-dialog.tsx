@@ -6,6 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ImagePlus, Loader2 } from "lucide-react";
 import Image from "next/image";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { z } from "zod";
 import {
   Form,
@@ -46,6 +53,7 @@ const formSchema = z.object({
     .min(1, { message: "At least one genre is required" }),
   trailer: z.string().optional(),
   trailerUrl: z.string().optional(),
+  status: z.enum(["COMING_SOON", "NOW_SHOWING", "ENDED"]),
 });
 
 interface EditMovieDialogProps {
@@ -83,6 +91,7 @@ export function EditMovieDialog({
       duration: undefined,
       genres: [],
       trailer: "",
+      status: "COMING_SOON",
     },
     mode: "onSubmit",
     reValidateMode: "onSubmit",
@@ -114,6 +123,7 @@ export function EditMovieDialog({
         genres: movieData.genres.map((g: Genre) => g.id),
         trailer: isTrailerUrl ? "" : movieData.trailerUrl,
         trailerUrl: isTrailerUrl ? movieData.trailerUrl : "",
+        status: movieData.status || "COMING_SOON",
       });
 
       setThumbnail({
@@ -180,6 +190,7 @@ export function EditMovieDialog({
         thumbnail?: File;
         trailer?: File;
         trailerPath?: string;
+        status?: string;
       } = {
         title: values.title,
         description: values.description,
@@ -190,6 +201,7 @@ export function EditMovieDialog({
             : new Date(movie.releaseDate).toISOString(),
         genresIds: values.genres.join(","),
         thumbnail: thumbnail?.imageFile || undefined,
+        status: values.status,
       };
 
       if (trailerMode === "file" && trailer?.videoFile) {
@@ -317,11 +329,10 @@ export function EditMovieDialog({
                                       onChange={handleTrailerChange}
                                     />
                                     <div
-                                      className={`flex h-84 p-5 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${
-                                        form.formState.errors.trailer
-                                          ? "border-red-500"
-                                          : "border-gray-300"
-                                      } cursor-pointer hover:bg-accent`}
+                                      className={`flex h-84 p-5 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${form.formState.errors.trailer
+                                        ? "border-red-500"
+                                        : "border-gray-300"
+                                        } cursor-pointer hover:bg-accent`}
                                     >
                                       <Label
                                         htmlFor="trailer-file"
@@ -431,11 +442,10 @@ export function EditMovieDialog({
                                 onChange={handlePhotoChange}
                               />
                               <div
-                                className={`flex h-84 w-60 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${
-                                  form.formState.errors.thumbnail
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                } cursor-pointer hover:bg-accent`}
+                                className={`flex h-84 w-60 flex-row flex-wrap items-center justify-center rounded-lg border-2 border-dashed ${form.formState.errors.thumbnail
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                                  } cursor-pointer hover:bg-accent`}
                               >
                                 <Label
                                   htmlFor="dropzone-file"
@@ -524,6 +534,44 @@ export function EditMovieDialog({
                             </FormItem>
                           )}
                         />
+                        <FormField
+                          control={form.control}
+                          name="status"
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormLabel>
+                                {t("movies.header.movieStatus")}{" "}
+                                <span className="text-xs text-red-500">*</span>
+                              </FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue
+                                      placeholder={t(
+                                        "movies.filterMovies.allMovieStatus"
+                                      )}
+                                    />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="COMING_SOON">
+                                    {t("movies.filterMovies.COMING_SOON")}
+                                  </SelectItem>
+                                  <SelectItem value="NOW_SHOWING">
+                                    {t("movies.filterMovies.NOW_SHOWING")}
+                                  </SelectItem>
+                                  <SelectItem value="ENDED">
+                                    {t("movies.filterMovies.ENDED")}
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
                       <div className="flex gap-4">
                         <FormField
@@ -548,6 +596,7 @@ export function EditMovieDialog({
                             </FormItem>
                           )}
                         />
+
                       </div>
 
                       <FormField

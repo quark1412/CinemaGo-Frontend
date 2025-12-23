@@ -101,11 +101,11 @@ export const getBookingById = async (id: string): Promise<Booking> => {
 
 export const updatePaymentStatus = async (
   id: string,
-  data: { paymentStatus: string }
+  data: { status: string; paymentMethod?: string }
 ): Promise<{ message: string }> => {
   try {
-    const response = await instance.patch(
-      `/v1/bookings/${id}/payment-status`,
+    const response = await instance.put(
+      `/v1/bookings/update-status/${id}`,
       data,
       {
         requiresAuth: true,

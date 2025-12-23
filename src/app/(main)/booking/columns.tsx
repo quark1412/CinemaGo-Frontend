@@ -75,15 +75,19 @@ export const createColumns = ({
         />
       ),
       cell: ({ row }) => {
-        const isCOD = row.original.paymentMethod === "COD";
+        const canSelect =
+          row.original.paymentMethod === "COD" &&
+          row.original.status === "Chưa thanh toán";
+
+        if (!canSelect) return null;
+
         return (
           <input
             type="checkbox"
             checked={row.getIsSelected()}
             onChange={(e) => row.toggleSelected(!!e.target.checked)}
             aria-label="Select row"
-            disabled={!isCOD}
-            className={`translate-y-[2px] ${!isCOD ? "opacity-50 cursor-not-allowed" : ""}`}
+            className="translate-y-[2px]"
           />
         );
       },
@@ -177,7 +181,7 @@ export const createColumns = ({
     },
     {
       accessorKey: "paymentMethod",
-      header: "Phương thức",
+      header: t("bookings.paymentMethod"),
       cell: ({ row }) => {
         const method = row.original.paymentMethod;
         return (
@@ -188,26 +192,26 @@ export const createColumns = ({
       },
     },
     {
-      accessorKey: "paymentStatus",
-      header: "Trạng thái",
+      accessorKey: "status",
+      header: t("bookings.status"),
       cell: ({ row }) => {
-        const status = row.original.paymentStatus || "PENDING";
+        const status = row.original.status || "PENDING";
 
         // Map status to VI labels
         let label = status;
         let colorClass = "bg-gray-100 text-gray-800 border-gray-200";
 
         switch (status) {
-          case "SUCCESS":
-            label = "Đã thanh toán";
+          case "Đã thanh toán":
+            label = t("bookings.paid");
             colorClass = "bg-green-100 text-green-800 border-green-200";
             break;
-          case "PENDING":
-            label = "Chờ thanh toán";
+          case "Chưa thanh toán":
+            label = t("bookings.unpaid");
             colorClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
             break;
-          case "FAILED":
-            label = "Thất bại";
+          case "Thanh toán thất bại":
+            label = t("bookings.failed");
             colorClass = "bg-red-100 text-red-800 border-red-200";
             break;
         }
