@@ -229,6 +229,13 @@ export default function BookingCompletedPage() {
       searchParams.get("bookingId") || searchParams.get("orderId");
     const usedBookingId = queryBookingId || storedBookingId;
 
+    // Get payment method from URL params or localStorage
+    const paymentMethod =
+      searchParams.get("method") ||
+      (typeof window !== "undefined"
+        ? window.localStorage.getItem("paymentMethod")
+        : null);
+
     if (!usedBookingId) {
       setStatus("failed");
       setMessage("Không tìm thấy thông tin đặt vé.");
@@ -253,35 +260,81 @@ export default function BookingCompletedPage() {
 
       if (fetchedBooking?.status === "Đã thanh toán") {
         setStatus("success");
-        setMessage("Thanh toán và đặt vé thành công!");
+        if (paymentMethod === "MOMO") {
+          setMessage(
+            "Thanh toán MoMo thành công. Đặt vé của bạn đã được xác nhận."
+          );
+        } else if (paymentMethod === "ZALOPAY") {
+          setMessage(
+            "Thanh toán ZaloPay thành công. Đặt vé của bạn đã được xác nhận."
+          );
+        } else {
+          setMessage("Thanh toán và đặt vé thành công!");
+        }
         await fetchTicketData(fetchedBooking);
         if (typeof window !== "undefined") {
           window.localStorage.removeItem("paymentId");
           window.localStorage.removeItem("bookingId");
+          window.localStorage.removeItem("paymentMethod");
         }
         return;
       }
 
-      try {
-        await paymentService.checkMoMoStatus(usedBookingId);
-        const bookingResponse = (await getBookingById(
-          usedBookingId
-        )) as BookingWithStatus;
-        setBooking(bookingResponse);
-        setAmount(bookingResponse.totalPrice ?? null);
-        setStatus("success");
-        setMessage(
-          "Thanh toán MoMo thành công. Đặt vé của bạn đã được xác nhận."
-        );
-        await fetchTicketData(bookingResponse);
+      // Check payment status based on payment method
+      if (paymentMethod === "MOMO") {
+        try {
+          await paymentService.checkMoMoStatus(usedBookingId);
+          const bookingResponse = (await getBookingById(
+            usedBookingId
+          )) as BookingWithStatus;
+          setBooking(bookingResponse);
+          setAmount(bookingResponse.totalPrice ?? null);
+          setStatus("success");
+          setMessage(
+            "Thanh toán MoMo thành công. Đặt vé của bạn đã được xác nhận."
+          );
+          await fetchTicketData(bookingResponse);
 
-        if (typeof window !== "undefined") {
-          window.localStorage.removeItem("bookingId");
+          if (typeof window !== "undefined") {
+            window.localStorage.removeItem("bookingId");
+            window.localStorage.removeItem("paymentMethod");
+          }
+        } catch (error: any) {
+          setStatus("failed");
+          setMessage("Thanh toán không thành công hoặc đã bị hủy.");
         }
-      } catch (error: any) {
-        setStatus("failed");
-        setMessage("Thanh toán không thành công hoặc đã bị hủy.");
+        return;
       }
+
+      if (paymentMethod === "ZALOPAY") {
+        try {
+          await paymentService.checkZaloPayStatus(usedBookingId);
+          const bookingResponse = (await getBookingById(
+            usedBookingId
+          )) as BookingWithStatus;
+          setBooking(bookingResponse);
+          setAmount(bookingResponse.totalPrice ?? null);
+          setStatus("success");
+          setMessage(
+            "Thanh toán ZaloPay thành công. Đặt vé của bạn đã được xác nhận."
+          );
+          await fetchTicketData(bookingResponse);
+
+          if (typeof window !== "undefined") {
+            window.localStorage.removeItem("bookingId");
+            window.localStorage.removeItem("paymentMethod");
+          }
+        } catch (error: any) {
+          setStatus("failed");
+          setMessage("Thanh toán không thành công hoặc đã bị hủy.");
+        }
+        return;
+      }
+
+      setStatus("failed");
+      setMessage(
+        "Không thể xác định phương thức thanh toán hoặc thanh toán chưa được xác nhận."
+      );
     };
 
     checkStatus();
@@ -370,9 +423,7 @@ export default function BookingCompletedPage() {
           {status === "pending" && (
             <>
               <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
-              <h1 className="text-2xl font-bold">
-                Đang xử lý thanh toán MoMo...
-              </h1>
+              <h1 className="text-2xl font-bold">Đang xử lý thanh toán...</h1>
             </>
           )}
 

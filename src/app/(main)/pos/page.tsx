@@ -133,7 +133,9 @@ export default function POSPage() {
   const [trailerOpen, setTrailerOpen] = useState(false);
   const [trailerUrl, setTrailerUrl] = useState<string>("");
   const [foodDrinkSelectOpen, setFoodDrinkSelectOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"COD" | "MOMO">("COD");
+  const [paymentMethod, setPaymentMethod] = useState<
+    "COD" | "MOMO" | "ZALOPAY"
+  >("COD");
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [successBooking, setSuccessBooking] = useState<Booking | null>(null);
   const [successMessage, setSuccessMessage] = useState<string>("");
@@ -961,6 +963,11 @@ export default function POSPage() {
           if (momoResponse.URL) {
             if (typeof window !== "undefined") {
               window.localStorage.setItem("bookingId", booking.id);
+              window.localStorage.setItem(
+                "paymentAmount",
+                totalPrice.toString()
+              );
+              window.localStorage.setItem("paymentMethod", "MOMO");
               window.open(momoResponse.URL, "_self");
             }
           }
@@ -968,6 +975,33 @@ export default function POSPage() {
           toast.error(
             error.message ||
               "Không thể khởi tạo thanh toán MoMo cho đơn đặt vé này"
+          );
+        }
+      } else if (paymentMethod === "ZALOPAY") {
+        try {
+          const zalopayResponse = await paymentService.checkoutWithZaloPay(
+            totalPrice,
+            booking.id,
+            "http://localhost:3000/booking-completed"
+          );
+
+          if (zalopayResponse.URL) {
+            if (typeof window !== "undefined") {
+              window.localStorage.setItem("bookingId", booking.id);
+              window.localStorage.setItem(
+                "paymentAmount",
+                totalPrice.toString()
+              );
+              window.localStorage.setItem("paymentMethod", "ZALOPAY");
+              window.open(zalopayResponse.URL, "_self");
+            }
+          } else {
+            toast.error("Không thể tạo liên kết thanh toán ZaloPay");
+          }
+        } catch (error: any) {
+          toast.error(
+            error.message ||
+              "Không thể khởi tạo thanh toán ZaloPay cho đơn đặt vé này"
           );
         }
       } else {
@@ -1988,7 +2022,7 @@ export default function POSPage() {
                       <Select
                         value={paymentMethod}
                         onValueChange={(value) =>
-                          setPaymentMethod(value as "COD" | "MOMO")
+                          setPaymentMethod(value as "COD" | "MOMO" | "ZALOPAY")
                         }
                       >
                         <SelectTrigger className="w-[220px]">
@@ -2000,6 +2034,9 @@ export default function POSPage() {
                           </SelectItem>
                           <SelectItem value="MOMO">
                             Thanh toán với MoMo
+                          </SelectItem>
+                          <SelectItem value="ZALOPAY">
+                            Thanh toán với ZaloPay
                           </SelectItem>
                         </SelectContent>
                       </Select>
