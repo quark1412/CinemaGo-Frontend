@@ -173,6 +173,8 @@ export default function POSPage() {
   const [timerActive, setTimerActive] = useState(false);
   const timerStartTimeRef = useRef<number | null>(null);
   const previousShowtimeIdRef = useRef<string | null>(null);
+  // Track which seat IDs we've selected to restore them when reopening
+  const ourSelectedSeatIdsRef = useRef<Set<string>>(new Set());
 
   // Set today's date as default
   useEffect(() => {
@@ -298,6 +300,7 @@ export default function POSPage() {
         setBookedSeatIds([]);
         setSelectedSeats([]);
         setHeldSeatIds([]);
+        ourSelectedSeatIdsRef.current.clear();
         return;
       }
 
@@ -425,7 +428,51 @@ export default function POSPage() {
 
         // Load held seats
         const heldSeatsResponse = await getHeldSeats(selectedShowtime.id);
-        setHeldSeatIds(heldSeatsResponse.data.map((h) => h.seatId));
+        const newHeldSeatIds = heldSeatsResponse.data.map((h) => h.seatId);
+        setHeldSeatIds(newHeldSeatIds);
+
+        // Restore selectedSeats from heldSeatIds if they're missing
+        // Only restore seats that we previously selected (tracked in ourSelectedSeatIdsRef)
+        // This handles the case when reopening the sheet after closing it
+        if (
+          newHeldSeatIds.length > 0 &&
+          ourSelectedSeatIdsRef.current.size > 0
+        ) {
+          const currentSelectedSeatIds = new Set(
+            selectedSeats.map((s) => s.id)
+          );
+
+          // Find held seats that we previously selected but aren't currently in selectedSeats
+          const seatsToRestore = newHeldSeatIds.filter(
+            (heldId) =>
+              ourSelectedSeatIdsRef.current.has(heldId) &&
+              !currentSelectedSeatIds.has(heldId)
+          );
+
+          if (seatsToRestore.length > 0) {
+            // Restore seats from heldSeatIds
+            const restoredSeats: SeatType[] = [];
+            seatsToRestore.forEach((seatId) => {
+              const seat = Array.from(newSeatMap.values()).find(
+                (s) => s.id === seatId
+              );
+              if (seat) {
+                restoredSeats.push(seat);
+              }
+            });
+
+            if (restoredSeats.length > 0) {
+              // Merge with existing selectedSeats, avoiding duplicates
+              setSelectedSeats((prev) => {
+                const existingIds = new Set(prev.map((s) => s.id));
+                const newSeats = restoredSeats.filter(
+                  (s) => !existingIds.has(s.id)
+                );
+                return [...prev, ...newSeats];
+              });
+            }
+          }
+        }
       } catch (error: any) {
         if (error.response?.status === 404) {
           setBookedSeatIds([]);
@@ -441,29 +488,13 @@ export default function POSPage() {
     loadRoomAndSeats();
   }, [selectedShowtime]);
 
-  // Reset when sheet closes
+  // Only reset selectedMovieForBooking when sheet closes
+  // Keep selectedShowtime, selectedSeats, etc. so they persist
+  // Seats will only be released when showtime changes or timer expires
   useEffect(() => {
     if (!sheetOpen) {
-      if (selectedShowtime && selectedSeats.length > 0) {
-        (async () => {
-          try {
-            await Promise.all(
-              selectedSeats.map((seat) =>
-                releaseSeat({
-                  showtimeId: selectedShowtime.id,
-                  seatId: seat.id,
-                }).catch(() => {})
-              )
-            );
-          } catch {}
-        })();
-      }
-
+      // Only reset the movie selection, keep everything else
       setSelectedMovieForBooking(null);
-      setSelectedShowtime(null);
-      setSelectedSeats([]);
-      setSelectedFoodDrinks([]);
-      setHeldSeatIds([]);
     }
   }, [sheetOpen]);
 
@@ -500,6 +531,7 @@ export default function POSPage() {
 
       setSelectedSeats([]);
       setHeldSeatIds([]);
+      ourSelectedSeatIdsRef.current.clear();
       setTimerActive(false);
       timerStartTimeRef.current = null;
 
@@ -509,15 +541,62 @@ export default function POSPage() {
     }
   }, [selectedShowtime, selectedSeats]);
 
-  // Reset timer when showtime changes
+  // Reset timer and release seats when showtime changes
+  const previousShowtimeIdForCleanup = useRef<string | null>(null);
+  const previousSelectedSeatsRef = useRef<SeatType[]>([]);
+  const previousHeldSeatIdsRef = useRef<string[]>([]);
+
   useEffect(() => {
-    setTimerActive(false);
-    timerStartTimeRef.current = null;
-    setTimeRemaining({
-      minutes: SEAT_HOLD_TIMEOUT_MINUTES,
-      seconds: 0,
-    });
-  }, [selectedShowtime?.id]);
+    const currentShowtimeId = selectedShowtime?.id || null;
+
+    // If showtime changed (not just set to null), release seats from previous showtime
+    if (
+      previousShowtimeIdForCleanup.current !== null &&
+      previousShowtimeIdForCleanup.current !== currentShowtimeId &&
+      currentShowtimeId !== null // Only release if we're switching to a different showtime, not clearing
+    ) {
+      // Release seats from previous showtime
+      const seatsToRelease = previousSelectedSeatsRef.current.filter(
+        (seat) => seat.id && previousHeldSeatIdsRef.current.includes(seat.id)
+      );
+
+      if (seatsToRelease.length > 0) {
+        (async () => {
+          try {
+            await Promise.all(
+              seatsToRelease.map((seat) =>
+                releaseSeat({
+                  showtimeId: previousShowtimeIdForCleanup.current!,
+                  seatId: seat.id,
+                }).catch(() => {})
+              )
+            );
+          } catch {}
+        })();
+      }
+    }
+
+    // Reset timer and clear selected seats when showtime changes
+    const prevShowtimeId = previousShowtimeIdForCleanup.current;
+    if (prevShowtimeId !== currentShowtimeId && currentShowtimeId !== null) {
+      // Clear selected seats and held seats
+      setSelectedSeats([]);
+      setHeldSeatIds([]);
+      ourSelectedSeatIdsRef.current.clear();
+      // Reset timer
+      setTimerActive(false);
+      timerStartTimeRef.current = null;
+      setTimeRemaining({
+        minutes: SEAT_HOLD_TIMEOUT_MINUTES,
+        seconds: 0,
+      });
+    }
+
+    // Update refs
+    previousShowtimeIdForCleanup.current = currentShowtimeId;
+    previousSelectedSeatsRef.current = selectedSeats;
+    previousHeldSeatIdsRef.current = heldSeatIds;
+  }, [selectedShowtime?.id, selectedSeats, heldSeatIds]);
 
   // Start timer when seats are selected
   useEffect(() => {
@@ -612,6 +691,7 @@ export default function POSPage() {
               setSelectedSeats((prev) =>
                 prev.filter((seat) => seat.id !== data.seatId)
               );
+              ourSelectedSeatIdsRef.current.delete(data.seatId);
               // Update booked seats list
               const bookedSeatsResponse = await getBookedSeats(data.showtimeId);
               const bookedIds: string[] = Array.isArray(
@@ -633,6 +713,7 @@ export default function POSPage() {
                   const seat = prev.find((s) => s.id === data.seatId);
                   // Only remove if the seat exists and is no longer held
                   if (seat && !newHeldSeatIds.includes(data.seatId)) {
+                    ourSelectedSeatIdsRef.current.delete(data.seatId);
                     return prev.filter((s) => s.id !== data.seatId);
                   }
                   return prev;
@@ -658,9 +739,6 @@ export default function POSPage() {
 
   const handleBookTicketClick = (movie: Movie) => {
     setSelectedMovieForBooking(movie);
-    setSelectedShowtime(null);
-    setSelectedSeats([]);
-    setSelectedFoodDrinks([]);
     setSheetOpen(true);
   };
 
@@ -725,6 +803,9 @@ export default function POSPage() {
         selectedSeats.filter((s) => !seatIdsToRemove.includes(s.id))
       );
       setHeldSeatIds(heldSeatIds.filter((id) => !seatIdsToRemove.includes(id)));
+      seatIdsToRemove.forEach((id) => {
+        ourSelectedSeatIdsRef.current.delete(id);
+      });
 
       // Release all seats
       await Promise.all(
@@ -748,6 +829,11 @@ export default function POSPage() {
         );
         setSelectedSeats([...selectedSeats, ...seatsToProcess]);
         setHeldSeatIds([...heldSeatIds, ...seatsToProcess.map((s) => s.id)]);
+        seatsToProcess.forEach((seat) => {
+          if (seat.id) {
+            ourSelectedSeatIdsRef.current.add(seat.id);
+          }
+        });
       } catch (error: any) {
         if (error.response?.status === 409) {
           toast.error("Seat is already held by another user");
@@ -838,8 +924,13 @@ export default function POSPage() {
 
   // Create booking
   const handleCreateBooking = async () => {
-    if (!selectedShowtime || selectedSeats.length === 0) {
-      toast.error("Please select a showtime and at least one seat");
+    if (!selectedShowtime) {
+      toast.error("Please select a showtime");
+      return;
+    }
+
+    if (selectedSeats.length === 0 && selectedFoodDrinks.length === 0) {
+      toast.error("Please select at least one seat or food/drink");
       return;
     }
 
@@ -890,6 +981,7 @@ export default function POSPage() {
       setSelectedSeats([]);
       setSelectedFoodDrinks([]);
       setHeldSeatIds([]);
+      ourSelectedSeatIdsRef.current.clear();
       setSheetOpen(false);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to create booking");
@@ -1437,6 +1529,9 @@ export default function POSPage() {
                           .map((showtime: Showtime) => {
                             const isSelected =
                               selectedShowtime?.id === showtime.id;
+                            const startTime = new Date(showtime.startTime);
+                            const isPastShowtime =
+                              startTime.getTime() < Date.now();
                             return (
                               <Button
                                 key={showtime.id}
@@ -1445,8 +1540,12 @@ export default function POSPage() {
                                   isSelected
                                     ? "border-primary border-2 ring-2 ring-primary ring-offset-2 bg-primary/10 dark:bg-primary/20"
                                     : "hover:bg-accent hover:text-accent-foreground"
-                                }`}
-                                onClick={() => handleShowtimeSelect(showtime)}
+                                } ${isPastShowtime ? "opacity-50" : ""}`}
+                                onClick={() =>
+                                  !isPastShowtime &&
+                                  handleShowtimeSelect(showtime)
+                                }
+                                disabled={isPastShowtime}
                               >
                                 <div
                                   className={`font-semibold text-base ${
@@ -1917,7 +2016,8 @@ export default function POSPage() {
                   onClick={handleCreateBooking}
                   disabled={
                     !selectedShowtime ||
-                    selectedSeats.length === 0 ||
+                    (selectedSeats.length === 0 &&
+                      selectedFoodDrinks.length === 0) ||
                     creatingBooking ||
                     checkingPayment
                   }
@@ -2014,16 +2114,6 @@ export default function POSPage() {
                               <QRCodeSVG
                                 value={generateBookingQRData({
                                   id: successBooking.id,
-                                  userId: successBooking.userId,
-                                  showtimeId: successBooking.showtimeId,
-                                  totalPrice: successBooking.totalPrice,
-                                  bookingSeats: successBooking.bookingSeats.map(
-                                    (seat) => ({ seatId: seat.seatId })
-                                  ),
-                                  createdAt:
-                                    successBooking.createdAt instanceof Date
-                                      ? successBooking.createdAt
-                                      : new Date(successBooking.createdAt),
                                 })}
                                 size={160}
                                 level="H"
@@ -2056,12 +2146,15 @@ export default function POSPage() {
                                 {successBooking.id}
                               </span>
                             </div>
-                            <div className="flex justify-between">
-                              <span>Ghế</span>
-                              <span className="font-medium">
-                                {formatSeatNumbers(ticketData?.seatsData)}
-                              </span>
-                            </div>
+                            {ticketData?.seatsData &&
+                              ticketData.seatsData.length > 0 && (
+                                <div className="flex justify-between">
+                                  <span>Ghế</span>
+                                  <span className="font-medium">
+                                    {formatSeatNumbers(ticketData?.seatsData)}
+                                  </span>
+                                </div>
+                              )}
                             <div className="flex justify-between">
                               <span>Suất chiếu</span>
                               <span className="font-medium">

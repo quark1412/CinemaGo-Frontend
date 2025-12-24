@@ -438,16 +438,6 @@ export default function BookingCompletedPage() {
                             <QRCodeSVG
                               value={generateBookingQRData({
                                 id: booking.id,
-                                userId: booking.userId,
-                                showtimeId: booking.showtimeId,
-                                totalPrice: booking.totalPrice,
-                                bookingSeats: booking.bookingSeats.map(
-                                  (seat) => ({ seatId: seat.seatId })
-                                ),
-                                createdAt:
-                                  booking.createdAt instanceof Date
-                                    ? booking.createdAt
-                                    : new Date(booking.createdAt),
                               })}
                               size={160}
                               level="H"
@@ -466,12 +456,15 @@ export default function BookingCompletedPage() {
                             <span>Mã vé</span>
                             <span className="font-medium">{booking?.id}</span>
                           </div>
-                          <div className="flex justify-between">
-                            <span>Ghế</span>
-                            <span className="font-medium">
-                              {formatSeatNumbers(ticketData?.seatsData)}
-                            </span>
-                          </div>
+                          {ticketData?.seatsData &&
+                            ticketData.seatsData.length > 0 && (
+                              <div className="flex justify-between">
+                                <span>Ghế</span>
+                                <span className="font-medium">
+                                  {formatSeatNumbers(ticketData?.seatsData)}
+                                </span>
+                              </div>
+                            )}
                           <div className="flex justify-between">
                             <span>Suất chiếu</span>
                             <span className="font-medium">

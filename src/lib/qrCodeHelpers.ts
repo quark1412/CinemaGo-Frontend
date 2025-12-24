@@ -7,76 +7,50 @@ export interface BookingQRData {
   createdAt: string;
 }
 
-// Generate QR code data string
-export const generateBookingQRData = (booking: {
-  id: string;
-  userId?: string;
-  showtimeId: string;
-  totalPrice: number;
-  bookingSeats: Array<{ seatId: string }>;
-  createdAt: Date | string;
-}): string => {
-  const createdAtDate =
-    booking.createdAt instanceof Date
-      ? booking.createdAt
-      : new Date(booking.createdAt);
+export const generateBookingQRData = (booking: { id: string }): string => {
+  const bookingId = booking.id;
 
-  const qrData: BookingQRData = {
-    bookingId: booking.id,
-    userId: booking.userId,
-    showtimeId: booking.showtimeId,
-    totalPrice: booking.totalPrice,
-    seats: booking.bookingSeats.map((seat) => seat.seatId),
-    createdAt: createdAtDate.toISOString(),
-  };
-
-  return JSON.stringify(qrData);
+  return JSON.stringify({
+    bookingId: bookingId,
+  });
 };
 
-// Parse QR code data string back to booking information
 export const parseBookingQRData = (
   qrDataString: string
-): BookingQRData | null => {
+): { bookingId: string } | null => {
   try {
     const parsed = JSON.parse(qrDataString);
 
-    // Validate required fields
-    if (
-      !parsed.bookingId ||
-      !parsed.showtimeId ||
-      !parsed.totalPrice ||
-      !Array.isArray(parsed.seats)
-    ) {
-      console.error("Invalid QR data structure");
-      return null;
+    if (parsed.bookingId && typeof parsed.bookingId === "string") {
+      return {
+        bookingId: parsed.bookingId,
+      };
     }
 
-    return {
-      bookingId: parsed.bookingId,
-      userId: parsed.userId,
-      showtimeId: parsed.showtimeId,
-      totalPrice: parsed.totalPrice,
-      seats: parsed.seats,
-      createdAt: parsed.createdAt,
-    };
+    console.error("Invalid QR data structure - missing bookingId");
+    return null;
   } catch (error) {
     console.error("Failed to parse QR code data:", error);
     return null;
   }
 };
 
-// Format booking QR data for display
-export const formatBookingForDisplay = (qrData: BookingQRData) => {
+export const formatBookingForDisplay = (booking: {
+  id: string;
+  totalPrice: number;
+  bookingSeats: Array<{ seatId: string }>;
+  createdAt: Date | string;
+}) => {
   return {
-    bookingId: qrData.bookingId.toUpperCase(),
-    shortBookingId: qrData.bookingId.slice(-8).toUpperCase(),
+    bookingId: booking.id.toUpperCase(),
+    shortBookingId: booking.id.slice(-8).toUpperCase(),
     formattedPrice: new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-    }).format(qrData.totalPrice),
-    seatCount: qrData.seats.length,
-    seatList: qrData.seats.join(", "),
-    bookingDate: new Date(qrData.createdAt).toLocaleDateString("vi-VN", {
+    }).format(booking.totalPrice),
+    seatCount: booking.bookingSeats?.length || 0,
+    seatList: booking.bookingSeats?.map((s) => s.seatId).join(", ") || "",
+    bookingDate: new Date(booking.createdAt).toLocaleDateString("vi-VN", {
       weekday: "short",
       year: "numeric",
       month: "short",
