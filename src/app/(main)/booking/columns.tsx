@@ -75,11 +75,9 @@ export const createColumns = ({
         />
       ),
       cell: ({ row }) => {
-        const canSelect =
-          row.original.paymentMethod === "COD" &&
-          row.original.status === "Chưa thanh toán";
-
-        if (!canSelect) return null;
+        if (!row.getCanSelect()) {
+          return null;
+        }
 
         return (
           <input
