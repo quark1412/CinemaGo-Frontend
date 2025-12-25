@@ -1393,11 +1393,11 @@ export default function POSPage() {
             {moviesWithShowtimes.map((movie) => (
               <div
                 key={movie.id}
-                className="overflow-hidden min-w-62 hover:shadow-2xl transition-all duration-300 border-0 shadow-lg rounded-xl cursor-pointer"
+                className="overflow-hidden w-[250px] hover:shadow-2xl transition-all duration-300 border-0 shadow-lg rounded-xl cursor-pointer flex flex-col"
               >
-                <div className="relative group">
+                <div className="relative group w-full flex flex-col flex-1">
                   {/* Poster */}
-                  <div className="aspect-[2/3] relative overflow-hidden bg-gradient-to-b from-blue-900 to-blue-700 rounded-t-xl">
+                  <div className="aspect-[2/3] relative overflow-hidden bg-gradient-to-b from-blue-900 to-blue-700 rounded-t-xl w-full flex-shrink-0">
                     {movie.thumbnail ? (
                       <Image
                         src={movie.thumbnail}
@@ -1481,11 +1481,13 @@ export default function POSPage() {
                   </div>
 
                   {/* Bottom section*/}
-                  <div className="bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 p-5">
-                    <h3 className="text-white font-bold text-lg mb-4 text-center line-clamp-2">
-                      {movie.title}
-                    </h3>
-                    <div className="flex items-center justify-center gap-3 mb-3">
+                  <div className="bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 p-5 flex flex-col flex-shrink-0">
+                    <div className="min-h-[3.5rem] flex items-center justify-center mb-4">
+                      <h3 className="text-white font-bold text-lg text-center line-clamp-2">
+                        {movie.title}
+                      </h3>
+                    </div>
+                    <div className="flex items-center justify-center gap-3 mb-3 min-h-[2.5rem]">
                       {movie.trailerUrl && (
                         <Button
                           variant="ghost"
@@ -1503,7 +1505,7 @@ export default function POSPage() {
                       )}
                     </div>
                     <Button
-                      className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-base py-3 shadow-xl cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                      className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-base py-3 shadow-xl cursor-pointer transition-all duration-200 hover:scale-[1.02] flex-shrink-0"
                       onClick={() => handleBookTicketClick(movie)}
                     >
                       ĐẶT VÉ
