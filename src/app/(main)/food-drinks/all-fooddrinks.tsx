@@ -88,23 +88,46 @@ export default function AllFoodDrinks() {
   };
 
   const handleSearchChange = (search: string) => {
-    setCurrentParams({ ...currentParams, page: 1, search });
+    if (search) {
+      setCurrentParams({ ...currentParams, page: 1, search });
+    } else {
+      const { search: _, ...restParams } = currentParams;
+      setCurrentParams({ ...restParams, page: 1 });
+    }
   };
 
   const handleFilterChange = (filterType: string, value: string) => {
-    const newFilters = { ...filters, [filterType]: value };
+    const newFilters = value
+      ? { ...filters, [filterType]: value }
+      : Object.fromEntries(
+          Object.entries(filters).filter(([key]) => key !== filterType)
+        );
     setFilters(newFilters);
+
+    if (filterType === "isAvailable") {
+      if (value) {
+        const apiParams: GetFoodDrinksParams = {
+          ...currentParams,
+          page: 1,
+          isAvailable:
+            value === "true" ? true : value === "false" ? false : undefined,
+        };
+        setCurrentParams(apiParams);
+      } else {
+        // Remove the filter by creating a new object without it
+        const { isAvailable, ...restParams } = currentParams;
+        setCurrentParams({
+          ...restParams,
+          page: 1,
+        });
+      }
+      return;
+    }
 
     const apiParams: GetFoodDrinksParams = {
       ...currentParams,
       page: 1,
     };
-
-    if (filterType === "isAvailable") {
-      apiParams.isAvailable =
-        value === "true" ? true : value === "false" ? false : undefined;
-    }
-
     setCurrentParams(apiParams);
   };
 

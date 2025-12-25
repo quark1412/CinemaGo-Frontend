@@ -123,12 +123,10 @@ export function DataTable<TData, TValue>({
               "all"
             }
             onValueChange={(value) => {
+              const filterValue = value === "all" ? "" : value;
+              table.getColumn("isAvailable")?.setFilterValue(filterValue);
               if (pagination && onFilterChange) {
-                onFilterChange("isAvailable", value === "all" ? "" : value);
-              } else {
-                table
-                  .getColumn("isAvailable")
-                  ?.setFilterValue(value === "all" ? "" : value);
+                onFilterChange("isAvailable", filterValue);
               }
             }}
           >
