@@ -79,7 +79,7 @@ export default function AllFoodDrinks() {
         action: "toggle",
       });
     } catch (error) {
-      console.error(error);
+      console.log(error);
     }
   };
 

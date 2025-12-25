@@ -93,7 +93,7 @@ export function useBookingTable(initialParams: MyBookingParams) {
               console.warn("User data structure weird:", res.data);
             }
           } else {
-            console.error(`Failed to fetch User ${res.id}`, res.err);
+            console.log(`Failed to fetch User ${res.id}`, res.err);
           }
         });
 
@@ -106,7 +106,7 @@ export function useBookingTable(initialParams: MyBookingParams) {
               console.warn("Showtime data structure weird:", res.data);
             }
           } else {
-            console.error(`Failed to fetch Showtime ${res.id}`, res.err);
+            console.log(`Failed to fetch Showtime ${res.id}`, res.err);
           }
         });
       }
@@ -145,17 +145,17 @@ export function useBookingTable(initialParams: MyBookingParams) {
         const [movieRes, roomRes, cinemaRes] = await Promise.all([
           Promise.all(
             Array.from(missingMovieIds).map((id) =>
-              getMovieById(id).catch((e) => console.error("Err Movie", id, e))
+              getMovieById(id).catch((e) => console.log("Err Movie", id, e))
             )
           ),
           Promise.all(
             Array.from(missingRoomIds).map((id) =>
-              getRoomById(id).catch((e) => console.error("Err Room", id, e))
+              getRoomById(id).catch((e) => console.log("Err Room", id, e))
             )
           ),
           Promise.all(
             Array.from(missingCinemaIds).map((id) =>
-              getCinemaById(id).catch((e) => console.error("Err Cinema", id, e))
+              getCinemaById(id).catch((e) => console.log("Err Cinema", id, e))
             )
           ),
         ]);

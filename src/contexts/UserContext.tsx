@@ -48,7 +48,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error("Failed to fetch user profile:", error);
+      console.log("Failed to fetch user profile:", error);
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -78,7 +78,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         await authService.logout();
         throw new Error("Bạn không có quyền truy cập!");
       }
-
     } catch (error) {
       throw error;
     }
@@ -91,7 +90,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(false);
       router.push("/login");
     } catch (error) {
-      console.error("Logout error:", error);
+      console.log("Logout error:", error);
       setUser(null);
       setIsAuthenticated(false);
       router.push("/login");

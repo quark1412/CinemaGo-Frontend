@@ -565,7 +565,7 @@ async function fetchAvailableCinemas(): Promise<
       })) || []
     );
   } catch (error) {
-    console.error("Failed to fetch cinemas:", error);
+    console.log("Failed to fetch cinemas:", error);
     return [];
   }
 }
@@ -585,7 +585,7 @@ async function fetchAvailableMovies(): Promise<
       })) || []
     );
   } catch (error) {
-    console.error("Failed to fetch movies:", error);
+    console.log("Failed to fetch movies:", error);
     return [];
   }
 }

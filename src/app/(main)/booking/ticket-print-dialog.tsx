@@ -72,7 +72,7 @@ export function TicketPrintDialog({
           (showtimeResponse as any)?.data || showtimeResponse;
 
         if (!showtimeDetails || !showtimeDetails.startTime) {
-          console.error("Failed to get showtime details");
+          console.log("Failed to get showtime details");
           setTicketLoading(false);
           return;
         }
@@ -167,7 +167,7 @@ export function TicketPrintDialog({
           roomExtraPrices,
         });
       } catch (error) {
-        console.error("Error fetching ticket data:", error);
+        console.log("Error fetching ticket data:", error);
       } finally {
         setTicketLoading(false);
       }

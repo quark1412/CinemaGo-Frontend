@@ -154,7 +154,7 @@ export function ShowtimeDialog({
             : "showtimes.createShowtime.fetchCinemasError"
         )
       );
-      console.error("Error fetching cinemas:", error);
+      console.log("Error fetching cinemas:", error);
     } finally {
       setCinemasLoading(false);
     }
@@ -195,7 +195,7 @@ export function ShowtimeDialog({
               : "showtimes.createShowtime.fetchRoomsError"
           )
         );
-        console.error("Error fetching rooms:", error);
+        console.log("Error fetching rooms:", error);
       } finally {
         setRoomsLoading(false);
       }
@@ -217,7 +217,7 @@ export function ShowtimeDialog({
               : "showtimes.createShowtime.fetchMovieError"
           )
         );
-        console.error("Error fetching movie:", error);
+        console.log("Error fetching movie:", error);
       } finally {
         setMoviesLoading(false);
       }
@@ -478,7 +478,7 @@ export function ShowtimeDialog({
           }
         }
       } catch (error) {
-        console.error("Error checking busy rooms:", error);
+        console.log("Error checking busy rooms:", error);
         errors.push(
           t(
             isEditing

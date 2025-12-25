@@ -102,7 +102,7 @@ export default function AllBookings() {
       toast.success("Cập nhật trạng thái thành công");
       refresh();
     } catch (error) {
-      console.error(error);
+      console.log(error);
       toast.error("Cập nhật thất bại");
     }
   };
@@ -137,7 +137,7 @@ export default function AllBookings() {
       toast.success(`Đã cập nhật ${ids.length} đơn hàng thành ${status}`);
       refresh();
     } catch (error) {
-      console.error(error);
+      console.log(error);
       toast.error("Cập nhật hàng loạt thất bại!");
     }
   };
@@ -172,7 +172,7 @@ export default function AllBookings() {
 
       toast.success("Đã tìm thấy đặt vé từ mã QR");
     } catch (error: any) {
-      console.error("Error fetching booking:", error);
+      console.log("Error fetching booking:", error);
       toast.error(
         error.response?.data?.message || "Không tìm thấy đặt vé với mã QR này"
       );
@@ -259,7 +259,7 @@ export default function AllBookings() {
                   };
                   setViewBooking(booking);
                 } catch (error) {
-                  console.error("Error refreshing booking:", error);
+                  console.log("Error refreshing booking:", error);
                 }
               }
             : undefined

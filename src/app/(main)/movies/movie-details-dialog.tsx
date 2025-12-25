@@ -53,7 +53,7 @@ export function MovieDetailsDialog({
       setMovie(response.data);
     } catch (error: any) {
       toast.error(t("movies.details.fetchError"));
-      console.error("Error fetching movie:", error);
+      console.log("Error fetching movie:", error);
     } finally {
       setLoading(false);
     }

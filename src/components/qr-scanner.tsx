@@ -27,7 +27,7 @@ export function QRScanner({ open, onClose, onScanSuccess }: QRScannerProps) {
         try {
           scannerRef.current.clear();
         } catch (error) {
-          console.error("Error clearing scanner:", error);
+          console.log("Error clearing scanner:", error);
         }
         scannerRef.current = null;
       }
@@ -88,7 +88,7 @@ export function QRScanner({ open, onClose, onScanSuccess }: QRScannerProps) {
         try {
           scannerRef.current.clear();
         } catch (error) {
-          console.error("Error clearing scanner on cleanup:", error);
+          console.log("Error clearing scanner on cleanup:", error);
         }
         scannerRef.current = null;
       }

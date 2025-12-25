@@ -50,7 +50,7 @@ export function NavUser({
     try {
       await logout();
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.log("Logout failed:", error);
     }
   };
 

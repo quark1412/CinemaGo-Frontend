@@ -70,7 +70,7 @@ export function useReviewTable(initialParams: GetReviewsParams) {
         setMovieMap(movies);
         isInitialMapLoaded.current = true;
       } catch (error) {
-        console.error("Failed to load reference maps", error);
+        console.log("Failed to load reference maps", error);
       } finally {
         setIsLoadingMaps(false);
       }

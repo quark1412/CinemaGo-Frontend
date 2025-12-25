@@ -539,7 +539,7 @@ export default function POSPage() {
 
       toast.error("Hết thời gian giữ ghế.");
     } catch (error) {
-      console.error("Failed to release seats on timer expiration:", error);
+      console.log("Failed to release seats on timer expiration:", error);
     }
   }, [selectedShowtime, selectedSeats]);
 
@@ -723,7 +723,7 @@ export default function POSPage() {
               }
             }
           } catch (error) {
-            console.error(
+            console.log(
               "Failed to refresh seat data after socket update:",
               error
             );
@@ -1037,7 +1037,7 @@ export default function POSPage() {
             (showtimeResponse as any)?.data || showtimeResponse;
 
           if (!showtimeDetails || !showtimeDetails.startTime) {
-            console.error(
+            console.log(
               "Failed to get showtime details or invalid structure",
               showtimeResponse
             );
@@ -1154,7 +1154,7 @@ export default function POSPage() {
           });
         }
       } catch (error) {
-        console.error("Error fetching ticket data:", error);
+        console.log("Error fetching ticket data:", error);
       } finally {
         setTicketLoading(false);
       }

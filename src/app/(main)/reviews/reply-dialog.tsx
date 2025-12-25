@@ -75,7 +75,7 @@ export function ReplyDialog({
         const userData = await getUserById(review.userId);
         setUserName(userData.data.fullname || review.userId);
       } catch (error) {
-        console.error("Failed to fetch user name:", error);
+        console.log("Failed to fetch user name:", error);
         setUserName(review.userId);
       } finally {
         setLoadingUser(false);

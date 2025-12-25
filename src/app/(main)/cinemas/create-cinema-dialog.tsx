@@ -237,7 +237,7 @@ export function CreateCinemaDialog({
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
-      console.error("Error creating cinema:", error);
+      console.log("Error creating cinema:", error);
       const message =
         error.response?.data?.message || "Failed to create cinema";
       toast.error(message);

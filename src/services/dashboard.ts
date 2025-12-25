@@ -41,7 +41,7 @@ export const getDashboardStatistics =
         } as any);
         totalBookings = bookingsRes.data.pagination?.totalItems || 0;
       } catch (error) {
-        console.error("Failed to fetch bookings count:", error);
+        console.log("Failed to fetch bookings count:", error);
       }
 
       return {

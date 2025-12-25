@@ -146,7 +146,7 @@ export function EditMovieDialog({
       }
     } catch (error: any) {
       toast.error(t("movies.editMovie.fetchMovieError"));
-      console.error("Error fetching movie:", error);
+      console.log("Error fetching movie:", error);
       handleClose();
     } finally {
       setLoading(false);
@@ -218,7 +218,7 @@ export function EditMovieDialog({
       queryClient.invalidateQueries({ queryKey: movieKeys.lists() });
       handleClose();
     } catch (error: any) {
-      console.error("Update movie error:", error);
+      console.log("Update movie error:", error);
       const message =
         error.response?.data?.message ||
         error.message ||
