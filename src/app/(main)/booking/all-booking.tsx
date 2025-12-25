@@ -34,14 +34,14 @@ export default function AllBookings() {
     isLoading,
     refresh,
     maps,
-
+    fetchBookingRelatedData,
     setType,
     setShowtime,
     setPaymentStatus,
     onPaginationChange,
   } = useBookingTable({
     page: 1,
-    limit: 10,
+    limit: 10000,
     type: undefined,
     showtimeId: undefined,
   });
@@ -166,6 +166,11 @@ export default function AllBookings() {
             : (bookingResponse.updatedAt as Date).toISOString(),
         userId: bookingResponse.userId || null,
       };
+
+      await fetchBookingRelatedData({
+        userId: booking.userId,
+        showtimeId: booking.showtimeId,
+      });
 
       setViewBooking(booking);
       setDialogOpen(true);

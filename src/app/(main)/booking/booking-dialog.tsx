@@ -202,6 +202,7 @@ export function BookingDialog({
           }
         : null;
 
+      console.log(booking, showtimeMap);
       const showTime = showtimeMap[booking.showtimeId];
       const room = showTime ? roomMap[showTime.roomId] : null;
       const cinemaId = showTime?.cinemaId || room?.cinemaId;
@@ -238,6 +239,15 @@ export function BookingDialog({
         id: f.foodDrinkId,
       }));
 
+      console.log({
+        userObj,
+        cinemaName,
+        roomName,
+        movieTitle,
+        showTimeRaw: showTime?.startTime || "",
+        displaySeats,
+        foodItems: initialFoods,
+      });
       setDetails({
         userObj,
         cinemaName,
@@ -284,7 +294,7 @@ export function BookingDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] max-w-[95vw] max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
-        <DialogHeader className="p-6 border-b bg-muted/40">
+        <DialogHeader className="p-6 border-b bg-muted/40 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <DialogTitle className="text-xl">
@@ -327,7 +337,7 @@ export function BookingDialog({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="p-6 space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4 p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
@@ -526,7 +536,7 @@ export function BookingDialog({
           </div>
         </ScrollArea>
 
-        <DialogFooter className="p-6 border-t bg-background flex items-center justify-between sm:justify-between gap-4">
+        <DialogFooter className="p-6 border-t bg-background flex items-center justify-between sm:justify-between gap-4 flex-shrink-0">
           <div className="flex flex-col items-start gap-1">
             <span className="text-xs text-muted-foreground uppercase font-bold">
               {t("bookings.modal.totalprice")}

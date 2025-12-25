@@ -200,6 +200,113 @@ export function useBookingTable(initialParams: MyBookingParams) {
     []
   );
 
+  const fetchBookingRelatedData = useCallback(
+    async (booking: { userId?: string | null; showtimeId: string }) => {
+      try {
+        const promises: Promise<any>[] = [];
+
+        if (booking.userId && !cache.current.users[booking.userId]) {
+          promises.push(
+            getUserById(booking.userId)
+              .then((res) => {
+                const userObj = res?.data || res;
+                if (userObj && userObj.id) {
+                  cache.current.users[userObj.id] = userObj;
+                }
+              })
+              .catch((err) => console.log("Failed to fetch User", err))
+          );
+        }
+
+        if (
+          booking.showtimeId &&
+          !cache.current.showTimes[booking.showtimeId]
+        ) {
+          promises.push(
+            getShowtimeById(booking.showtimeId)
+              .then((res) => {
+                // Handle both { data: Showtime } and Showtime formats
+                const stObj = res?.data?.data || res?.data || res;
+                if (stObj && stObj.id) {
+                  cache.current.showTimes[stObj.id] = stObj;
+                }
+              })
+              .catch((err) => console.log("Failed to fetch Showtime", err))
+          );
+        }
+
+        await Promise.all(promises);
+
+        const showTime = cache.current.showTimes[booking.showtimeId];
+        if (showTime) {
+          const relatedPromises: Promise<any>[] = [];
+
+          if (showTime.movieId && !cache.current.movies[showTime.movieId]) {
+            relatedPromises.push(
+              getMovieById(showTime.movieId)
+                .then((res) => {
+                  const item = res?.data || res;
+                  if (item?.id) cache.current.movies[item.id] = item;
+                })
+                .catch((err) => console.log("Failed to fetch Movie", err))
+            );
+          }
+
+          // Fetch room if missing
+          if (showTime.roomId && !cache.current.rooms[showTime.roomId]) {
+            relatedPromises.push(
+              getRoomById(showTime.roomId)
+                .then((res) => {
+                  const item = res?.data || res;
+                  if (item?.id) cache.current.rooms[item.id] = item;
+                })
+                .catch((err) => console.log("Failed to fetch Room", err))
+            );
+          }
+
+          // Fetch cinema if missing
+          const cinemaId = showTime.cinemaId;
+          if (cinemaId && !cache.current.cinemas[cinemaId]) {
+            relatedPromises.push(
+              getCinemaById(cinemaId)
+                .then((res) => {
+                  const item = res?.data || res;
+                  if (item?.id) cache.current.cinemas[item.id] = item;
+                })
+                .catch((err) => console.log("Failed to fetch Cinema", err))
+            );
+          }
+
+          await Promise.all(relatedPromises);
+
+          if (showTime.roomId) {
+            const room = cache.current.rooms[showTime.roomId];
+            if (room?.cinemaId && !cache.current.cinemas[room.cinemaId]) {
+              await getCinemaById(room.cinemaId)
+                .then((res) => {
+                  const item = res?.data || res;
+                  if (item?.id) cache.current.cinemas[item.id] = item;
+                })
+                .catch((err) =>
+                  console.log("Failed to fetch Cinema from Room", err)
+                );
+            }
+          }
+        }
+
+        // Update state maps
+        setUserMap({ ...cache.current.users });
+        setShowTimeMap({ ...cache.current.showTimes });
+        setMovieMap({ ...cache.current.movies });
+        setRoomMap({ ...cache.current.rooms });
+        setCinemaMap({ ...cache.current.cinemas });
+      } catch (error) {
+        console.error("Error fetching booking related data:", error);
+      }
+    },
+    []
+  );
+
   return {
     bookings: data?.data || [],
     pagination: data?.pagination || {
@@ -227,5 +334,6 @@ export function useBookingTable(initialParams: MyBookingParams) {
     setPaymentStatus: (val: string) =>
       setParamValue("status", val === "all" ? undefined : val),
     onPaginationChange: handlePaginationChange,
+    fetchBookingRelatedData,
   };
 }
