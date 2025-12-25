@@ -1,0 +1,114 @@
+"use client";
+
+import { cn } from "@/lib/utils";
+import { SeatType, SEAT_COLORS, SeatPosition } from "@/types/seat";
+import { Armchair, Crown, Sofa, X } from "lucide-react";
+
+interface SeatCellProps {
+  seat: SeatPosition;
+  isSelected?: boolean;
+  onClick?: (seat: SeatPosition) => void;
+  onContextMenu?: (seat: SeatPosition, event: React.MouseEvent) => void;
+  onMouseDown?: () => void;
+  onMouseEnter?: () => void;
+  className?: string;
+}
+
+export function SeatCell({
+  seat,
+  isSelected = false,
+  onClick,
+  onContextMenu,
+  onMouseDown,
+  onMouseEnter,
+  className,
+}: SeatCellProps) {
+  const handleClick = () => {
+    onClick?.(seat);
+  };
+
+  const handleRightClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onContextMenu?.(seat, e);
+  };
+
+  const getSeatIcon = (type: SeatType) => {
+    const iconClass = "h-5 w-5 text-white";
+    switch (type) {
+      case SeatType.NORMAL:
+        return <Armchair className={iconClass} />;
+      case SeatType.VIP:
+        return <Crown className={iconClass} />;
+      case SeatType.COUPLE:
+        return <Sofa className={iconClass} />;
+      case SeatType.BLOCKED:
+        return <X className={iconClass} />;
+      default:
+        return null;
+    }
+  };
+
+  const getSeatContent = () => {
+    if (seat.type === SeatType.EMPTY) return "";
+
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-xs">
+        {getSeatIcon(seat.type)}
+        {seat.seatNumber && (
+          <span className="text-white font-bold text-[10px] leading-none mt-1">
+            {seat.seatNumber}
+          </span>
+        )}
+        {seat.isCoupleSeat && (
+          <span className="text-white text-[8px] leading-none">COUPLE</span>
+        )}
+      </div>
+    );
+  };
+
+  const getCoupleSeatStyles = () => {
+    if (!seat.isCoupleSeat || seat.coupleWith === undefined) return "";
+
+    // Determine if this is the left or right seat in the couple
+    const isLeftSeat = seat.col < seat.coupleWith;
+
+    if (isLeftSeat) {
+      return "rounded-r-none border-r-0";
+    } else {
+      return "rounded-l-none border-l-0";
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "w-12 h-12 border-2 cursor-pointer transition-all duration-200 select-none",
+        "flex items-center justify-center relative",
+        seat.isCoupleSeat ? "rounded-lg" : "rounded-lg",
+        SEAT_COLORS[seat.type],
+        isSelected && "ring-2 ring-purple-500 ring-offset-1",
+        seat.type !== SeatType.EMPTY && "shadow-sm hover:shadow-md",
+        seat.isCoupleSeat && "border-pink-600 shadow-md",
+        seat.isCoupleSeat && getCoupleSeatStyles(),
+        className
+      )}
+      onClick={handleClick}
+      onContextMenu={handleRightClick}
+      onMouseDown={onMouseDown}
+      onMouseEnter={onMouseEnter}
+      title={`Row ${seat.row + 1}, Col ${seat.col + 1} - ${seat.type}${
+        seat.isCoupleSeat ? " (Couple)" : ""
+      }`}
+    >
+      {getSeatContent()}
+
+      {/* Row/Col indicators for empty seats */}
+      {seat.type === SeatType.EMPTY && (
+        <span className="text-gray-400 text-xs font-mono">
+          {String.fromCharCode(65 + seat.row)}
+          {seat.col + 1}
+        </span>
+      )}
+    </div>
+  );
+}
