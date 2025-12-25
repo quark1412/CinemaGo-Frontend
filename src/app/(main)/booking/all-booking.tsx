@@ -4,19 +4,29 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import { Booking } from "@/types/booking";
-import { updatePaymentStatus } from "@/services/booking";
+import { updatePaymentStatus, getBookingById } from "@/services/booking";
+import { parseBookingQRData } from "@/lib/qrCodeHelpers";
 import { toast } from "sonner";
 
 import { DataTable } from "./data-table";
 import { createColumns } from "./columns";
 import { BookingDialog } from "./booking-dialog";
+import { QRScanner } from "@/components/qr-scanner";
+import { TicketPrintDialog } from "./ticket-print-dialog";
 
 import { useBookingTable } from "@/app/(main)/booking/use-booking-table";
+import { Button } from "@/components/ui/button";
+import { ScanQrCode } from "lucide-react";
 
 export default function AllBookings() {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewBooking, setViewBooking] = useState<Booking | null>(null);
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
+  const [ticketPrintOpen, setTicketPrintOpen] = useState(false);
+  const [bookingForTicket, setBookingForTicket] = useState<Booking | null>(
+    null
+  );
 
   const {
     bookings,
@@ -132,8 +142,58 @@ export default function AllBookings() {
     }
   };
 
+  const handleQRScan = async (decodedText: string) => {
+    try {
+      const qrData = parseBookingQRData(decodedText);
+      if (!qrData || !qrData.bookingId) {
+        toast.error("Mã QR không hợp lệ");
+        return;
+      }
+
+      const bookingResponse = await getBookingById(qrData.bookingId);
+
+      const booking: Booking = {
+        ...bookingResponse,
+        status: (bookingResponse as any).status || "Chưa thanh toán",
+        paymentMethod: (bookingResponse as any).paymentMethod,
+        createdAt:
+          typeof bookingResponse.createdAt === "string"
+            ? bookingResponse.createdAt
+            : (bookingResponse.createdAt as Date).toISOString(),
+        updatedAt:
+          typeof bookingResponse.updatedAt === "string"
+            ? bookingResponse.updatedAt
+            : (bookingResponse.updatedAt as Date).toISOString(),
+        userId: bookingResponse.userId || null,
+      };
+
+      setViewBooking(booking);
+      setDialogOpen(true);
+
+      toast.success("Đã tìm thấy đặt vé từ mã QR");
+    } catch (error: any) {
+      console.error("Error fetching booking:", error);
+      toast.error(
+        error.response?.data?.message || "Không tìm thấy đặt vé với mã QR này"
+      );
+    }
+  };
+
   return (
     <div className="h-full space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setQrScannerOpen(true)}
+            variant="default"
+            className="gap-2"
+          >
+            <ScanQrCode className="h-4 w-4" />
+            <span>Quét mã QR</span>
+          </Button>
+        </div>
+      </div>
+
       <DataTable
         columns={columns}
         data={bookings}
@@ -141,7 +201,6 @@ export default function AllBookings() {
         pagination={pagination}
         onPaginationChange={onPaginationChange}
         onTypeChange={setType}
-
         onPaymentStatusChange={setPaymentStatus}
         onBulkUpdate={handleBulkUpdate}
         //
@@ -150,6 +209,12 @@ export default function AllBookings() {
         selectedMovieId={filterMovieId}
         onMovieChange={handleMovieFilterChange}
         onShowtimeChange={setShowtime}
+      />
+
+      <QRScanner
+        open={qrScannerOpen}
+        onClose={() => setQrScannerOpen(false)}
+        onScanSuccess={handleQRScan}
       />
 
       <BookingDialog
@@ -161,10 +226,53 @@ export default function AllBookings() {
           movieMap: maps.movieMap,
           roomMap: maps.roomMap,
           cinemaMap: maps.cinemaMap,
-
           showtimeMap: maps.showTimeMap || {},
         }}
+        onPrintTicket={
+          viewBooking
+            ? () => {
+                setBookingForTicket(viewBooking);
+                setTicketPrintOpen(true);
+              }
+            : undefined
+        }
+        onUpdateStatus={
+          viewBooking?.paymentMethod === "COD"
+            ? async (status: string) => {
+                if (!viewBooking) return;
+                await handleUpdatePaymentStatus(viewBooking.id, status);
+                try {
+                  const updatedBooking = await getBookingById(viewBooking.id);
+                  const booking: Booking = {
+                    ...updatedBooking,
+                    status: (updatedBooking as any).status || "Chưa thanh toán",
+                    paymentMethod: (updatedBooking as any).paymentMethod,
+                    createdAt:
+                      typeof updatedBooking.createdAt === "string"
+                        ? updatedBooking.createdAt
+                        : (updatedBooking.createdAt as Date).toISOString(),
+                    updatedAt:
+                      typeof updatedBooking.updatedAt === "string"
+                        ? updatedBooking.updatedAt
+                        : (updatedBooking.updatedAt as Date).toISOString(),
+                    userId: updatedBooking.userId || null,
+                  };
+                  setViewBooking(booking);
+                } catch (error) {
+                  console.error("Error refreshing booking:", error);
+                }
+              }
+            : undefined
+        }
       />
+
+      {bookingForTicket && (
+        <TicketPrintDialog
+          open={ticketPrintOpen}
+          onOpenChange={setTicketPrintOpen}
+          booking={bookingForTicket}
+        />
+      )}
     </div>
   );
 }

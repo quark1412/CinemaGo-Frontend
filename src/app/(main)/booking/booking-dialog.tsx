@@ -24,7 +24,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { User, Mail, Phone, MapPin, MonitorPlay, Calendar } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  MonitorPlay,
+  Calendar,
+  Printer,
+} from "lucide-react";
 
 import { getFoodDrinkById } from "@/services/fooddrinks";
 import { Booking } from "@/types/booking";
@@ -80,6 +95,8 @@ interface BookingDialogProps {
     roomMap: RoomMap;
     cinemaMap: CinemaMap;
   };
+  onPrintTicket?: () => void;
+  onUpdateStatus?: (status: string) => void;
 }
 
 export function BookingDialog({
@@ -87,11 +104,14 @@ export function BookingDialog({
   onOpenChange,
   booking,
   maps,
+  onPrintTicket,
+  onUpdateStatus,
 }: BookingDialogProps) {
   const { t } = useI18n();
 
   const [details, setDetails] = useState<BookingDetails | null>(null);
   const [loadingFood, setLoadingFood] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("vi-VN", {
@@ -274,14 +294,36 @@ export function BookingDialog({
                 ID: {booking.id}
               </DialogDescription>
             </div>
-            <Badge
-              variant={booking.type === "online" ? "default" : "secondary"}
-              className="text-sm px-3 py-1"
-            >
-              {booking.type === "online"
-                ? t("bookings.online")
-                : t("bookings.offline")}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge
+                variant={booking.type === "online" ? "default" : "secondary"}
+                className="text-sm px-3 py-1"
+              >
+                {booking.type === "online"
+                  ? t("bookings.online")
+                  : t("bookings.offline")}
+              </Badge>
+              {booking.paymentMethod && (
+                <Badge
+                  variant="outline"
+                  className="text-sm px-3 py-1 uppercase"
+                >
+                  {booking.paymentMethod}
+                </Badge>
+              )}
+              <Badge
+                variant={
+                  booking.status === "Đã thanh toán"
+                    ? "default"
+                    : booking.status === "Chưa thanh toán"
+                    ? "secondary"
+                    : "destructive"
+                }
+                className="text-sm px-3 py-1"
+              >
+                {booking.status || "Chưa thanh toán"}
+              </Badge>
+            </div>
           </div>
         </DialogHeader>
 
@@ -484,7 +526,7 @@ export function BookingDialog({
           </div>
         </ScrollArea>
 
-        <DialogFooter className="p-6 border-t bg-background flex items-center justify-between sm:justify-between">
+        <DialogFooter className="p-6 border-t bg-background flex items-center justify-between sm:justify-between gap-4">
           <div className="flex flex-col items-start gap-1">
             <span className="text-xs text-muted-foreground uppercase font-bold">
               {t("bookings.modal.totalprice")}
@@ -493,9 +535,47 @@ export function BookingDialog({
               {formatCurrency(booking.totalPrice)}
             </span>
           </div>
-          <Button onClick={() => onOpenChange(false)} size="lg">
-            {t("bookings.modal.cancel")}
-          </Button>
+          <div className="flex items-center gap-2">
+            {onPrintTicket && (
+              <Button onClick={onPrintTicket} variant="outline" size="lg">
+                <Printer className="h-4 w-4 mr-2" />
+                In vé
+              </Button>
+            )}
+            {onUpdateStatus && booking.paymentMethod === "COD" && (
+              <div className="flex items-center gap-2">
+                <Select
+                  value={selectedStatus}
+                  onValueChange={setSelectedStatus}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Cập nhật trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Đã thanh toán">Đã thanh toán</SelectItem>
+                    <SelectItem value="Thanh toán thất bại">
+                      Thanh toán thất bại
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={() => {
+                    if (selectedStatus) {
+                      onUpdateStatus(selectedStatus);
+                      setSelectedStatus("");
+                    }
+                  }}
+                  disabled={!selectedStatus}
+                  size="lg"
+                >
+                  Cập nhật
+                </Button>
+              </div>
+            )}
+            <Button onClick={() => onOpenChange(false)} size="lg">
+              {t("bookings.modal.cancel")}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
